@@ -1,0 +1,180 @@
+# My Greenhouse - Implementation Plan
+
+This document tracks the development progress of the "My Greenhouse" Android application.
+
+## 1. Core Modules & Features
+
+Based on `greenhouse.md`:
+
+*   **Dashboard:**
+    *   [X] Navigation Menu (Hamburger)
+    *   [X] Plant Image Carousel (editable cards: Strain Name & Batch Number)
+    *   [X] Task Alerts (upcoming tasks, tap to view details)
+*   **Add to Greenhouse:**
+    *   [X] Form (Strain Name, Batch Number, Seed/Clone, Autoflower/Photoperiod, Start Date, Nutrients, Soil Type)
+    *   [X] Growth Stage Logic (Seed: Germination, Seedling, Vegetation, Flower, Drying, Curing; Clone: Non-rooted, Rooted, Vegetation, Flower, Drying, Curing)
+    *   [X] Autoflower/Photoperiod specific fields (Seed to Harvest / Flower Duration)
+    *   [X] Save to Room Database
+    *   [X] Plant appears in Dashboard carousel
+    *   [X] Edit Mode (modify details, upload/delete images, view progress)
+*   **Task Scheduling:**
+    *   [X] Task Types (Watering, Feeding, Pest Control, Soil Test, Water Test, CO₂ Supplementation, Light Cycle Changes)
+    *   [X] Scheduling (Date & Time Pickers)
+    *   [X] Save tasks to Room Database
+    *   [X] Task Management (Edit, delete, reschedule, mark complete)
+    *   [X] Notifications (Dashboard alerts, tap to view details)
+*   **Quick Stats:**
+    *   [ ] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
+    *   [ ] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
+*   **My Dank Bank:**
+    *   [ ] Harvest Tracking (Total dried & cured weight - grams/ounces)
+    *   [ ] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
+    *   [ ] Charts (Pie: Stored strains proportion, Bar: Harvest trends)
+*   **Settings:**
+    *   [X] Theme selection (Light/Dark)
+    *   [ ] Authentication (Password / Biometric)
+    *   [ ] Photo Management (View/delete uploaded images)
+    *   [ ] Data Management (Export/import logs, Clear all data with confirmation)
+
+## 2. Core Functionalities (Technical)
+
+*   [X] Data Handling: Room Database, ViewModel + LiveData/StateFlow, Coroutines
+*   [>] Task Reminders: WorkManager for scheduling, System notifications
+*   [X] Image Management: Local storage, (Optional Firebase backup), Timelapse view
+
+## 3. Technical Stack (Confirmed/Planned)
+
+*   **Language:** Kotlin ✓
+*   **UI:** Jetpack Compose (Material 3) ✓
+*   **Database:** Room ✓
+*   **UI Components:** RecyclerView (or Compose equivalent LazyLists), ViewPager2 (or Compose equivalent), MPAndroidChart (or Compose alternative)
+*   **Background Tasks & Notifications:** WorkManager
+*   **Storage:** Internal Storage (Optional Firebase later)
+*   **Architecture:** MVVM (or MVI) with LiveData/Kotlin Flows ✓
+*   **Authentication:** Biometric / Password (Android Keystore)
+
+## 4. Development Milestones & Tasks
+
+(Adapted from `greenhouse_proposal.md`)
+
+### Milestone 1: UI/UX Setup & Base Architecture (Week 1 Focus)
+
+*   [X] **Branding & Theme:**
+    *   [X] Define color palette (refine from default `Color.kt`)
+    *   [X] Define typography (refine from default `Type.kt`)
+    *   [X] Implement Light/Dark theme switching mechanism (Settings screen later, but foundation now)
+*   [X] **Base Project Structure:**
+    *   [X] Set up MVVM/MVI architecture (create base classes/interfaces if needed).
+    *   [X] Set up Room Database:
+        *   [X] Define initial Entities (e.g., Plant, Task)
+        *   [X] Define DAOs
+        *   [X] Create Database class
+        *   [X] Set up Dependency Injection (e.g., Hilt) for database and view models.
+*   [X] **Navigation:**
+    *   [X] Implement basic navigation graph (Jetpack Compose Navigation).
+    *   [X] Create placeholder screens for main modules.
+    *   [X] Implement main navigation structure (e.g., Bottom Navigation or Hamburger Menu for Dashboard).
+*   [X] **Initial Dashboard UI:**
+    *   [X] Basic layout for Dashboard screen.
+    *   [X] Placeholder for Plant Carousel.
+    *   [X] Placeholder for Task Alerts.
+
+### Milestone 2: Dashboard + Add Plant Flow
+
+*   [X] **Plant Entity & DAO (Refine/Implement):**
+    *   [X] Finalize all fields for Plant entity.
+    *   [X] Implement all necessary DAO methods for Plant (CRUD).
+*   [X] **"Add to Greenhouse" Screen:**
+    *   [X] Create UI for the form.
+    *   [X] Implement input fields and pickers (Date, Seed/Clone, etc.).
+    *   [X] Implement DatePickerDialog for Start Date.
+    *   [X] Implement logic for conditional fields (Autoflower/Photoperiod, Seed/Clone stages).
+    *   [X] ViewModel for "Add to Greenhouse" screen.
+    *   [X] Integrate Image Picker.
+    *   [X] Save functionality (ViewModel interacts with Repository/DAO).
+*   [X] **Dashboard - Plant Carousel:**
+    *   [X] Implement Composable for Plant Card.
+    *   [X] Fetch plants from database and display in a `LazyRow` or similar.
+    *   [X] Clicking a card navigates to "Edit Plant".
+*   [X] **"Edit Plant" Mode (Basic):**
+    *   [X] Screen to display plant details (mirrors Add Plant screen).
+    *   [X] Allow modification of existing plant details.
+    *   [X] Save changes to database.
+    *   [X] Implement DatePickerDialog for Start Date.
+*   [X] **Image Handling (Basic - Local):**
+    *   [X] Functionality to pick an image from gallery for a plant (Add & Edit screens).
+    *   [X] Store image URI/path with the plant entity.
+    *   [X] Display plant image in carousel, add screen, and edit screen.
+
+### Milestone 3: Task Management + Notifications
+
+*   [X] **Task Entity & DAO (Refine/Implement):**
+    *   [X] Finalize all fields for Task entity.
+    *   [X] Implement all necessary DAO methods for Task (CRUD, fetching upcoming).
+*   [X] **"Task Scheduling" Screen:**
+    *   [X] UI for selecting task type, date, time, and details.
+    *   [X] ViewModel for Task Scheduling.
+    *   [X] Save tasks to database.
+*   [X] **Task Management UI:**
+    *   [X] Display list of tasks.
+    *   [X] Allow editing, deleting, rescheduling tasks.
+    *   [X] Mark tasks as complete.
+*   [X] **Dashboard - Task Alerts:**
+    *   [X] Fetch upcoming/pending tasks.
+    *   [X] Display alerts on Dashboard.
+    *   [X] Tapping an alert navigates to task details/scheduling screen.
+*   [>] **WorkManager for Notifications:**
+    *   [ ] Schedule background worker to check for due tasks.
+    *   [ ] Implement system notifications for task reminders.
+
+### Milestone 4: Quick Stats & My Dank Bank
+
+*   [ ] **"Quick Stats" Screen:**
+    *   [ ] UI for displaying statistics.
+    *   [ ] Logic to calculate: Total Plants, Drying Count, Curing Count, Days in growth stage.
+    *   [ ] ViewModel for Quick Stats.
+*   [ ] **Charts - Quick Stats:**
+    *   [ ] Integrate MPAndroidChart or Compose charting library.
+    *   [ ] Bar Chart: Number of plants per growth stage.
+    *   [ ] Line Graph: Growth trends over time (requires data logging over time - consider how to store this).
+*   [ ] **"My Dank Bank" Screen - Harvest Tracking:**
+    *   [ ] UI for logging dried & cured weight.
+    *   [ ] ViewModel and database updates for harvest data.
+*   [ ] **"My Dank Bank" Screen - Seed Bank Management:**
+    *   [ ] UI for managing seed inventory (Strain Name, Batch, Count).
+    *   [ ] CRUD operations for seed bank entries.
+*   [ ] **Charts - My Dank Bank:**
+    *   [ ] Pie Chart: Proportion of different stored strains.
+    *   [ ] Bar Graph: Harvest trends over time.
+
+### Milestone 5 (Optional/Later): Settings, Advanced Features & Testing
+
+*   [>] **Settings Screen:**
+    *   [X] UI for all settings options.
+    *   [X] Theme selection (Light/Dark) - connect to implementation from Milestone 1.
+*   [ ] **Authentication:**
+    *   [ ] Implement Password/PIN setup.
+    *   [ ] Implement Biometric authentication.
+*   [ ] **Photo Management (Advanced):**
+    *   [ ] Dedicated screen to view all plant photos.
+    *   [ ] Delete photos.
+*   [ ] **Data Management:**
+    *   [ ] Export logs/data (e.g., as CSV or JSON).
+    *   [ ] Import logs/data.
+    *   [ ] "Clear all data" functionality with confirmation.
+*   [ ] **Image Management - Timelapse:**
+    *   [ ] Logic to create a timelapse from a plant's images.
+*   [ ] **Firebase Integration (Optional):**
+    *   [ ] Cloud backup for logs/images.
+*   [ ] **Comprehensive Testing:**
+    *   [ ] Unit tests for ViewModels and Repositories.
+    *   [ ] UI tests for critical user flows.
+*   [ ] **AI Growth Analysis (Future Scope)**
+
+## Progress Tracking
+
+*   **To Do:** [ ]
+*   **In Progress:** [>]
+*   **Done:** [X]
+
+*(We will update the checkboxes as we complete tasks)* 
