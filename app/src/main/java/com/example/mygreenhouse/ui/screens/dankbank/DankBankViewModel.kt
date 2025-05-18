@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.first
@@ -120,23 +121,45 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         )
         
     // Combined UI state
-    val uiState: StateFlow<DankBankUiState> = MutableStateFlow(DankBankUiState()).also { flow ->
+    val uiState: StateFlow<DankBankUiState> = combine(
+        _isLoading,
+        _selectedTab,
+        totalHarvestedWeight,
+        dryingHarvests,
+        curingHarvests,
+        completedHarvests,
+        totalSeedCount,
+        uniqueStrainCount
+    ) { values ->
+        val isLoading = values[0] as Boolean
+        val selectedTab = values[1] as Int
+        val totalHarvestedWeight = values[2] as Double
+        val dryingHarvests = values[3] as List<Harvest>
+        val curingHarvests = values[4] as List<Harvest>
+        val completedHarvests = values[5] as List<Harvest>
+        val totalSeedCount = values[6] as Int
+        val uniqueStrainCount = values[7] as Int
+
+        DankBankUiState(
+            isLoading = isLoading,
+            selectedTab = selectedTab,
+            totalHarvestedWeight = totalHarvestedWeight,
+            dryingCount = dryingHarvests.size,
+            curingCount = curingHarvests.size,
+            completedCount = completedHarvests.size,
+            totalSeedCount = totalSeedCount,
+            uniqueStrainCount = uniqueStrainCount
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = DankBankUiState()
+    )
+
+    init {
         viewModelScope.launch {
-            // Simulate initial loading
-            delay(1000)
+            delay(1000) // Simulate initial loading if needed, or remove
             _isLoading.value = false
-            
-            // Update UI state based on data
-            flow.value = DankBankUiState(
-                isLoading = false,
-                selectedTab = _selectedTab.value,
-                totalHarvestedWeight = totalHarvestedWeight.value,
-                dryingCount = dryingHarvests.value.size,
-                curingCount = curingHarvests.value.size,
-                completedCount = completedHarvests.value.size,
-                totalSeedCount = totalSeedCount.value,
-                uniqueStrainCount = uniqueStrainCount.value
-            )
         }
     }
     
@@ -235,6 +258,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         seedCount: Int,
         breeder: String = "",
         seedType: SeedType = SeedType.REGULAR,
+        acquisitionDate: LocalDate = LocalDate.now(),
         source: String = "",
         notes: String = ""
     ) {
@@ -245,6 +269,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
                 seedCount = seedCount,
                 breeder = breeder,
                 seedType = seedType,
+                acquisitionDate = acquisitionDate,
                 source = source,
                 notes = notes
             )

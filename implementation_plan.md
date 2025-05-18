@@ -147,15 +147,29 @@ Based on `greenhouse.md`:
     *   [X] Integrate MPAndroidChart or Compose charting library.
     *   [X] Bar Chart: Number of plants per growth stage.
     *   [X] Line Graph: Growth trends over time (requires data logging over time - consider how to store this).
-*   [>] **"My Dank Bank" Screen - Harvest Tracking:**
-    *   [>] UI for logging dried & cured weight. (AddHarvestScreen created)
-    *   [>] ViewModel and database updates for harvest data. (Basic structure in place)
-*   [>] **"My Dank Bank" Screen - Seed Bank Management:**
-    *   [>] UI for managing seed inventory (Strain Name, Batch, Count). (Basic structure in place, no UI yet)
-    *   [>] CRUD operations for seed bank entries. (Basic structure in place)
+*   [X] **"My Dank Bank" Screen - Harvest Tracking:**
+    *   [X] UI for logging dried & cured weight. (AddHarvestScreen created)
+    *   [X] ViewModel and database updates for harvest data.
+    *   [X] `HarvestListItem.kt` created for harvest list display.
+    *   [X] `HarvestTrackingContent` implemented with `LazyColumn`.
+    *   [X] Dialogs for entering/updating Dry and Cured weights for harvests.
+    *   [X] Statistics for harvests (Total Harvested, Drying, Curing, Completed) display and update reactively.
+*   [X] **"My Dank Bank" Screen - Seed Bank Management:**
+    *   [X] UI for managing seed inventory (Strain Name, Batch, Count).
+    *   [X] `AddSeedScreen.kt` created for adding new seeds.
+    *   [X] `SeedListItem.kt` created for seed list display.
+    *   [X] `SeedBankContent` implemented with `LazyColumn`.
+    *   [X] CRUD operations for seed bank entries (via ViewModel).
+    *   [X] Statistics for seeds (Total Seeds, Unique Strains) display and update reactively.
 *   [ ] **Charts - My Dank Bank:**
     *   [ ] Pie Chart: Proportion of different stored strains.
     *   [ ] Bar Graph: Harvest trends over time.
+*   [ ] **Next Steps for Dank Bank:**
+    *   [ ] Implement "Edit Harvest" screen and navigation.
+    *   [ ] Implement "Edit Seed" screen and navigation.
+    *   [ ] Implement Detail View screens for Harvests and Seeds.
+    *   [ ] Add filtering and sorting capabilities to harvest and seed lists.
+    *   [ ] Implement search functionality for harvests and seeds.
 
 ### Milestone 5 (Optional/Later): Settings, Advanced Features & Testing
 

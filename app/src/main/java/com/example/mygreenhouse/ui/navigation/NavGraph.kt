@@ -15,6 +15,7 @@ import com.example.mygreenhouse.ui.screens.addplant.AddPlantScreen
 import com.example.mygreenhouse.ui.screens.dashboard.DashboardScreen
 import com.example.mygreenhouse.ui.screens.dankbank.DankBankScreen
 import com.example.mygreenhouse.ui.screens.dankbank.AddHarvestScreen
+import com.example.mygreenhouse.ui.screens.dankbank.AddSeedScreen
 import com.example.mygreenhouse.ui.screens.editplant.EditPlantScreen
 import com.example.mygreenhouse.ui.screens.quickstats.QuickStatsScreen
 import com.example.mygreenhouse.ui.screens.settings.SettingsScreen
@@ -47,6 +48,7 @@ sealed class NavDestination(val route: String) {
     object QuickStats : NavDestination("quick_stats")
     object DankBank : NavDestination("dank_bank")
     object AddHarvest : NavDestination("add_harvest")
+    object AddSeed : NavDestination("add_seed")
     object Settings : NavDestination("settings")
 }
 
@@ -226,8 +228,7 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                     navController.navigate(NavDestination.AddHarvest.route)
                 },
                 onNavigateToAddSeed = {
-                    // For now, we'll navigate to AddHarvest until we implement AddSeed
-                    navController.navigate(NavDestination.AddHarvest.route)
+                    navController.navigate(NavDestination.AddSeed.route)
                 },
                 navController = navController
             )
@@ -238,6 +239,15 @@ fun GreenhouseNavGraph(navController: NavHostController) {
             AddHarvestScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onHarvestAdded = { navController.popBackStack() },
+                navController = navController
+            )
+        }
+        
+        // Add Seed Screen
+        composable(NavDestination.AddSeed.route) {
+            AddSeedScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSeedAdded = { navController.popBackStack() },
                 navController = navController
             )
         }
