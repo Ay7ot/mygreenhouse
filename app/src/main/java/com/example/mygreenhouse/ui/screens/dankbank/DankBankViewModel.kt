@@ -41,6 +41,9 @@ data class DankBankUiState(
     // Seeds
     val totalSeedCount: Int = 0,
     val uniqueStrainCount: Int = 0,
+    val regularSeedCount: Int = 0,
+    val feminizedSeedCount: Int = 0,
+    val autoflowerSeedCount: Int = 0,
     
     // Search and filter
     val searchQuery: String = "",
@@ -88,43 +91,45 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     val seedTypeFilter: StateFlow<SeedType?> = _seedTypeFilter.asStateFlow()
 
     // Data states
-    val allHarvests: StateFlow<List<Harvest>> = harvestRepository.allHarvests
+    val allHarvests: StateFlow<List<Harvest>?> = harvestRepository.allHarvests
+        .map { it as List<Harvest>? } // Ensure it's nullable for stateIn
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = null // Changed to null
         )
         
     // Filtered harvests based on search query and filter type
-    val filteredHarvests = combine(
+    val filteredHarvests: StateFlow<List<Harvest>?> = combine(
         allHarvests,
         _searchQuery,
         _harvestFilter
     ) { harvests, query, filterType ->
-        var filtered = harvests
-        
-        // Apply search query filter
-        if (query.isNotBlank()) {
-            filtered = filtered.filter { 
-                it.strainName.contains(query, ignoreCase = true) || 
-                it.batchNumber.contains(query, ignoreCase = true) || 
-                it.notes.contains(query, ignoreCase = true)
+        harvests?.let { nonNullHarvests ->
+            var filtered = nonNullHarvests
+            
+            // Apply search query filter
+            if (query.isNotBlank()) {
+                filtered = filtered.filter { 
+                    it.strainName.contains(query, ignoreCase = true) || 
+                    it.batchNumber.contains(query, ignoreCase = true) || 
+                    it.notes.contains(query, ignoreCase = true)
+                }
             }
-        }
-        
-        // Apply filter type
-        filtered = when (filterType) {
-            HarvestFilterType.DRYING -> filtered.filter { it.isDrying }
-            HarvestFilterType.CURING -> filtered.filter { it.isCuring }
-            HarvestFilterType.COMPLETED -> filtered.filter { it.isCompleted }
-            HarvestFilterType.ALL -> filtered
-        }
-        
-        filtered
+            
+            // Apply filter type
+            filtered = when (filterType) {
+                HarvestFilterType.DRYING -> filtered.filter { it.isDrying }
+                HarvestFilterType.CURING -> filtered.filter { it.isCuring }
+                HarvestFilterType.COMPLETED -> filtered.filter { it.isCompleted }
+                HarvestFilterType.ALL -> filtered
+            }
+            filtered
+        } // If harvests is null, combine returns null implicitly if not handled, or we ensure null propagation
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = null // Changed to null
     )
         
     val dryingHarvests: StateFlow<List<Harvest>> = harvestRepository.dryingHarvests
@@ -156,41 +161,43 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             initialValue = 0.0
         )
         
-    val allSeeds: StateFlow<List<Seed>> = seedRepository.allSeeds
+    val allSeeds: StateFlow<List<Seed>?> = seedRepository.allSeeds
+        .map { it as List<Seed>? } // Ensure it's nullable for stateIn
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
+            initialValue = null // Changed to null
         )
         
     // Filtered seeds based on search query and filter type
-    val filteredSeeds = combine(
+    val filteredSeeds: StateFlow<List<Seed>?> = combine(
         allSeeds,
         _searchQuery,
         _seedTypeFilter
     ) { seeds, query, seedType ->
-        var filtered = seeds
-        
-        // Apply search query filter
-        if (query.isNotBlank()) {
-            filtered = filtered.filter { 
-                it.strainName.contains(query, ignoreCase = true) || 
-                it.batchNumber.contains(query, ignoreCase = true) || 
-                it.breeder.contains(query, ignoreCase = true) ||
-                it.notes.contains(query, ignoreCase = true)
+        seeds?.let { nonNullSeeds ->
+            var filtered = nonNullSeeds
+            
+            // Apply search query filter
+            if (query.isNotBlank()) {
+                filtered = filtered.filter { 
+                    it.strainName.contains(query, ignoreCase = true) || 
+                    it.batchNumber.contains(query, ignoreCase = true) || 
+                    it.breeder.contains(query, ignoreCase = true) ||
+                    it.notes.contains(query, ignoreCase = true)
+                }
             }
-        }
-        
-        // Apply seed type filter
-        if (seedType != null) {
-            filtered = filtered.filter { it.seedType == seedType }
-        }
-        
-        filtered
+            
+            // Apply seed type filter
+            if (seedType != null) {
+                filtered = filtered.filter { it.seedType == seedType }
+            }
+            filtered
+        } // If seeds is null, combine returns null implicitly
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
+        initialValue = null // Changed to null
     )
         
     val totalSeedCount: StateFlow<Int> = seedRepository.totalSeedCount
@@ -214,36 +221,46 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         _isLoading,
         _selectedTab,
         totalHarvestedWeight,
-        dryingHarvests,
-        curingHarvests,
-        completedHarvests,
+        dryingHarvests, // Stays List<Harvest>, initial emptyList()
+        curingHarvests,  // Stays List<Harvest>, initial emptyList()
+        completedHarvests, // Stays List<Harvest>, initial emptyList()
         totalSeedCount,
         uniqueStrainCount,
         _searchQuery,
         _harvestFilter,
-        _seedTypeFilter
+        _seedTypeFilter,
+        allSeeds // This is now List<Seed>?
     ) { values ->
         val isLoading = values[0] as Boolean
         val selectedTab = values[1] as Int
         val totalHarvestedWeight = values[2] as Double
-        val dryingHarvests = values[3] as List<Harvest>
-        val curingHarvests = values[4] as List<Harvest>
-        val completedHarvests = values[5] as List<Harvest>
+        val dryingHarvestsList = values[3] as List<Harvest>
+        val curingHarvestsList = values[4] as List<Harvest>
+        val completedHarvestsList = values[5] as List<Harvest>
         val totalSeedCount = values[6] as Int
         val uniqueStrainCount = values[7] as Int
         val searchQuery = values[8] as String
         val harvestFilter = values[9] as HarvestFilterType
         val seedTypeFilter = values[10] as SeedType?
+        val currentAllSeeds = values[11] as List<Seed>? // Now nullable
+        
+        // Calculate seed counts by type, handling nullable currentAllSeeds
+        val regularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.REGULAR }?.sumOf { it.seedCount } ?: 0
+        val feminizedSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.FEMINIZED }?.sumOf { it.seedCount } ?: 0
+        val autoflowerSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.AUTOFLOWER }?.sumOf { it.seedCount } ?: 0
 
         DankBankUiState(
             isLoading = isLoading,
             selectedTab = selectedTab,
             totalHarvestedWeight = totalHarvestedWeight,
-            dryingCount = dryingHarvests.size,
-            curingCount = curingHarvests.size,
-            completedCount = completedHarvests.size,
+            dryingCount = dryingHarvestsList.size,
+            curingCount = curingHarvestsList.size,
+            completedCount = completedHarvestsList.size,
             totalSeedCount = totalSeedCount,
             uniqueStrainCount = uniqueStrainCount,
+            regularSeedCount = regularSeedCount,
+            feminizedSeedCount = feminizedSeedCount,
+            autoflowerSeedCount = autoflowerSeedCount,
             searchQuery = searchQuery,
             showDryingOnly = harvestFilter == HarvestFilterType.DRYING,
             showCuringOnly = harvestFilter == HarvestFilterType.CURING,
@@ -253,7 +270,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        initialValue = DankBankUiState()
+        initialValue = DankBankUiState() // DankBankUiState.isLoading is true by default
     )
 
     init {

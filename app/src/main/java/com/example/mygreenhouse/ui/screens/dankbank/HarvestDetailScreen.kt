@@ -73,6 +73,10 @@ fun HarvestDetailScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var associatedPlantName by remember { mutableStateOf<String?>(null) }
     
+    // Add dialog states for weight updates
+    var showDryWeightDialog by remember { mutableStateOf(false) }
+    var showCuredWeightDialog by remember { mutableStateOf(false) }
+    
     // Fetch harvest data
     LaunchedEffect(harvestId) {
         val fetchedHarvest = viewModel.getHarvestById(harvestId).firstOrNull()
@@ -239,6 +243,37 @@ fun HarvestDetailScreen(
                     )
                 }
                 
+                // Add action buttons based on the current state of the harvest
+                if (harvest!!.isDrying) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = { showDryWeightDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryGreen,
+                            contentColor = TextWhite
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Update Dry Weight")
+                    }
+                } else if (harvest!!.isCuring) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Button(
+                        onClick = { showCuredWeightDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryGreen,
+                            contentColor = TextWhite
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Update Cured Weight")
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -277,6 +312,30 @@ fun HarvestDetailScreen(
                 }
             },
             containerColor = DarkSurface
+        )
+    }
+    
+    // Add Dry Weight Dialog
+    if (showDryWeightDialog && harvest != null) {
+        DryWeightInputDialog(
+            harvest = harvest!!,
+            onDismiss = { showDryWeightDialog = false },
+            onConfirm = { dryWeight ->
+                viewModel.updateHarvestWithDryWeight(harvest!!.id, dryWeight)
+                showDryWeightDialog = false
+            }
+        )
+    }
+    
+    // Add Cured Weight Dialog
+    if (showCuredWeightDialog && harvest != null) {
+        CuredWeightInputDialog(
+            harvest = harvest!!,
+            onDismiss = { showCuredWeightDialog = false },
+            onConfirm = { finalCuredWeight, qualityRating ->
+                viewModel.completeHarvest(harvest!!.id, finalCuredWeight, qualityRating = qualityRating)
+                showCuredWeightDialog = false
+            }
         )
     }
 }

@@ -162,8 +162,8 @@ Based on `greenhouse.md`:
     *   [X] CRUD operations for seed bank entries (via ViewModel).
     *   [X] Statistics for seeds (Total Seeds, Unique Strains) display and update reactively.
 *   [>] **Charts - My Dank Bank:**
-    *   [ ] Pie Chart: Proportion of different stored strains.
-    *   [ ] Bar Graph: Harvest trends over time.
+    *   [X] Pie Chart: Proportion of different stored strains.
+    *   [X] Bar Graph: Harvest trends over time.
 *   [>] **Next Steps for Dank Bank:**
     *   [X] Implement "Edit Harvest" screen and navigation.
     *   [X] Implement "Edit Seed" screen and navigation.
@@ -171,6 +171,8 @@ Based on `greenhouse.md`:
     *   [X] Add filtering and sorting capabilities to harvest and seed lists.
     *   [X] Implement search functionality for harvests and seeds.
     *   [X] Add loading states and skeleton loaders to the Dank Bank section.
+    *   [X] Refine chart implementation and ensure proper layout and scrolling.
+    *   [X] Ensure correct loading state behavior with skeleton loaders for lists.
 
 ### Milestone 5 (Optional/Later): Settings, Advanced Features & Testing
 

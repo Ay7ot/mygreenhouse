@@ -75,6 +75,13 @@ import com.example.mygreenhouse.data.model.SeedType
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -222,72 +229,60 @@ fun DankBankScreen(
                 .padding(paddingValues)
                 .background(DarkBackground)
         ) {
-            if (uiState.isLoading && !isSearchMode) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = PrimaryGreen)
-                }
-            } else {
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = DarkBackground,
-                    contentColor = PrimaryGreen,
-                    divider = {}
-                ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { viewModel.setSelectedTab(0) },
-                        text = { Text("Harvest Tracking") },
-                        selectedContentColor = PrimaryGreen,
-                        unselectedContentColor = TextGrey
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { viewModel.setSelectedTab(1) },
-                        text = { Text("Seed Bank") },
-                        selectedContentColor = PrimaryGreen,
-                        unselectedContentColor = TextGrey
-                    )
-                }
-                
-                if (harvestFilter != HarvestFilterType.ALL && selectedTab == 0) {
-                    FilterChip(
-                        label = when(harvestFilter) {
-                            HarvestFilterType.DRYING -> "Drying Only"
-                            HarvestFilterType.CURING -> "Curing Only"
-                            HarvestFilterType.COMPLETED -> "Completed Only"
-                            else -> ""
-                        },
-                        onClear = { viewModel.setHarvestFilter(HarvestFilterType.ALL) }
-                    )
-                }
-                
-                val currentSeedTypeFilter = seedTypeFilter
-                if (currentSeedTypeFilter != null && selectedTab == 1) {
-                    FilterChip(
-                        label = "Type: ${currentSeedTypeFilter.name.lowercase().replaceFirstChar { it.uppercase() }}",
-                        onClear = { viewModel.setSeedTypeFilter(null) }
-                    )
-                }
-                
-                if (searchQuery.isNotEmpty() && !isSearchMode) {
-                    FilterChip(
-                        label = "Search: $searchQuery",
-                        onClear = { viewModel.setSearchQuery("") }
-                    )
-                }
-                
-                if (selectedTab == 0) {
-                    HarvestStatsSection(uiState)
-                } else {
-                    SeedStatsSection(uiState)
-                }
-                
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = DarkBackground,
+                contentColor = PrimaryGreen,
+                divider = {}
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { viewModel.setSelectedTab(0) },
+                    text = { Text("Harvest Tracking") },
+                    selectedContentColor = PrimaryGreen,
+                    unselectedContentColor = TextGrey
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { viewModel.setSelectedTab(1) },
+                    text = { Text("Seed Bank") },
+                    selectedContentColor = PrimaryGreen,
+                    unselectedContentColor = TextGrey
+                )
+            }
+            
+            if (harvestFilter != HarvestFilterType.ALL && selectedTab == 0) {
+                FilterChip(
+                    label = when(harvestFilter) {
+                        HarvestFilterType.DRYING -> "Drying Only"
+                        HarvestFilterType.CURING -> "Curing Only"
+                        HarvestFilterType.COMPLETED -> "Completed Only"
+                        else -> ""
+                    },
+                    onClear = { viewModel.setHarvestFilter(HarvestFilterType.ALL) }
+                )
+            }
+            
+            val currentSeedTypeFilter = seedTypeFilter
+            if (currentSeedTypeFilter != null && selectedTab == 1) {
+                FilterChip(
+                    label = "Type: ${currentSeedTypeFilter.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                    onClear = { viewModel.setSeedTypeFilter(null) }
+                )
+            }
+            
+            if (searchQuery.isNotEmpty() && !isSearchMode) {
+                FilterChip(
+                    label = "Search: $searchQuery",
+                    onClear = { viewModel.setSearchQuery("") }
+                )
+            }
+            
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (selectedTab) {
                     0 -> HarvestTrackingContent(
                         viewModel = viewModel,
+                        uiState = uiState,
                         onMarkDryClick = { harvest -> showDryWeightDialog = harvest },
                         onMarkCuredClick = { harvest -> showCuredWeightDialog = harvest },
                         onEditHarvestClick = { harvest -> navController.navigate("editHarvest/${harvest.id}") },
@@ -295,6 +290,7 @@ fun DankBankScreen(
                     )
                     1 -> SeedBankContent(
                         viewModel = viewModel,
+                        uiState = uiState,
                         onEditSeedClick = { seed -> navController.navigate("editSeed/${seed.id}") },
                         onSeedClick = { seed -> navController.navigate("seedDetail/${seed.id}") }
                     )
@@ -491,188 +487,72 @@ fun FilterOption(
 }
 
 @Composable
-fun HarvestStatsSection(uiState: DankBankUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Harvest Statistics",
-            color = TextWhite,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            StatCard(
-                title = "Total Harvested",
-                value = "${String.format("%.1f", uiState.totalHarvestedWeight)}g",
-                modifier = Modifier.weight(1f)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            StatCard(
-                title = "Drying",
-                value = "${uiState.dryingCount}",
-                modifier = Modifier.weight(1f)
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            StatCard(
-                title = "Curing",
-                value = "${uiState.curingCount}",
-                modifier = Modifier.weight(1f)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            StatCard(
-                title = "Completed",
-                value = "${uiState.completedCount}",
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun SeedStatsSection(uiState: DankBankUiState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Seed Bank Statistics",
-            color = TextWhite,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            StatCard(
-                title = "Total Seeds",
-                value = "${uiState.totalSeedCount}",
-                modifier = Modifier.weight(1f)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
-            
-            StatCard(
-                title = "Unique Strains",
-                value = "${uiState.uniqueStrainCount}",
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-@Composable
-fun StatCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = DarkSurface
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
-        )
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = title,
-                color = TextGrey,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = value,
-                color = PrimaryGreen,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
 fun HarvestTrackingContent(
     viewModel: DankBankViewModel,
+    uiState: DankBankUiState,
     onMarkDryClick: (Harvest) -> Unit,
     onMarkCuredClick: (Harvest) -> Unit,
     onEditHarvestClick: (Harvest) -> Unit,
     onHarvestClick: (Harvest) -> Unit
 ) {
     val filteredHarvests by viewModel.filteredHarvests.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-
-    val showSkeleton = isLoading && filteredHarvests.isEmpty() && searchQuery.isEmpty()
-
-    if (showSkeleton) {
-        HarvestTrackingSkeleton()
-    } else if (filteredHarvests.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (searchQuery.isNotEmpty() || viewModel.harvestFilter.value != HarvestFilterType.ALL) 
-                        "No harvests found with current filters."
-                       else 
-                        "No harvests recorded yet.\nTap the + button to add your first harvest.",
-                color = TextGrey,
-                textAlign = TextAlign.Center
-            )
+    
+    when {
+        uiState.isLoading || filteredHarvests == null -> {
+            HarvestTrackingSkeleton()
         }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            items(filteredHarvests) { harvest ->
-                HarvestListItem(
-                    harvest = harvest,
-                    onHarvestClick = onHarvestClick,
-                    onEdit = onEditHarvestClick,
-                    onDelete = { viewModel.deleteHarvest(it) },
-                    onMarkDryClick = onMarkDryClick,
-                    onMarkCuredClick = onMarkCuredClick
+        filteredHarvests?.isEmpty() == true && searchQuery.isEmpty() && viewModel.harvestFilter.value == HarvestFilterType.ALL -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No harvests recorded yet.\nTap the + button to add your first harvest.",
+                    color = TextGrey,
+                    textAlign = TextAlign.Center
                 )
             }
-            
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
+        }
+        filteredHarvests?.isEmpty() == true -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No harvests found with current filters.",
+                    color = TextGrey,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        else -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item {
+                    HarvestStatsSection(uiState)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                items(filteredHarvests ?: emptyList()) { harvest ->
+                    HarvestListItem(
+                        harvest = harvest,
+                        onHarvestClick = onHarvestClick,
+                        onEdit = onEditHarvestClick,
+                        onDelete = { viewModel.deleteHarvest(it) },
+                        onMarkDryClick = onMarkDryClick,
+                        onMarkCuredClick = onMarkCuredClick,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+                
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
         }
     }
@@ -680,51 +560,67 @@ fun HarvestTrackingContent(
 
 @Composable
 fun SeedBankContent(
-    viewModel: DankBankViewModel, 
+    viewModel: DankBankViewModel,
+    uiState: DankBankUiState,
     onEditSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit,
     onSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit
 ) {
     val filteredSeeds by viewModel.filteredSeeds.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-
-    val showSkeleton = isLoading && filteredSeeds.isEmpty() && searchQuery.isEmpty()
-
-    if (showSkeleton) {
-        SeedBankSkeleton()
-    } else if (filteredSeeds.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (searchQuery.isNotEmpty() || viewModel.seedTypeFilter.value != null)
-                        "No seeds found with current filters."
-                       else
-                        "Your seed bank is empty.\nTap the + button to add seeds to your collection.",
-                color = TextGrey,
-                textAlign = TextAlign.Center
-            )
+    
+    when {
+        uiState.isLoading || filteredSeeds == null -> {
+            SeedBankSkeleton()
         }
-    } else {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            items(filteredSeeds) { seed ->
-                SeedListItem(
-                    seed = seed,
-                    onSeedClick = onSeedClick,
-                    onEdit = onEditSeedClick,
-                    onDelete = { viewModel.deleteSeed(it) }
+        filteredSeeds?.isEmpty() == true && searchQuery.isEmpty() && viewModel.seedTypeFilter.value == null -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Your seed bank is empty.\nTap the + button to add seeds to your collection.",
+                    color = TextGrey,
+                    textAlign = TextAlign.Center
                 )
             }
-            
-            item {
-                Spacer(modifier = Modifier.height(80.dp))
+        }
+        filteredSeeds?.isEmpty() == true -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No seeds found with current filters.",
+                    color = TextGrey,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        else -> {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                item {
+                    SeedStatsSection(uiState)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                items(filteredSeeds ?: emptyList()) { seed ->
+                    SeedListItem(
+                        seed = seed,
+                        onSeedClick = onSeedClick,
+                        onEdit = onEditSeedClick,
+                        onDelete = { viewModel.deleteSeed(it) },
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+                
+                item {
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
         }
     }
@@ -885,4 +781,375 @@ fun CuredWeightInputDialog(
         },
         containerColor = DarkSurface
     )
-} 
+}
+
+@Composable
+fun SimpleBarChart(
+    data: Map<String, Int>,
+    modifier: Modifier = Modifier
+) {
+    if (data.isEmpty() || data.values.sum() == 0) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No harvest data available yet",
+                color = TextGrey,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+
+    Box(
+        modifier = modifier.padding(
+            start = 32.dp, // Space for y-axis labels
+            end = 16.dp,
+            top = 24.dp,
+            bottom = 40.dp // Space for x-axis labels
+        )
+    ) {
+        val values = data.values.toList()
+        val maxValue = values.maxOrNull() ?: 0
+        
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val barWidth = size.width / data.size * 0.6f
+            val spacing = size.width / data.size * 0.4f
+            val yScale = if (maxValue > 0) size.height / maxValue.toFloat() else 1f
+            
+            // Draw grid lines
+            val gridColor = TextWhite.copy(alpha = 0.1f)
+            for (i in 0..4) {
+                val y = size.height - (i * size.height / 4)
+                drawLine(
+                    color = gridColor,
+                    start = Offset(0f, y),
+                    end = Offset(size.width, y),
+                    strokeWidth = 1f
+                )
+            }
+            
+            // Draw bars
+            data.entries.toList().forEachIndexed { index, entry ->
+                val barHeight = (entry.value * yScale).toFloat()
+                val x = index * (barWidth + spacing) + spacing / 2
+                
+                if (entry.value > 0) {
+                    // Use different colors for different categories
+                    val barColor = when (entry.key) {
+                        "Drying" -> Color(0xFFFFD54F) // Amber for drying
+                        "Curing" -> Color(0xFFAED581) // Light green for curing
+                        "Completed" -> PrimaryGreen
+                        else -> PrimaryGreen
+                    }
+                    
+                    drawRect(
+                        color = barColor,
+                        topLeft = Offset(x, size.height - barHeight),
+                        size = Size(barWidth, barHeight)
+                    )
+                }
+            }
+        }
+        
+        // Y-axis labels
+        Column(
+            modifier = Modifier
+                .height(200.dp)
+                .align(Alignment.CenterStart)
+                .offset(x = (-24).dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            for (i in 5 downTo 0) {
+                val value = if (maxValue > 0) ((maxValue * i) / 5) else i
+                if (i < 5) { // Skip the very top label to avoid overlap
+                    Text(
+                        text = value.toString(),
+                        color = TextWhite.copy(alpha = 0.7f),
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                }
+            }
+        }
+        
+        // X-axis labels
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .offset(y = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            data.keys.forEach { label ->
+                Text(
+                    text = label,
+                    color = TextWhite.copy(alpha = 0.7f),
+                    fontSize = 10.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SimplePieChart(
+    data: Map<String, Int>,
+    modifier: Modifier = Modifier
+) {
+    if (data.isEmpty() || data.values.sum() == 0) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No seed data available yet",
+                color = TextGrey,
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+    
+    val total = data.values.sum().toFloat()
+    val colors = listOf(
+        Color(0xFF81C784),  // Green for Regular
+        Color(0xFFE57373),  // Red for Feminized
+        Color(0xFF64B5F6)   // Blue for Autoflower
+    )
+    
+    Box(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .size(160.dp)
+                .align(Alignment.CenterStart)
+        ) {
+            var startAngle = 0f
+            
+            data.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
+                val sweepAngle = 360f * entry.value / total
+                drawArc(
+                    color = colors[index % colors.size],
+                    startAngle = startAngle,
+                    sweepAngle = sweepAngle,
+                    useCenter = true
+                )
+                startAngle += sweepAngle
+            }
+        }
+        
+        // Legend
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            data.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
+                val percentage = (entry.value * 100f / total).toInt()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(colors[index % colors.size], shape = CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${entry.key} ($percentage%)",
+                        color = TextWhite,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HarvestStatsSection(uiState: DankBankUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp) // Keep padding here for the section itself
+    ) {
+        Text(
+            text = "Harvest Statistics",
+            color = TextWhite,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            StatCard(
+                title = "Total Harvested",
+                value = "${String.format("%.1f", uiState.totalHarvestedWeight)}g",
+                modifier = Modifier.weight(1f)
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            StatCard(
+                title = "Current Status",
+                value = "${uiState.dryingCount + uiState.curingCount} Active",
+                modifier = Modifier.weight(1f)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = DarkSurface
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Harvest Status",
+                    color = TextWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                SimpleBarChart(
+                    data = mapOf(
+                        "Drying" to uiState.dryingCount,
+                        "Curing" to uiState.curingCount,
+                        "Completed" to uiState.completedCount
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SeedStatsSection(uiState: DankBankUiState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp) // Keep padding here for the section itself
+    ) {
+        Text(
+            text = "Seed Bank Statistics",
+            color = TextWhite,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            StatCard(
+                title = "Total Seeds",
+                value = "${uiState.totalSeedCount}",
+                modifier = Modifier.weight(1f)
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            StatCard(
+                title = "Unique Strains",
+                value = "${uiState.uniqueStrainCount}",
+                modifier = Modifier.weight(1f)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = DarkSurface
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Seed Type Distribution",
+                    color = TextWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                
+                SimplePieChart(
+                    data = mapOf(
+                        "Regular" to uiState.regularSeedCount,
+                        "Feminized" to uiState.feminizedSeedCount,
+                        "Autoflower" to uiState.autoflowerSeedCount
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .padding(vertical = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StatCard(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = DarkSurface
+        ),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                color = TextGrey,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = value,
+                color = PrimaryGreen,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
