@@ -16,6 +16,10 @@ import com.example.mygreenhouse.ui.screens.dashboard.DashboardScreen
 import com.example.mygreenhouse.ui.screens.dankbank.DankBankScreen
 import com.example.mygreenhouse.ui.screens.dankbank.AddHarvestScreen
 import com.example.mygreenhouse.ui.screens.dankbank.AddSeedScreen
+import com.example.mygreenhouse.ui.screens.dankbank.EditHarvestScreen
+import com.example.mygreenhouse.ui.screens.dankbank.EditSeedScreen
+import com.example.mygreenhouse.ui.screens.dankbank.HarvestDetailScreen
+import com.example.mygreenhouse.ui.screens.dankbank.SeedDetailScreen
 import com.example.mygreenhouse.ui.screens.editplant.EditPlantScreen
 import com.example.mygreenhouse.ui.screens.quickstats.QuickStatsScreen
 import com.example.mygreenhouse.ui.screens.settings.SettingsScreen
@@ -49,6 +53,18 @@ sealed class NavDestination(val route: String) {
     object DankBank : NavDestination("dank_bank")
     object AddHarvest : NavDestination("add_harvest")
     object AddSeed : NavDestination("add_seed")
+    object EditHarvest : NavDestination("editHarvest/{harvestId}") {
+        fun createRoute(harvestId: String) = "editHarvest/$harvestId"
+    }
+    object EditSeed : NavDestination("editSeed/{seedId}") {
+        fun createRoute(seedId: String) = "editSeed/$seedId"
+    }
+    object HarvestDetail : NavDestination("harvestDetail/{harvestId}") {
+        fun createRoute(harvestId: String) = "harvestDetail/$harvestId"
+    }
+    object SeedDetail : NavDestination("seedDetail/{seedId}") {
+        fun createRoute(seedId: String) = "seedDetail/$seedId"
+    }
     object Settings : NavDestination("settings")
 }
 
@@ -250,6 +266,84 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 onSeedAdded = { navController.popBackStack() },
                 navController = navController
             )
+        }
+        
+        // Edit Harvest Screen
+        composable(
+            route = NavDestination.EditHarvest.route,
+            arguments = listOf(navArgument("harvestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val harvestId = backStackEntry.arguments?.getString("harvestId")
+            if (harvestId != null) {
+                EditHarvestScreen(
+                    harvestId = harvestId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onHarvestUpdated = { navController.popBackStack() },
+                    navController = navController
+                )
+            } else {
+                navController.popBackStack() // Handle error: harvestId is null
+            }
+        }
+        
+        // Edit Seed Screen
+        composable(
+            route = NavDestination.EditSeed.route,
+            arguments = listOf(navArgument("seedId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val seedId = backStackEntry.arguments?.getString("seedId")
+            if (seedId != null) {
+                EditSeedScreen(
+                    seedId = seedId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSeedUpdated = { navController.popBackStack() },
+                    navController = navController
+                )
+            } else {
+                navController.popBackStack() // Handle error: seedId is null
+            }
+        }
+        
+        // Harvest Detail Screen
+        composable(
+            route = NavDestination.HarvestDetail.route,
+            arguments = listOf(navArgument("harvestId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val harvestId = backStackEntry.arguments?.getString("harvestId")
+            if (harvestId != null) {
+                HarvestDetailScreen(
+                    harvestId = harvestId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { id -> 
+                        navController.navigate(NavDestination.EditHarvest.createRoute(id))
+                    },
+                    onDeleteHarvest = { navController.popBackStack() },
+                    navController = navController
+                )
+            } else {
+                navController.popBackStack() // Handle error: harvestId is null
+            }
+        }
+        
+        // Seed Detail Screen
+        composable(
+            route = NavDestination.SeedDetail.route,
+            arguments = listOf(navArgument("seedId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val seedId = backStackEntry.arguments?.getString("seedId")
+            if (seedId != null) {
+                SeedDetailScreen(
+                    seedId = seedId,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { id -> 
+                        navController.navigate(NavDestination.EditSeed.createRoute(id))
+                    },
+                    onDeleteSeed = { navController.popBackStack() },
+                    navController = navController
+                )
+            } else {
+                navController.popBackStack() // Handle error: seedId is null
+            }
         }
         
         composable(NavDestination.Settings.route) {

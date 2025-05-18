@@ -294,4 +294,207 @@ fun TaskListSkeleton() {
             }
         }
     }
+}
+
+/**
+ * Skeleton loader for harvest tracking
+ */
+@Composable
+fun HarvestTrackingSkeleton() {
+    val brush = shimmerBrush()
+    
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        repeat(3) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = DarkSurface.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    // Strain title and batch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .width(150.dp)
+                                    .height(22.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(brush)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(16.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(brush)
+                            )
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(brush)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Harvest date
+                    Box(
+                        modifier = Modifier
+                            .width(180.dp)
+                            .height(16.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(brush)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Weight chips
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(brush)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(brush)
+                        )
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+                        
+                        Box(
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(20.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(brush)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Skeleton loader for seed bank
+ */
+@Composable
+fun SeedBankSkeleton() {
+    val brush = shimmerBrush()
+    
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        repeat(3) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = DarkSurface.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    // Strain title and batch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Box(
+                                modifier = Modifier
+                                    .width(150.dp)
+                                    .height(22.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(brush)
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Box(
+                                modifier = Modifier
+                                    .width(80.dp)
+                                    .height(16.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(brush)
+                            )
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(brush)
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Seed info row
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(brush)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        Box(
+                            modifier = Modifier
+                                .width(90.dp)
+                                .height(28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(brush)
+                        )
+                        
+                        Spacer(modifier = Modifier.weight(1f))
+                        
+                        Box(
+                            modifier = Modifier
+                                .width(100.dp)
+                                .height(16.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(brush)
+                        )
+                    }
+                }
+            }
+        }
+    }
 } 

@@ -37,9 +37,9 @@ Based on `greenhouse.md`:
     *   [X] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
     *   [X] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
 *   **My Dank Bank:**
-    *   [>] Harvest Tracking (Total dried & cured weight - grams/ounces)
-    *   [>] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
-    *   [ ] Charts (Pie: Stored strains proportion, Bar: Harvest trends)
+    *   [X] Harvest Tracking (Total dried & cured weight - grams/ounces)
+    *   [X] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
+    *   [X] Charts (Pie: Stored strains proportion, Bar: Harvest trends)
 *   **Settings:**
     *   [X] Theme selection (Light/Dark)
     *   [ ] Authentication (Password / Biometric)
@@ -161,15 +161,16 @@ Based on `greenhouse.md`:
     *   [X] `SeedBankContent` implemented with `LazyColumn`.
     *   [X] CRUD operations for seed bank entries (via ViewModel).
     *   [X] Statistics for seeds (Total Seeds, Unique Strains) display and update reactively.
-*   [ ] **Charts - My Dank Bank:**
+*   [>] **Charts - My Dank Bank:**
     *   [ ] Pie Chart: Proportion of different stored strains.
     *   [ ] Bar Graph: Harvest trends over time.
-*   [ ] **Next Steps for Dank Bank:**
-    *   [ ] Implement "Edit Harvest" screen and navigation.
-    *   [ ] Implement "Edit Seed" screen and navigation.
-    *   [ ] Implement Detail View screens for Harvests and Seeds.
-    *   [ ] Add filtering and sorting capabilities to harvest and seed lists.
-    *   [ ] Implement search functionality for harvests and seeds.
+*   [>] **Next Steps for Dank Bank:**
+    *   [X] Implement "Edit Harvest" screen and navigation.
+    *   [X] Implement "Edit Seed" screen and navigation.
+    *   [X] Implement Detail View screens for Harvests and Seeds.
+    *   [X] Add filtering and sorting capabilities to harvest and seed lists.
+    *   [X] Implement search functionality for harvests and seeds.
+    *   [X] Add loading states and skeleton loaders to the Dank Bank section.
 
 ### Milestone 5 (Optional/Later): Settings, Advanced Features & Testing
 
