@@ -64,6 +64,7 @@ import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TaskAlertGreen
 import com.example.mygreenhouse.ui.theme.TextGrey
 import com.example.mygreenhouse.ui.theme.TextWhite
+import androidx.navigation.NavController
 
 /**
  * Main Dashboard screen
@@ -78,6 +79,8 @@ fun DashboardScreen(
     navigateToTaskList: () -> Unit,
     navigateToEditTask: (String, String) -> Unit,
     navigateToQuickStats: () -> Unit,
+    navigateToDankBank: () -> Unit,
+    navController: NavController,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
 ) {
     val plants by viewModel.plants.collectAsState(initial = null)
@@ -115,14 +118,7 @@ fun DashboardScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.Dashboard.route,
-                onNavItemClick = { route ->
-                    when (route) {
-                        NavDestination.AddPlant.route -> navigateToAddPlant()
-                        NavDestination.Task.route -> navigateToTask()
-                        NavDestination.QuickStats.route -> navigateToQuickStats()
-                        // Add other navigation handlers as needed
-                    }
-                }
+                navController = navController
             )
         }
     ) { paddingValues ->

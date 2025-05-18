@@ -2,6 +2,7 @@ package com.example.mygreenhouse.data.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 import java.util.UUID
@@ -32,7 +33,8 @@ enum class TaskType {
             childColumns = ["plantId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index(value = ["plantId"])]
 )
 data class Task(
     @PrimaryKey

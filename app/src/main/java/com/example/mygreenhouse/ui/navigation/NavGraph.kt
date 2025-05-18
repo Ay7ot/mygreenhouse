@@ -14,6 +14,7 @@ import com.example.mygreenhouse.data.repository.TaskRepository
 import com.example.mygreenhouse.ui.screens.addplant.AddPlantScreen
 import com.example.mygreenhouse.ui.screens.dashboard.DashboardScreen
 import com.example.mygreenhouse.ui.screens.dankbank.DankBankScreen
+import com.example.mygreenhouse.ui.screens.dankbank.AddHarvestScreen
 import com.example.mygreenhouse.ui.screens.editplant.EditPlantScreen
 import com.example.mygreenhouse.ui.screens.quickstats.QuickStatsScreen
 import com.example.mygreenhouse.ui.screens.settings.SettingsScreen
@@ -45,6 +46,7 @@ sealed class NavDestination(val route: String) {
     }
     object QuickStats : NavDestination("quick_stats")
     object DankBank : NavDestination("dank_bank")
+    object AddHarvest : NavDestination("add_harvest")
     object Settings : NavDestination("settings")
 }
 
@@ -69,14 +71,17 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 navigateToEditTask = { taskId, taskTypeName ->
                     navController.navigate(NavDestination.EditTask.createRoute(taskId, taskTypeName))
                 },
-                navigateToQuickStats = { navController.navigate(NavDestination.QuickStats.route) }
+                navigateToQuickStats = { navController.navigate(NavDestination.QuickStats.route) },
+                navigateToDankBank = { navController.navigate(NavDestination.DankBank.route) },
+                navController = navController
             )
         }
         
         composable(NavDestination.AddPlant.route) {
             AddPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPlantAdded = { navController.popBackStack() }
+                onPlantAdded = { navController.popBackStack() },
+                navController = navController
             )
         }
         
@@ -88,7 +93,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             EditPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPlantUpdated = { navController.popBackStack() }
+                onPlantUpdated = { navController.popBackStack() },
+                navController = navController
             )
         }
         
@@ -117,7 +123,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 },
                 onViewTaskList = {
                     navController.navigate(NavDestination.TaskList.route)
-                }
+                },
+                navController = navController
             )
         }
         
@@ -199,7 +206,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                             popUpTo(NavDestination.Dashboard.route) { inclusive = true }
                         }
                     }
-                }
+                },
+                navController = navController
             )
         }
         
@@ -213,7 +221,24 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                             popUpTo(NavDestination.Dashboard.route) { inclusive = true }
                         }
                     }
-                }
+                },
+                onNavigateToAddHarvest = {
+                    navController.navigate(NavDestination.AddHarvest.route)
+                },
+                onNavigateToAddSeed = {
+                    // For now, we'll navigate to AddHarvest until we implement AddSeed
+                    navController.navigate(NavDestination.AddHarvest.route)
+                },
+                navController = navController
+            )
+        }
+        
+        // Add Harvest Screen
+        composable(NavDestination.AddHarvest.route) {
+            AddHarvestScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onHarvestAdded = { navController.popBackStack() },
+                navController = navController
             )
         }
         

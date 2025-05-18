@@ -13,7 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 // Material Icons
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -56,13 +56,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditPlantScreen(
     onNavigateBack: () -> Unit,
     onPlantUpdated: () -> Unit,
-    viewModel: EditPlantViewModel = viewModel(factory = EditPlantViewModel.Factory)
+    viewModel: EditPlantViewModel = viewModel(factory = EditPlantViewModel.Factory),
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -72,7 +74,7 @@ fun EditPlantScreen(
                 title = { Text("Edit Plant", color = TextWhite) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = TextWhite)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = TextWhite)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -84,11 +86,7 @@ fun EditPlantScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.EditPlant.route,
-                onNavItemClick = { route ->
-                    if (route != NavDestination.EditPlant.route) {
-                        onNavigateBack()
-                    }
-                }
+                navController = navController
             )
         }
     ) { paddingValues ->

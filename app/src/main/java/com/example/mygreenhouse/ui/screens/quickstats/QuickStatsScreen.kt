@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Spa
@@ -34,11 +34,13 @@ import com.example.mygreenhouse.ui.theme.DarkBackground
 import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickStatsScreen(
     onNavigateBack: () -> Unit,
+    navController: NavController,
     viewModel: QuickStatsViewModel = viewModel(factory = QuickStatsViewModel.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -50,7 +52,7 @@ fun QuickStatsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = TextWhite
                         )
@@ -65,11 +67,7 @@ fun QuickStatsScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.QuickStats.route,
-                onNavItemClick = { route ->
-                    if (route != NavDestination.QuickStats.route) {
-                        onNavigateBack()
-                    }
-                }
+                navController = navController
             )
         }
     ) { paddingValues ->
@@ -243,7 +241,7 @@ fun QuickStatsScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
-                                    Divider(color = TextWhite.copy(alpha = 0.1f))
+                                    HorizontalDivider(color = TextWhite.copy(alpha = 0.1f))
                                 }
                             
                             if (uiState.averageDaysInStage.entries.none { 

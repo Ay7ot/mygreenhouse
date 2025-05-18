@@ -56,6 +56,7 @@ import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.DarkerGreenButton
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
+import androidx.navigation.NavController
 
 // For displaying user-friendly names for TaskType
 fun TaskType.displayName(): String {
@@ -93,7 +94,8 @@ fun TaskType.getIcon(): ImageVector {
 fun TaskScreen(
     onNavigateBack: () -> Unit,
     onTaskTypeSelected: (TaskType) -> Unit,
-    onViewTaskList: () -> Unit
+    onViewTaskList: () -> Unit,
+    navController: NavController
 ) {
     // Task types to be displayed
     val taskTypesToDisplay = listOf(
@@ -134,11 +136,7 @@ fun TaskScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.Task.route,
-                onNavItemClick = { route ->
-                    if (route != NavDestination.Task.route) {
-                        onNavigateBack()
-                    }
-                }
+                navController = navController
             )
         }
     ) { paddingValues ->

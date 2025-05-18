@@ -37,8 +37,8 @@ Based on `greenhouse.md`:
     *   [X] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
     *   [X] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
 *   **My Dank Bank:**
-    *   [ ] Harvest Tracking (Total dried & cured weight - grams/ounces)
-    *   [ ] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
+    *   [>] Harvest Tracking (Total dried & cured weight - grams/ounces)
+    *   [>] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
     *   [ ] Charts (Pie: Stored strains proportion, Bar: Harvest trends)
 *   **Settings:**
     *   [X] Theme selection (Light/Dark)
@@ -147,12 +147,12 @@ Based on `greenhouse.md`:
     *   [X] Integrate MPAndroidChart or Compose charting library.
     *   [X] Bar Chart: Number of plants per growth stage.
     *   [X] Line Graph: Growth trends over time (requires data logging over time - consider how to store this).
-*   [ ] **"My Dank Bank" Screen - Harvest Tracking:**
-    *   [ ] UI for logging dried & cured weight.
-    *   [ ] ViewModel and database updates for harvest data.
-*   [ ] **"My Dank Bank" Screen - Seed Bank Management:**
-    *   [ ] UI for managing seed inventory (Strain Name, Batch, Count).
-    *   [ ] CRUD operations for seed bank entries.
+*   [>] **"My Dank Bank" Screen - Harvest Tracking:**
+    *   [>] UI for logging dried & cured weight. (AddHarvestScreen created)
+    *   [>] ViewModel and database updates for harvest data. (Basic structure in place)
+*   [>] **"My Dank Bank" Screen - Seed Bank Management:**
+    *   [>] UI for managing seed inventory (Strain Name, Batch, Count). (Basic structure in place, no UI yet)
+    *   [>] CRUD operations for seed bank entries. (Basic structure in place)
 *   [ ] **Charts - My Dank Bank:**
     *   [ ] Pie Chart: Proportion of different stored strains.
     *   [ ] Bar Graph: Harvest trends over time.

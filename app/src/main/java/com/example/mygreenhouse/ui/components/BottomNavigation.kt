@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.mygreenhouse.ui.navigation.NavDestination
 import com.example.mygreenhouse.ui.theme.DarkBackground
 import com.example.mygreenhouse.ui.theme.DarkSurface
@@ -42,7 +43,7 @@ data class BottomNavItem(
 @Composable
 fun GreenhouseBottomNavigation(
     currentRoute: String,
-    onNavItemClick: (String) -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val navItems = listOf(
@@ -82,7 +83,17 @@ fun GreenhouseBottomNavigation(
         navItems.forEach { item ->
             NavigationBarItem(
                 selected = currentRoute == item.route,
-                onClick = { onNavItemClick(item.route) },
+                onClick = { 
+                    if (navController.currentDestination?.route != item.route) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
                 icon = {
                     Icon(
                         imageVector = item.icon,

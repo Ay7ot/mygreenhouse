@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -69,6 +69,7 @@ import com.example.mygreenhouse.ui.composables.ImagePicker
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -156,7 +157,8 @@ fun DropdownMenuField(
 fun AddPlantScreen(
     onNavigateBack: () -> Unit,
     onPlantAdded: () -> Unit,
-    viewModel: AddPlantViewModel = viewModel(factory = AddPlantViewModel.Factory)
+    viewModel: AddPlantViewModel = viewModel(factory = AddPlantViewModel.Factory),
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
@@ -172,7 +174,7 @@ fun AddPlantScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
                             tint = TextWhite
                         )
@@ -187,11 +189,7 @@ fun AddPlantScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.AddPlant.route,
-                onNavItemClick = { route ->
-                    if (route != NavDestination.AddPlant.route) {
-                        onNavigateBack()
-                    }
-                }
+                navController = navController
             )
         }
     ) { paddingValues ->
