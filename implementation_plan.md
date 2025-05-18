@@ -133,9 +133,9 @@ Based on `greenhouse.md`:
     *   [X] Fetch upcoming/pending tasks.
     *   [X] Display alerts on Dashboard.
     *   [X] Tapping an alert navigates to task details/scheduling screen.
-*   [>] **WorkManager for Notifications:**
-    *   [ ] Schedule background worker to check for due tasks.
-    *   [ ] Implement system notifications for task reminders.
+*   [X] **WorkManager for Notifications:**
+    *   [X] Schedule background worker to check for due tasks. (Now: Schedule individual workers per task)
+    *   [X] Implement system notifications for task reminders.
 
 ### Milestone 4: Quick Stats & My Dank Bank
 

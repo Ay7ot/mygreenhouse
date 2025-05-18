@@ -12,6 +12,7 @@ import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.TaskType
 import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.TaskRepository
+import com.example.mygreenhouse.utils.TaskNotificationScheduler
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
     private val taskRepository: TaskRepository = TaskRepository(AppDatabase.getDatabase(application).taskDao())
     private val plantRepository: PlantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val app = application // Store application context for scheduler
 
     // Loading states
     private val _isLoading = MutableStateFlow(true)
@@ -92,12 +94,14 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 // isCompleted and completedDateTime have defaults
             )
             taskRepository.insertTask(newTask)
+            TaskNotificationScheduler.scheduleTaskNotification(app, newTask) // Schedule notification
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             taskRepository.deleteTask(task)
+            TaskNotificationScheduler.cancelTaskNotification(app, task.id) // Cancel notification
         }
     }
 
@@ -105,8 +109,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             if (task.isCompleted) {
                 taskRepository.markTaskAsIncomplete(task.id)
+                // Reschedule if it was marked incomplete and is still in the future
+                val updatedTask = task.copy(isCompleted = false, completedDateTime = null)
+                TaskNotificationScheduler.scheduleTaskNotification(app, updatedTask)
             } else {
                 taskRepository.markTaskAsCompleted(task.id)
+                TaskNotificationScheduler.cancelTaskNotification(app, task.id) // Cancel if marked complete
             }
         }
     }
@@ -124,17 +132,21 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             val localTime = LocalTime.of(time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE))
             val localDateTime = java.time.LocalDateTime.now().with(localTime)
 
-            // Create updated task object with the same ID
+            // Fetch the original task to maintain its completed status if not changing it here
+            val originalTask = taskRepository.getTaskById(existingTaskId).first()
+
             val updatedTask = Task(
-                id = existingTaskId, // Keep the same ID to replace the existing task
+                id = existingTaskId, 
                 type = taskType,
                 description = notes,
                 scheduledDateTime = localDateTime,
-                plantId = plantId
-                // isCompleted and completedDateTime remain unchanged from original task
-                // This simplification might not be ideal in all scenarios
+                plantId = plantId,
+                isCompleted = originalTask?.isCompleted ?: false, // Preserve original completion status
+                completedDateTime = originalTask?.completedDateTime // Preserve original completion time
             )
             taskRepository.updateTask(updatedTask)
+            // Schedule/reschedule notification for the updated task
+            TaskNotificationScheduler.scheduleTaskNotification(app, updatedTask) 
         }
     }
 

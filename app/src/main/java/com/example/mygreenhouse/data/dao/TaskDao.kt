@@ -27,11 +27,17 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :taskId")
     fun getTaskById(taskId: String): Flow<Task?>
     
+    @Query("SELECT * FROM tasks WHERE id = :taskId")
+    suspend fun getTaskByIdOnce(taskId: String): Task?
+    
     @Query("SELECT * FROM tasks WHERE plantId = :plantId ORDER BY scheduledDateTime ASC")
     fun getTasksForPlant(plantId: String): Flow<List<Task>>
     
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledDateTime > :now ORDER BY scheduledDateTime ASC LIMIT :limit")
     fun getUpcomingTasks(now: LocalDateTime, limit: Int = 10): Flow<List<Task>>
+    
+    @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledDateTime <= :now ORDER BY scheduledDateTime DESC")
+    suspend fun getDueTasks(now: LocalDateTime): List<Task>
     
     @Query("UPDATE tasks SET isCompleted = 1, completedDateTime = :completionTime WHERE id = :taskId")
     suspend fun markTaskAsCompleted(taskId: String, completionTime: LocalDateTime)
