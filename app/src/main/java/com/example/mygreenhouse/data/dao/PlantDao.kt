@@ -24,6 +24,9 @@ interface PlantDao {
     @Query("SELECT * FROM plants WHERE isArchived = 0 ORDER BY lastUpdated DESC")
     fun getAllActivePlants(): Flow<List<Plant>>
     
+    @Query("SELECT * FROM plants ORDER BY lastUpdated DESC")
+    fun getAllPlants(): Flow<List<Plant>>
+    
     @Query("SELECT * FROM plants WHERE id = :plantId")
     fun getPlantById(plantId: String): Flow<Plant?>
     

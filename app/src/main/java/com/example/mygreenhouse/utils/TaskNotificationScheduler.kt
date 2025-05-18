@@ -1,6 +1,7 @@
 package com.example.mygreenhouse.utils
 
 import android.content.Context
+import android.os.Build
 import android.util.Log
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -38,18 +39,36 @@ object TaskNotificationScheduler {
             return
         }
         
-        val workRequest = OneTimeWorkRequestBuilder<TaskReminderWorker>()
-            .setInitialDelay(delay)
+        val workRequestBuilder = OneTimeWorkRequestBuilder<TaskReminderWorker>()
             .setInputData(workDataOf(TaskReminderWorker.TASK_ID_KEY to task.id))
             .addTag(task.id) // Tag work with task ID for cancellation
-            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            workRequestBuilder.setInitialDelay(delay)
+        } else {
+            // For API < 26, schedule without initial delay if the delay is significant.
+            // WorkManager will attempt to run it as soon as constraints are met.
+            // If delay is very small, it might run almost immediately.
+            // This is a trade-off for compatibility.
+            if (delay.toMillis() > 0) {
+                 // No setInitialDelay for older APIs, it will run when constraints are met.
+                 // Log that we are not using setInitialDelay
+                Log.d("TaskNotificationScheduler", "API level ${Build.VERSION.SDK_INT} < 26. Scheduling task ${task.id} without explicit initial delay. Actual delay: $delay")
+            } else {
+                // If delay is zero or negative (should be caught above, but as a safeguard)
+                 Log.d("TaskNotificationScheduler", "Task ${task.id} delay is zero or negative, not scheduling with WorkManager.")
+                return
+            }
+        }
+        
+        val workRequest = workRequestBuilder.build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             task.id, // Use task ID as unique work name
             ExistingWorkPolicy.REPLACE, // Replace if task is updated
             workRequest
         )
-        Log.d("TaskNotificationScheduler", "Scheduled notification for task ${task.id} with delay: $delay")
+        Log.d("TaskNotificationScheduler", "Scheduled notification for task ${task.id} with effective delay (if API >=26): $delay")
     }
 
     fun cancelTaskNotification(context: Context, taskId: String) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -257,17 +258,25 @@ fun TaskListItem(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(
+                    Button(
                         onClick = onToggleComplete,
                         modifier = Modifier.height(36.dp),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            width = 1.dp,
-                            brush = SolidColor(if (task.isCompleted) Color.Yellow else PrimaryGreen)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (task.isCompleted) 
+                                Color(0xFFF9A825).copy(alpha = 0.2f) 
+                            else 
+                                PrimaryGreen.copy(alpha = 0.2f),
+                            contentColor = if (task.isCompleted) 
+                                Color(0xFFF9A825) 
+                            else 
+                                PrimaryGreen
                         ),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = if (task.isCompleted) Color.Yellow else PrimaryGreen
-                        ),
-                        shape = RoundedCornerShape(18.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp
+                        )
                     ) {
                         Text(
                             if (task.isCompleted) "Mark Incomplete" else "Mark Complete",
@@ -304,26 +313,37 @@ fun StatusChip(
     completedDate: String? = null
 ) {
     Surface(
-        color = if (isCompleted) PrimaryGreen.copy(alpha = 0.2f) else Color.Yellow.copy(alpha = 0.15f),
-        shape = RoundedCornerShape(16.dp),
+        color = if (isCompleted) PrimaryGreen.copy(alpha = 0.15f) else Color(0xFFF9A825).copy(alpha = 0.15f),
+        shape = RoundedCornerShape(12.dp),
         modifier = Modifier.padding(vertical = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.Start
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Text(
-                text = if (isCompleted) "Completed" else "Pending",
-                fontSize = 12.sp,
-                color = if (isCompleted) PrimaryGreen else Color.Yellow,
-                fontWeight = FontWeight.SemiBold
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(
+                        if (isCompleted) PrimaryGreen else Color(0xFFF9A825),
+                        CircleShape
+                    )
             )
-            if (isCompleted && completedDate != null) {
+            Column {
                 Text(
-                    text = completedDate,
-                    fontSize = 10.sp,
-                    color = TextGrey
+                    text = if (isCompleted) "Completed" else "Pending",
+                    fontSize = 12.sp,
+                    color = if (isCompleted) PrimaryGreen else Color(0xFFF9A825),
+                    fontWeight = FontWeight.SemiBold
                 )
+                if (isCompleted && completedDate != null) {
+                    Text(
+                        text = completedDate,
+                        fontSize = 10.sp,
+                        color = TextGrey
+                    )
+                }
             }
         }
     }

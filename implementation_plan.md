@@ -34,8 +34,8 @@ Based on `greenhouse.md`:
     *   [X] Plant selection dropdown in task creation/editing
     *   [X] Display associated plant names in task alerts and list
 *   **Quick Stats:**
-    *   [ ] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
-    *   [ ] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
+    *   [X] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
+    *   [X] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
 *   **My Dank Bank:**
     *   [ ] Harvest Tracking (Total dried & cured weight - grams/ounces)
     *   [ ] Seed Bank Management (Strain Name, Batch Number, Seed Count, Add/Edit/Delete)
@@ -139,14 +139,14 @@ Based on `greenhouse.md`:
 
 ### Milestone 4: Quick Stats & My Dank Bank
 
-*   [ ] **"Quick Stats" Screen:**
-    *   [ ] UI for displaying statistics.
-    *   [ ] Logic to calculate: Total Plants, Drying Count, Curing Count, Days in growth stage.
-    *   [ ] ViewModel for Quick Stats.
-*   [ ] **Charts - Quick Stats:**
-    *   [ ] Integrate MPAndroidChart or Compose charting library.
-    *   [ ] Bar Chart: Number of plants per growth stage.
-    *   [ ] Line Graph: Growth trends over time (requires data logging over time - consider how to store this).
+*   [X] **"Quick Stats" Screen:**
+    *   [X] UI for displaying statistics.
+    *   [X] Logic to calculate: Total Plants, Drying Count, Curing Count, Days in growth stage.
+    *   [X] ViewModel for Quick Stats.
+*   [X] **Charts - Quick Stats:**
+    *   [X] Integrate MPAndroidChart or Compose charting library.
+    *   [X] Bar Chart: Number of plants per growth stage.
+    *   [X] Line Graph: Growth trends over time (requires data logging over time - consider how to store this).
 *   [ ] **"My Dank Bank" Screen - Harvest Tracking:**
     *   [ ] UI for logging dried & cured weight.
     *   [ ] ViewModel and database updates for harvest data.

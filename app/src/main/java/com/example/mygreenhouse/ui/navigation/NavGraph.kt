@@ -68,7 +68,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 navigateToTaskList = { navController.navigate(NavDestination.TaskList.route) },
                 navigateToEditTask = { taskId, taskTypeName ->
                     navController.navigate(NavDestination.EditTask.createRoute(taskId, taskTypeName))
-                }
+                },
+                navigateToQuickStats = { navController.navigate(NavDestination.QuickStats.route) }
             )
         }
         

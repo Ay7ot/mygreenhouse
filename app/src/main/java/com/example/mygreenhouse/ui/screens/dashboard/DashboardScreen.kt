@@ -77,6 +77,7 @@ fun DashboardScreen(
     navigateToTask: () -> Unit,
     navigateToTaskList: () -> Unit,
     navigateToEditTask: (String, String) -> Unit,
+    navigateToQuickStats: () -> Unit,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
 ) {
     val plants by viewModel.plants.collectAsState(initial = null)
@@ -118,6 +119,7 @@ fun DashboardScreen(
                     when (route) {
                         NavDestination.AddPlant.route -> navigateToAddPlant()
                         NavDestination.Task.route -> navigateToTask()
+                        NavDestination.QuickStats.route -> navigateToQuickStats()
                         // Add other navigation handlers as needed
                     }
                 }
@@ -451,7 +453,7 @@ fun TaskAlert(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Task due date indicator
+            // Task due date indicator with enhanced UI
             val daysText = when (daysUntil) {
                 0L -> "Today"
                 1L -> "Tomorrow"
@@ -459,15 +461,17 @@ fun TaskAlert(
             }
             
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Status dot indicator
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
                         .background(if (daysUntil == 0L) TaskAlertGreen else TextGrey.copy(alpha = 0.5f))
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                
                 Text(
                     text = daysText,
                     style = MaterialTheme.typography.bodySmall,
@@ -476,7 +480,7 @@ fun TaskAlert(
                 )
                 
                 if (task.plantId != null) {
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     val plantName = plantNameCache[task.plantId] ?: "Unknown plant"
                     Text(
                         text = "For: $plantName",

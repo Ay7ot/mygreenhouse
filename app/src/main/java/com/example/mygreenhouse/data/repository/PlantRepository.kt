@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 class PlantRepository(private val plantDao: PlantDao) {
     
     val allActivePlants: Flow<List<Plant>> = plantDao.getAllActivePlants()
+    val allPlants: Flow<List<Plant>> = plantDao.getAllPlants()
     val activePlantCount: Flow<Int> = plantDao.getActivePlantCount()
     val dryingCount: Flow<Int> = plantDao.getDryingCount()
     val curingCount: Flow<Int> = plantDao.getCuringCount()
