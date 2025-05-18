@@ -13,11 +13,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -28,18 +35,23 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.TaskType
 import com.example.mygreenhouse.ui.theme.DarkBackground
@@ -60,10 +72,16 @@ fun ScheduleTaskScreen(
     taskType: TaskType,
     onNavigateBack: () -> Unit,
     onSaveTask: (taskType: TaskType, time: Calendar, repeatDays: List<String>, notes: String) -> Unit,
-    viewModel: TaskViewModel,
+    viewModel: TaskViewModel = viewModel(),
     existingTask: Task? = null // Optional task parameter for editing
 ) {
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    
+    // Plants state
+    val plants by viewModel.plants.collectAsState(initial = emptyList())
+    val isLoadingPlants by viewModel.isLoadingPlants.collectAsState(initial = true)
+    
     var selectedTime by remember { 
         mutableStateOf(
             if (existingTask != null) {
@@ -79,6 +97,21 @@ fun ScheduleTaskScreen(
     }
     var showTimePicker by remember { mutableStateOf(false) }
     val timeFormatter = remember { SimpleDateFormat("hh:mm a", Locale.getDefault()) }
+
+    // Plant selection state
+    var selectedPlantId by remember { mutableStateOf(existingTask?.plantId) }
+    var selectedPlantName by remember { mutableStateOf("Select a plant (optional)") }
+    var expandPlantDropdown by remember { mutableStateOf(false) }
+    
+    // Update selected plant name if we have plants and a selected ID
+    LaunchedEffect(plants, selectedPlantId) {
+        if (selectedPlantId != null && plants.isNotEmpty()) {
+            val plant = plants.find { it.id == selectedPlantId }
+            if (plant != null) {
+                selectedPlantName = plant.strainName
+            }
+        }
+    }
 
     val daysOfWeek = remember {
         listOf(
@@ -141,7 +174,8 @@ fun ScheduleTaskScreen(
                 .fillMaxSize()
                 .background(DarkBackground)
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(scrollState),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
@@ -156,8 +190,97 @@ fun ScheduleTaskScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+            
+            // Plant selection dropdown
+            Text(
+                "Associate with plant", 
+                fontSize = 18.sp, 
+                color = TextWhite, 
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = selectedPlantName,
+                    onValueChange = { /* Read only */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expandPlantDropdown = true },
+                    readOnly = true,
+                    enabled = false,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = TextFieldDefaults.colors(
+                        disabledContainerColor = PrimaryGreenLight.copy(alpha = 0.1f),
+                        disabledTextColor = if (selectedPlantId != null) TextWhite else TextGrey,
+                        disabledIndicatorColor = if (selectedPlantId != null) PrimaryGreen else Color.Transparent,
+                    ),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Expand plant selection",
+                            tint = PrimaryGreen
+                        )
+                    }
+                )
+                
+                // Invisible clickable overlay
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(onClick = { expandPlantDropdown = true })
+                )
+                
+                DropdownMenu(
+                    expanded = expandPlantDropdown,
+                    onDismissRequest = { expandPlantDropdown = false },
+                    modifier = Modifier.background(DarkBackground)
+                ) {
+                    // Option to clear selection
+                    DropdownMenuItem(
+                        text = { Text("No plant (general task)", color = TextGrey) },
+                        onClick = {
+                            selectedPlantId = null
+                            selectedPlantName = "Select a plant (optional)"
+                            expandPlantDropdown = false
+                        }
+                    )
+                    
+                    if (isLoadingPlants) {
+                        DropdownMenuItem(
+                            text = { Text("Loading plants...", color = TextGrey) },
+                            onClick = { /* No action */ }
+                        )
+                    } else if (plants.isEmpty()) {
+                        DropdownMenuItem(
+                            text = { Text("No plants in greenhouse", color = TextGrey) },
+                            onClick = { /* No action */ }
+                        )
+                    } else {
+                        plants.forEach { plant ->
+                            DropdownMenuItem(
+                                text = { Text(plant.strainName, color = TextWhite) },
+                                onClick = {
+                                    selectedPlantId = plant.id
+                                    selectedPlantName = plant.strainName
+                                    expandPlantDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
-            Text("Repeat", fontSize = 18.sp, color = TextWhite, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                "Repeat", 
+                fontSize = 18.sp, 
+                color = TextWhite, 
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -183,7 +306,13 @@ fun ScheduleTaskScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Notes:", fontSize = 18.sp, color = TextWhite, modifier = Modifier.align(Alignment.Start))
+            Text(
+                "Notes:", 
+                fontSize = 18.sp, 
+                color = TextWhite, 
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
@@ -206,7 +335,7 @@ fun ScheduleTaskScreen(
                 placeholder = { Text("Add notes here...", color = TextGrey) }
             )
 
-            Spacer(modifier = Modifier.weight(1f)) // Pushes Save button to bottom
+            Spacer(modifier = Modifier.height(32.dp)) // Added more space
 
             Button(
                 onClick = {
@@ -218,11 +347,17 @@ fun ScheduleTaskScreen(
                             time = selectedTime,
                             repeatDays = selectedDayIds,
                             notes = notes,
-                            plantId = existingTask.plantId
+                            plantId = selectedPlantId
                         )
                     } else {
                         // Handle new task creation
-                        viewModel.saveTask(taskType, selectedTime, selectedDayIds, notes)
+                        viewModel.saveTask(
+                            taskType = taskType,
+                            time = selectedTime,
+                            repeatDays = selectedDayIds,
+                            notes = notes,
+                            plantId = selectedPlantId
+                        )
                     }
                     onNavigateBack()
                 },

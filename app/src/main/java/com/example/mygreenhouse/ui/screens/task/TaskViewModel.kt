@@ -7,11 +7,16 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mygreenhouse.data.AppDatabase
+import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.TaskType
+import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.TaskRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -20,14 +25,49 @@ import java.util.Calendar
 
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository: TaskRepository = TaskRepository(AppDatabase.getDatabase(application).taskDao())
+    private val taskRepository: TaskRepository = TaskRepository(AppDatabase.getDatabase(application).taskDao())
+    private val plantRepository: PlantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
 
-    val allTasks: StateFlow<List<Task>> = repository.allTasks
+    // Loading states
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    
+    private val _isLoadingPlants = MutableStateFlow(true)
+    val isLoadingPlants: StateFlow<Boolean> = _isLoadingPlants.asStateFlow()
+
+    // Data states
+    val allTasks: StateFlow<List<Task>> = taskRepository.allTasks
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+        
+    val plants: StateFlow<List<Plant>> = plantRepository.allActivePlants
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        
+    // Plant name cache
+    private val _plantNameCache = MutableStateFlow<Map<String, String>>(emptyMap())
+    val plantNameCache: StateFlow<Map<String, String>> = _plantNameCache.asStateFlow()
+
+    init {
+        // Simulate loading delay
+        viewModelScope.launch {
+            delay(1000)
+            _isLoading.value = false
+            _isLoadingPlants.value = false
+            
+            // Initialize plant name cache
+            plants.collect { plantList ->
+                val newCache = plantList.associate { it.id to it.strainName }
+                _plantNameCache.value = newCache
+            }
+        }
+    }
 
     fun saveTask(
         taskType: TaskType,
@@ -51,22 +91,22 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 plantId = plantId
                 // isCompleted and completedDateTime have defaults
             )
-            repository.insertTask(newTask)
+            taskRepository.insertTask(newTask)
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            repository.deleteTask(task)
+            taskRepository.deleteTask(task)
         }
     }
 
     fun toggleTaskCompleted(task: Task) {
         viewModelScope.launch {
             if (task.isCompleted) {
-                repository.markTaskAsIncomplete(task.id)
+                taskRepository.markTaskAsIncomplete(task.id)
             } else {
-                repository.markTaskAsCompleted(task.id)
+                taskRepository.markTaskAsCompleted(task.id)
             }
         }
     }
@@ -94,27 +134,35 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 // isCompleted and completedDateTime remain unchanged from original task
                 // This simplification might not be ideal in all scenarios
             )
-            repository.updateTask(updatedTask)
+            taskRepository.updateTask(updatedTask)
         }
     }
 
     fun loadTask(taskId: String, onTaskLoaded: (Task?) -> Unit) {
         viewModelScope.launch {
-            val task = repository.getTaskById(taskId).first()
+            val task = taskRepository.getTaskById(taskId).first()
             onTaskLoaded(task)
         }
     }
 
     // Suspending function for use with LaunchedEffect
     suspend fun loadTaskAsync(taskId: String): Task? {
-        return repository.getTaskById(taskId).first()
+        return taskRepository.getTaskById(taskId).first()
+    }
+
+    /**
+     * Get plant name by its ID
+     */
+    fun getPlantNameById(plantId: String?, fallback: String = "Unknown plant"): String {
+        if (plantId == null) return fallback
+        return _plantNameCache.value[plantId] ?: fallback
     }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as Application
-                TaskViewModel(application = application)
+                val application = this[ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY] as Application
+                TaskViewModel(application)
             }
         }
     }

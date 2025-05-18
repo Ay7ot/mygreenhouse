@@ -57,7 +57,7 @@ fun EditTaskScreen(
             task != null -> ScheduleTaskScreen(
                 taskType = taskType,
                 onNavigateBack = onNavigateBack,
-                onSaveTask = { _, _, _, _ -> },
+                onSaveTask = { _, _, _, _ -> /* This parameter is unused as we use viewModel directly */ },
                 viewModel = viewModel,
                 existingTask = task
             )

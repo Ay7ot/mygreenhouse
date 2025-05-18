@@ -22,6 +22,7 @@ import com.example.mygreenhouse.ui.screens.task.ScheduleTaskScreen
 import com.example.mygreenhouse.ui.screens.task.TaskListScreen
 import com.example.mygreenhouse.ui.screens.task.TaskScreen
 import com.example.mygreenhouse.ui.screens.task.TaskViewModel
+import com.example.mygreenhouse.ui.screens.allplants.AllPlantsScreen
 
 /**
  * Navigation destinations for the app
@@ -33,6 +34,7 @@ sealed class NavDestination(val route: String) {
     object EditPlant : NavDestination("edit_plant/{plantId}") {
         fun createRoute(plantId: String) = "edit_plant/$plantId"
     }
+    object AllPlants : NavDestination("all_plants")
     object Task : NavDestination("task")
     object TaskList : NavDestination("task_list")
     object ScheduleTask : NavDestination("schedule_task/{taskTypeName}") {
@@ -61,7 +63,9 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 navigateToEditPlant = { plantId -> 
                     navController.navigate(NavDestination.EditPlant.createRoute(plantId))
                 },
+                navigateToAllPlants = { navController.navigate(NavDestination.AllPlants.route) },
                 navigateToTask = { navController.navigate(NavDestination.Task.route) },
+                navigateToTaskList = { navController.navigate(NavDestination.TaskList.route) },
                 navigateToEditTask = { taskId, taskTypeName ->
                     navController.navigate(NavDestination.EditTask.createRoute(taskId, taskTypeName))
                 }
@@ -84,6 +88,15 @@ fun GreenhouseNavGraph(navController: NavHostController) {
             EditPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPlantUpdated = { navController.popBackStack() }
+            )
+        }
+        
+        composable(NavDestination.AllPlants.route) {
+            AllPlantsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onEditPlant = { plantId ->
+                    navController.navigate(NavDestination.EditPlant.createRoute(plantId))
+                }
             )
         }
         

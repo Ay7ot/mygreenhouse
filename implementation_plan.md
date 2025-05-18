@@ -10,6 +10,10 @@ Based on `greenhouse.md`:
     *   [X] Navigation Menu (Hamburger)
     *   [X] Plant Image Carousel (editable cards: Strain Name & Batch Number)
     *   [X] Task Alerts (upcoming tasks, tap to view details)
+    *   [X] Enhanced empty states for plants and tasks
+    *   [X] Skeleton loaders for plants and tasks
+    *   [X] UI Polish for active states (plant cards, task alerts)
+    *   [X] Plant cards with circular images for visual consistency
 *   **Add to Greenhouse:**
     *   [X] Form (Strain Name, Batch Number, Seed/Clone, Autoflower/Photoperiod, Start Date, Nutrients, Soil Type)
     *   [X] Growth Stage Logic (Seed: Germination, Seedling, Vegetation, Flower, Drying, Curing; Clone: Non-rooted, Rooted, Vegetation, Flower, Drying, Curing)
@@ -23,6 +27,12 @@ Based on `greenhouse.md`:
     *   [X] Save tasks to Room Database
     *   [X] Task Management (Edit, delete, reschedule, mark complete)
     *   [X] Notifications (Dashboard alerts, tap to view details)
+    *   [X] Enhanced Task List Screen UI (active and empty states)
+    *   [X] Skeleton loader for Task List Screen
+    *   [X] Enhanced Task Selection Screen UI
+    *   [X] Task-Plant associations (assign tasks to specific plants)
+    *   [X] Plant selection dropdown in task creation/editing
+    *   [X] Display associated plant names in task alerts and list
 *   **Quick Stats:**
     *   [ ] Statistics (Total Plants, Drying Count, Curing Count, Days in growth stage)
     *   [ ] Charts (Bar: Plants per stage, Line: Growth trends - MPAndroidChart)
@@ -170,6 +180,34 @@ Based on `greenhouse.md`:
     *   [ ] Unit tests for ViewModels and Repositories.
     *   [ ] UI tests for critical user flows.
 *   [ ] **AI Growth Analysis (Future Scope)**
+
+### Milestone 6: UI/UX Polish & Advanced Empty/Loading States (New)
+
+*   [X] **Dashboard Enhancements:**
+    *   [X] Refine overall layout and visual hierarchy.
+    *   [X] Implement polished empty state UI for plant carousel.
+    *   [X] Implement polished empty state UI for task alerts.
+    *   [X] Implement skeleton loader for plant carousel.
+    *   [X] Implement skeleton loader for task alerts.
+    *   [X] Fix empty state flicker during data loading.
+    *   [X] Improve plant cards with circular images matching skeleton loader.
+    *   [X] Show plant names in task alerts instead of generic text.
+*   [X] **Task Screen Enhancements:**
+    *   [X] Refine UI for task type selection (`TaskScreen.kt`).
+    *   [X] Refine UI for task list (`TaskListScreen.kt`).
+    *   [X] Implement polished empty state UI for task list.
+    *   [X] Implement skeleton loader for task list.
+    *   [X] Fix empty state flicker during data loading.
+    *   [X] Update task screens to show associated plant names.
+*   [X] **Task-Plant Association:**
+    *   [X] Add plant selection dropdown in task creation
+    *   [X] Add plant name display in task list and alerts
+    *   [X] Cache plant data for efficient lookups
+    *   [X] Create consistent UI for displaying associated plants
+*   [X] **General UI Consistency:**
+    *   [X] Ensure consistent styling, typography, and spacing across updated screens.
+    *   [X] Remove sample data initialization to rely on true empty/loading states.
+    *   [X] Make card elevation consistent (flat design) across the app.
 
 ## Progress Tracking
 

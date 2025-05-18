@@ -47,7 +47,7 @@ fun GreenhouseBottomNavigation(
 ) {
     val navItems = listOf(
         BottomNavItem(
-            label = "My Greenhouse",
+            label = "Home",
             icon = Icons.Filled.Home,
             route = NavDestination.Dashboard.route
         ),
