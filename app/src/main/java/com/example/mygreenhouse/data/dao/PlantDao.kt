@@ -33,6 +33,9 @@ interface PlantDao {
     @Query("SELECT * FROM plants WHERE id = :plantId")
     suspend fun getPlantByIdOnce(plantId: String): Plant?
     
+    @Query("SELECT * FROM plants ORDER BY lastUpdated DESC")
+    suspend fun getAllPlantsOneShot(): List<Plant>
+    
     @Query("SELECT COUNT(*) FROM plants WHERE isArchived = 0")
     fun getActivePlantCount(): Flow<Int>
     

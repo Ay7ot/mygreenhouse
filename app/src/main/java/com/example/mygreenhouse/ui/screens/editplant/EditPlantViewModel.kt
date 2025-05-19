@@ -50,7 +50,6 @@ data class EditPlantUiState(
     val originalPlant: Plant? = null, // To compare for changes or use for update
     val isLoading: Boolean = true,
     val isValid: Boolean = false,
-    val showStartDatePicker: Boolean = false // Added for DatePickerDialog visibility
 )
 
 /**
@@ -244,7 +243,7 @@ class EditPlantViewModel(
     }
 
     fun updateStartDate(date: LocalDate) {
-        _uiState.update {
+        _uiState.update { 
             it.copy(
                 startDate = date,
                 startDateText = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
@@ -252,14 +251,6 @@ class EditPlantViewModel(
         }
     }
 
-    fun showStartDatePickerDialog() {
-        _uiState.update { it.copy(showStartDatePicker = true) }
-    }
-
-    fun dismissStartDatePickerDialog() {
-        _uiState.update { it.copy(showStartDatePicker = false) }
-    }
-    
     fun updateImageUri(uri: String?) {
         _uiState.update { it.copy(imageUri = uri) }
     }

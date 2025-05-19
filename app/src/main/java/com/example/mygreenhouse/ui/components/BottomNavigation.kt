@@ -17,7 +17,9 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +46,8 @@ data class BottomNavItem(
 fun GreenhouseBottomNavigation(
     currentRoute: String,
     navController: NavController,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean
 ) {
     val navItems = listOf(
         BottomNavItem(
@@ -75,9 +78,9 @@ fun GreenhouseBottomNavigation(
     )
     
     NavigationBar(
-        modifier = modifier.height(90.dp),
-        containerColor = DarkSurface,
-        contentColor = TextWhite,
+        modifier = modifier.navigationBarsPadding(),
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface,
+        contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
         tonalElevation = 4.dp
     ) {
         navItems.forEach { item ->
@@ -111,11 +114,11 @@ fun GreenhouseBottomNavigation(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PrimaryGreen,
-                    selectedTextColor = PrimaryGreen,
-                    unselectedIconColor = TextWhite.copy(alpha = 0.7f),
-                    unselectedTextColor = TextWhite.copy(alpha = 0.7f),
-                    indicatorColor = DarkSurface
+                    selectedIconColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    selectedTextColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f),
+                    unselectedTextColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f),
+                    indicatorColor = Color.Transparent
                 )
             )
         }

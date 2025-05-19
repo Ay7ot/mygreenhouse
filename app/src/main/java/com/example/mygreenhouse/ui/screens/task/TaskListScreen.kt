@@ -9,7 +9,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -40,7 +42,8 @@ import com.example.mygreenhouse.ui.components.TaskListSkeleton
 fun TaskListScreen(
     viewModel: TaskViewModel,
     onNavigateBack: () -> Unit,
-    onEditTask: (Task) -> Unit
+    onEditTask: (Task) -> Unit,
+    darkTheme: Boolean
 ) {
     val tasks by viewModel.allTasks.collectAsState(initial = null)
     val isLoading by viewModel.isLoading.collectAsState()
@@ -52,7 +55,7 @@ fun TaskListScreen(
                 title = { 
                     Text(
                         "Scheduled Tasks", 
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     ) 
@@ -62,13 +65,13 @@ fun TaskListScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -76,16 +79,21 @@ fun TaskListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             when {
                 isLoading || tasks == null -> TaskListSkeleton()
-                tasks!!.isEmpty() -> EmptyTaskListView(onAddTaskClick = onNavigateBack)
+                tasks!!.isEmpty() -> EmptyTaskListView(
+                    onAddTaskClick = onNavigateBack,
+                    darkTheme = darkTheme
+                )
                 else -> {
                     LazyColumn(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(tasks!!, key = { task -> task.id }) { task ->
                             TaskListItem(
@@ -93,7 +101,8 @@ fun TaskListScreen(
                                 dateFormatter = dateFormatter,
                                 onToggleComplete = { viewModel.toggleTaskCompleted(task) },
                                 onDelete = { viewModel.deleteTask(task) },
-                                onEdit = { onEditTask(task) }
+                                onEdit = { onEditTask(task) },
+                                darkTheme = darkTheme
                             )
                         }
                     }
@@ -104,7 +113,7 @@ fun TaskListScreen(
 }
 
 @Composable
-fun EmptyTaskListView(onAddTaskClick: () -> Unit) {
+fun EmptyTaskListView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -116,13 +125,13 @@ fun EmptyTaskListView(onAddTaskClick: () -> Unit) {
             imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
             contentDescription = "No Tasks",
             modifier = Modifier.size(80.dp),
-            tint = PrimaryGreen.copy(alpha = 0.8f)
+            tint = (if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.8f)
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = "Your Task List is Empty",
             style = MaterialTheme.typography.headlineMedium,
-            color = TextWhite,
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
@@ -130,7 +139,7 @@ fun EmptyTaskListView(onAddTaskClick: () -> Unit) {
         Text(
             text = "Ready to get organized? Add your first task and keep your greenhouse thriving.",
             style = MaterialTheme.typography.bodyLarge,
-            color = TextGrey,
+            color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -138,8 +147,8 @@ fun EmptyTaskListView(onAddTaskClick: () -> Unit) {
         Button(
             onClick = onAddTaskClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryGreen,
-                contentColor = TextWhite
+                containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
             ),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -162,22 +171,22 @@ fun TaskListItem(
     dateFormatter: DateTimeFormatter,
     onToggleComplete: () -> Unit,
     onDelete: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    darkTheme: Boolean
 ) {
     val viewModel: TaskViewModel = viewModel()
     val plantNameCache by viewModel.plantNameCache.collectAsState()
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (task.isCompleted) 
-                PrimaryGreen.copy(alpha = 0.1f) 
-            else 
-                DarkSurface.copy(alpha = 0.5f)
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceContainerLow
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
+            defaultElevation = 2.dp
         )
     ) {
         Column(
@@ -185,122 +194,167 @@ fun TaskListItem(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Text(
-                text = task.type.displayName(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextWhite
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Scheduled:",
-                    fontSize = 14.sp,
-                    color = TextGrey,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-                Text(
-                    text = task.scheduledDateTime.format(dateFormatter),
-                    fontSize = 14.sp,
-                    color = TextWhite.copy(alpha = 0.8f)
-                )
-                
-                if (task.plantId != null) {
-                    Spacer(modifier = Modifier.width(16.dp))
-                    val plantName = plantNameCache[task.plantId] ?: "Unknown plant"
-                    Text(
-                        text = "Plant: $plantName",
-                        fontSize = 14.sp,
-                        color = TextGrey,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-            
-            if (task.description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "Notes:",
-                    fontSize = 14.sp,
-                    color = TextGrey,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = task.description,
-                    fontSize = 14.sp,
-                    color = TextWhite.copy(alpha = 0.8f),
-                    lineHeight = 20.sp
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(
-                color = TextWhite.copy(alpha = 0.1f),
-                thickness = 1.dp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            
+            // Header row with task type and status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StatusChip(
-                    isCompleted = task.isCompleted,
-                    completedDate = task.completedDateTime?.format(dateFormatter)
-                )
-                
                 Row(
-                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(
-                        onClick = onToggleComplete,
-                        modifier = Modifier.height(36.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (task.isCompleted) 
-                                Color(0xFFF9A825).copy(alpha = 0.2f) 
-                            else 
-                                PrimaryGreen.copy(alpha = 0.2f),
-                            contentColor = if (task.isCompleted) 
-                                Color(0xFFF9A825) 
-                            else 
-                                PrimaryGreen
-                        ),
-                        shape = RoundedCornerShape(18.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 0.dp,
-                            pressedElevation = 0.dp
+                    Text(
+                        text = task.type.displayName(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Edit icon moved here
+                    FilledTonalIconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(28.dp),
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (darkTheme) 
+                                DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                         )
                     ) {
-                        Text(
-                            if (task.isCompleted) "Mark Incomplete" else "Mark Complete",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(onClick = onEdit) {
                         Icon(
                             Icons.Default.Edit, 
                             contentDescription = "Edit Task", 
-                            tint = PrimaryGreen.copy(alpha = 0.8f),
-                            modifier = Modifier.size(22.dp)
+                            tint = (if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.9f),
+                            modifier = Modifier.size(14.dp)
                         )
                     }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            Icons.Default.Delete, 
-                            contentDescription = "Delete Task", 
-                            tint = TextGrey,
-                            modifier = Modifier.size(22.dp)
+                }
+                
+                StatusChip(
+                    isCompleted = task.isCompleted,
+                    completedDate = task.completedDateTime?.format(dateFormatter),
+                    darkTheme = darkTheme
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Info row with schedule and plant
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Schedule info
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(
+                                if (darkTheme) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) 
+                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                CircleShape
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = task.scheduledDateTime.format(dateFormatter),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface)
+                    )
+                }
+                
+                // Plant info if available
+                if (task.plantId != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(
+                                    if (darkTheme) PrimaryGreen.copy(alpha = 0.7f) 
+                                    else MaterialTheme.colorScheme.tertiary.copy(alpha = 0.7f),
+                                    CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = plantNameCache[task.plantId] ?: "Unknown plant",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface)
                         )
                     }
+                }
+            }
+            
+            // Description if available
+            if (task.description.isNotBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(
+                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.1f),
+                    thickness = 0.5.dp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = task.description,
+                    fontSize = 14.sp,
+                    color = (if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)),
+                    lineHeight = 20.sp
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Action buttons row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalIconButton(
+                    onClick = onToggleComplete,
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (task.isCompleted) 
+                            if (darkTheme) Color(0xFFF9A825).copy(alpha = 0.2f) else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        else 
+                            if (darkTheme) PrimaryGreen.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (task.isCompleted) Icons.Default.Close else Icons.Default.Done,
+                        contentDescription = if (task.isCompleted) "Mark Incomplete" else "Mark Complete",
+                        tint = if (task.isCompleted) 
+                            if (darkTheme) Color(0xFFF9A825) else MaterialTheme.colorScheme.onTertiaryContainer
+                        else 
+                            if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                FilledTonalIconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.size(36.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (darkTheme) 
+                            DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Delete, 
+                        contentDescription = "Delete Task", 
+                        tint = if (darkTheme) TextGrey else MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
         }
@@ -310,15 +364,18 @@ fun TaskListItem(
 @Composable
 fun StatusChip(
     isCompleted: Boolean,
-    completedDate: String? = null
+    completedDate: String? = null,
+    darkTheme: Boolean
 ) {
     Surface(
-        color = if (isCompleted) PrimaryGreen.copy(alpha = 0.15f) else Color(0xFFF9A825).copy(alpha = 0.15f),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.padding(vertical = 4.dp)
+        color = if (isCompleted) 
+            if (darkTheme) PrimaryGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+        else 
+            if (darkTheme) Color(0xFFF9A825).copy(alpha = 0.15f) else MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -326,25 +383,22 @@ fun StatusChip(
                 modifier = Modifier
                     .size(8.dp)
                     .background(
-                        if (isCompleted) PrimaryGreen else Color(0xFFF9A825),
+                        if (isCompleted) 
+                            if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                        else 
+                            if (darkTheme) Color(0xFFF9A825) else MaterialTheme.colorScheme.tertiary,
                         CircleShape
                     )
             )
-            Column {
-                Text(
-                    text = if (isCompleted) "Completed" else "Pending",
-                    fontSize = 12.sp,
-                    color = if (isCompleted) PrimaryGreen else Color(0xFFF9A825),
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (isCompleted && completedDate != null) {
-                    Text(
-                        text = completedDate,
-                        fontSize = 10.sp,
-                        color = TextGrey
-                    )
-                }
-            }
+            Text(
+                text = if (isCompleted) "Completed" else "Pending",
+                fontSize = 12.sp,
+                color = if (isCompleted) 
+                    if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                else 
+                    if (darkTheme) Color(0xFFF9A825) else MaterialTheme.colorScheme.tertiary,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 } 

@@ -47,10 +47,12 @@ import com.example.mygreenhouse.data.model.GrowthStage
 // Java Time
 import java.time.Instant
 import java.time.ZoneId
+import java.time.LocalDate
 
 // UI specific
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -64,46 +66,65 @@ fun EditPlantScreen(
     onNavigateBack: () -> Unit,
     onPlantUpdated: () -> Unit,
     viewModel: EditPlantViewModel = viewModel(factory = EditPlantViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Context for date picker
+    val context = LocalContext.current
+
+    // Date picker dialog
+    val datePickerDialog = remember(uiState.startDate) { // Re-remember if initial date changes
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                viewModel.updateStartDate(LocalDate.of(year, month + 1, dayOfMonth))
+            },
+            uiState.startDate.year,
+            uiState.startDate.monthValue - 1,
+            uiState.startDate.dayOfMonth
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Plant", color = TextWhite) },
+                title = { Text("Edit Plant", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = TextWhite)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.EditPlant.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().background(DarkBackground), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = PrimaryGreen)
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else if (uiState.originalPlant == null && !plantIdIsEmpty(viewModel)) {
-            Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(DarkBackground).padding(16.dp), contentAlignment = Alignment.Center) {
-                Text("Plant not found or failed to load.", color = TextWhite)
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(MaterialTheme.colorScheme.background).padding(16.dp), contentAlignment = Alignment.Center) {
+                Text("Plant not found or failed to load.", color = MaterialTheme.colorScheme.onBackground)
             }
         } else {
             Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                    .background(DarkBackground)
+                    .background(MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -111,7 +132,7 @@ fun EditPlantScreen(
                 OutlinedTextField(
                     value = uiState.strainName,
                     onValueChange = { viewModel.updateStrainName(it) },
-                    label = { Text("Strain Name", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Strain Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = textFieldColors()
@@ -120,7 +141,7 @@ fun EditPlantScreen(
                 OutlinedTextField(
                     value = uiState.batchNumber,
                     onValueChange = { viewModel.updateBatchNumber(it) },
-                    label = { Text("Batch Number", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Batch Number", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = textFieldColors()
@@ -174,7 +195,7 @@ fun EditPlantScreen(
                     OutlinedTextField(
                         value = uiState.durationText,
                         onValueChange = { viewModel.updateDurationText(it) },
-                        label = { Text(uiState.durationLabel, color = TextWhite.copy(alpha = 0.8f)) },
+                        label = { Text(uiState.durationLabel, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                         colors = textFieldColors(),
@@ -185,15 +206,14 @@ fun EditPlantScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { viewModel.showStartDatePickerDialog() }
                 ) {
                     OutlinedTextField(
                         value = uiState.startDateText,
                         onValueChange = { /* Read-only */ },
-                        label = { Text("Start Date", color = TextWhite.copy(alpha = 0.8f)) },
+                        label = { Text("Start Date", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                         modifier = Modifier.fillMaxWidth(),
                         readOnly = true,
-                        enabled = false, // Important for click on Box to work
+                        enabled = false,
                         shape = RoundedCornerShape(8.dp),
                         trailingIcon = {
                             Icon(
@@ -218,74 +238,25 @@ fun EditPlantScreen(
                             disabledTrailingIconColor = TextWhite.copy(alpha = 0.7f)
                         )
                     )
-                }
-
-                if (uiState.showStartDatePicker) {
-                    val datePickerState = rememberDatePickerState(
-                        initialSelectedDateMillis = uiState.startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { datePickerDialog.show() }
                     )
-                    DatePickerDialog(
-                        onDismissRequest = { viewModel.dismissStartDatePickerDialog() },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    datePickerState.selectedDateMillis?.let { millis ->
-                                        val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-                                        viewModel.updateStartDate(selectedDate)
-                                    }
-                                    viewModel.dismissStartDatePickerDialog()
-                                },
-                                colors = ButtonDefaults.textButtonColors(contentColor = PrimaryGreen)
-                            ) {
-                                Text("OK")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = { viewModel.dismissStartDatePickerDialog() },
-                                colors = ButtonDefaults.textButtonColors(contentColor = TextWhite.copy(alpha = 0.7f))
-                            ) {
-                                Text("Cancel")
-                            }
-                        },
-                        colors = DatePickerDefaults.colors(
-                            containerColor = DarkSurface,
-                            titleContentColor = TextWhite,
-                            headlineContentColor = TextWhite,
-                            weekdayContentColor = TextWhite.copy(alpha = 0.7f),
-                            subheadContentColor = TextWhite.copy(alpha = 0.8f),
-                            yearContentColor = TextWhite,
-                            currentYearContentColor = PrimaryGreen,
-                            selectedYearContentColor = TextWhite,
-                            selectedYearContainerColor = PrimaryGreen.copy(alpha = 0.8f),
-                            dayContentColor = TextWhite,
-                            disabledDayContentColor = TextWhite.copy(alpha = 0.3f),
-                            selectedDayContentColor = DarkBackground, 
-                            disabledSelectedDayContentColor = DarkBackground.copy(alpha = 0.5f),
-                            selectedDayContainerColor = PrimaryGreen, 
-                            disabledSelectedDayContainerColor = PrimaryGreen.copy(alpha = 0.3f),
-                            todayContentColor = PrimaryGreen, 
-                            todayDateBorderColor = PrimaryGreen,
-                            dayInSelectionRangeContentColor = DarkBackground,
-                            dayInSelectionRangeContainerColor = PrimaryGreen.copy(alpha = 0.6f)
-                        )
-                    ) {
-                        DatePicker(state = datePickerState)
-                    }
                 }
 
-                Text("Nutrients", style = MaterialTheme.typography.labelLarge, color = TextWhite.copy(alpha = 0.9f))
+                Text("Nutrients", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = uiState.currentNutrientInput,
                         onValueChange = { viewModel.updateCurrentNutrientInput(it) },
-                        label = { Text("Add Nutrient", color = TextWhite.copy(alpha = 0.8f)) },
+                        label = { Text("Add Nutrient", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = textFieldColors()
                     )
                     IconButton(onClick = { viewModel.addNutrient() }) {
-                        Icon(Icons.Filled.Add, "Add Nutrient", tint = PrimaryGreen)
+                        Icon(Icons.Filled.Add, "Add Nutrient", tint = MaterialTheme.colorScheme.primary)
                     }
                 }
                 FlowRow(
@@ -297,19 +268,22 @@ fun EditPlantScreen(
                         InputChip(
                             selected = false,
                             onClick = { /* Can be used for selection if needed */ },
-                            label = { Text(nutrient, color = TextWhite) },
-                            colors = InputChipDefaults.inputChipColors(containerColor = DarkSurface),
+                            label = { Text(nutrient) },
+                            colors = InputChipDefaults.inputChipColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                trailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            ),
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Filled.Close, 
                                     contentDescription = "Remove $nutrient", 
-                                    tint = TextWhite.copy(alpha = 0.7f),
                                     modifier = Modifier
                                         .clickable { viewModel.removeNutrient(nutrient) }
                                         .size(InputChipDefaults.IconSize)
                                 )
                             },
-                            shape = RoundedCornerShape(8.dp)
+                            shape = RoundedCornerShape(16.dp)
                         )
                     }
                 }
@@ -333,9 +307,14 @@ fun EditPlantScreen(
                     },
                     enabled = uiState.isValid,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen, disabledContainerColor = DarkSurface)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    )
                 ) {
-                    Text("Update Plant", fontSize = 16.sp, color = if (uiState.isValid) Color.White else TextWhite.copy(alpha = 0.7f))
+                    Text("Update Plant", fontSize = 16.sp)
                 }
             }
         }
@@ -347,20 +326,22 @@ private fun plantIdIsEmpty(viewModel: EditPlantViewModel): Boolean {
 }
 
 @Composable
-private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-    unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-    focusedContainerColor = DarkSurface,
-    unfocusedContainerColor = DarkSurface,
-    focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-    unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-    cursorColor = PrimaryGreen,
-    focusedTextColor = TextWhite,
-    unfocusedTextColor = TextWhite,
-    disabledTextColor = TextWhite.copy(alpha = 0.7f),
-    disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-    disabledBorderColor = DarkSurface.copy(alpha = 0.3f),
-    disabledTrailingIconColor = TextWhite.copy(alpha = 0.5f)
+private fun textFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+    unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+    disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+    focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
 )
 
 private fun String.capitalizeWords(): String = split(" ").joinToString(" ") { word ->

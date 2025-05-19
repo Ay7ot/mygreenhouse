@@ -50,7 +50,8 @@ fun HarvestListItem(
     onDelete: (Harvest) -> Unit,
     onMarkDryClick: (Harvest) -> Unit,
     onMarkCuredClick: (Harvest) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
 ) {
     // Menu state
     var showMenu by remember { mutableStateOf(false) }
@@ -58,10 +59,10 @@ fun HarvestListItem(
     
     // Card color based on stage
     val cardColor = when {
-        harvest.isCompleted -> DarkSurface.copy(alpha = 0.5f)
-        harvest.isCuring -> PrimaryGreen.copy(alpha = 0.08f)
-        harvest.isDrying -> DarkSurface.copy(alpha = 0.7f)
-        else -> DarkSurface.copy(alpha = 0.7f)
+        harvest.isCompleted -> if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        harvest.isCuring -> if (darkTheme) PrimaryGreen.copy(alpha = 0.08f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        harvest.isDrying -> if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        else -> if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
     
     // Status text based on stage
@@ -74,10 +75,10 @@ fun HarvestListItem(
     
     // Status color based on stage
     val statusColor = when {
-        harvest.isCompleted -> PrimaryGreen
-        harvest.isCuring -> PrimaryGreen.copy(alpha = 0.8f)
-        harvest.isDrying -> TextGrey
-        else -> TextGrey
+        harvest.isCompleted -> if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+        harvest.isCuring -> if (darkTheme) PrimaryGreen.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+        harvest.isDrying -> if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        else -> if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
     }
     
     Card(
@@ -109,7 +110,7 @@ fun HarvestListItem(
                         text = harvest.strainName,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -117,7 +118,7 @@ fun HarvestListItem(
                     Text(
                         text = "Batch #${harvest.batchNumber}",
                         fontSize = 14.sp,
-                        color = TextGrey,
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -129,53 +130,53 @@ fun HarvestListItem(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
-                            tint = TextGrey
+                            tint = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                     
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        modifier = Modifier.background(DarkSurface)
+                        modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Edit", color = TextWhite) },
+                            text = { Text("Edit", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 onEdit(harvest)
                                 showMenu = false
                             },
-                            modifier = Modifier.background(DarkSurface)
+                            modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
                         
                         if (harvest.isDrying) {
                             DropdownMenuItem(
-                                text = { Text("Enter Dry Weight", color = TextWhite) },
+                                text = { Text("Enter Dry Weight", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                                 onClick = {
                                     onMarkDryClick(harvest)
                                     showMenu = false
                                 },
-                                modifier = Modifier.background(DarkSurface)
+                                modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                             )
                         }
                         
                         if (harvest.isCuring) {
                             DropdownMenuItem(
-                                text = { Text("Enter Cured Weight", color = TextWhite) },
+                                text = { Text("Enter Cured Weight", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                                 onClick = {
                                     onMarkCuredClick(harvest)
                                     showMenu = false
                                 },
-                                modifier = Modifier.background(DarkSurface)
+                                modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                             )
                         }
                         
                         DropdownMenuItem(
-                            text = { Text("Delete", color = TextWhite) },
+                            text = { Text("Delete", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 onDelete(harvest)
                                 showMenu = false
                             },
-                            modifier = Modifier.background(DarkSurface)
+                            modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
                     }
                 }
@@ -191,7 +192,7 @@ fun HarvestListItem(
                 Text(
                     text = "Harvested: ${harvest.harvestDate.format(dateFormatter)}",
                     fontSize = 14.sp,
-                    color = TextWhite.copy(alpha = 0.7f)
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
             
@@ -207,7 +208,8 @@ fun HarvestListItem(
                     WeightInfoChip(
                         label = "Wet",
                         weight = it,
-                        isHighlighted = harvest.isDrying
+                        isHighlighted = harvest.isDrying,
+                        darkTheme = darkTheme
                     )
                     
                     Spacer(modifier = Modifier.width(8.dp))
@@ -218,7 +220,8 @@ fun HarvestListItem(
                     WeightInfoChip(
                         label = "Dry",
                         weight = it,
-                        isHighlighted = harvest.isCuring
+                        isHighlighted = harvest.isCuring,
+                        darkTheme = darkTheme
                     )
                     
                     Spacer(modifier = Modifier.width(8.dp))
@@ -229,7 +232,8 @@ fun HarvestListItem(
                     WeightInfoChip(
                         label = "Final",
                         weight = it,
-                        isHighlighted = harvest.isCompleted
+                        isHighlighted = harvest.isCompleted,
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -262,7 +266,7 @@ fun HarvestListItem(
                 Text(
                     text = "Quality: ${harvest.qualityRating}/5",
                     fontSize = 14.sp,
-                    color = TextWhite.copy(alpha = 0.7f),
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -273,7 +277,7 @@ fun HarvestListItem(
                 Text(
                     text = harvest.notes,
                     fontSize = 14.sp,
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -286,18 +290,19 @@ fun HarvestListItem(
 private fun WeightInfoChip(
     label: String,
     weight: Double,
-    isHighlighted: Boolean = false
+    isHighlighted: Boolean = false,
+    darkTheme: Boolean = true
 ) {
     val backgroundColor = if (isHighlighted) {
-        PrimaryGreen.copy(alpha = 0.15f)
+        if (darkTheme) PrimaryGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
     } else {
-        DarkSurface.copy(alpha = 0.7f)
+        if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
     }
     
     val textColor = if (isHighlighted) {
-        PrimaryGreen
+        if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
     } else {
-        TextWhite.copy(alpha = 0.7f)
+        if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
     }
     
     Box(

@@ -41,6 +41,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -70,6 +71,26 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import androidx.navigation.NavController
+import androidx.compose.ui.platform.LocalContext
+
+@Composable
+fun myAppTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+    unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    cursorColor = MaterialTheme.colorScheme.primary,
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+    disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+    focusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+    unfocusedTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -95,34 +116,13 @@ fun DropdownMenuField(
         OutlinedTextField(
             value = selectedValue,
             onValueChange = { }, // Not used, as selection happens via dropdown
-            label = { Text(label, color = if (enabled) TextWhite.copy(alpha = 0.8f) else TextWhite.copy(alpha = 0.5f)) },
+            label = { Text(label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded,
-                    // Custom tint handling for enabled/disabled state
-                    // tint = if (enabled) TextWhite.copy(alpha = 0.7f) else TextWhite.copy(alpha = 0.4f)
+                    expanded = expanded
                 )
             },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface,
-                focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                cursorColor = PrimaryGreen,
-                focusedTextColor = TextWhite,
-                unfocusedTextColor = if (enabled) TextWhite else TextWhite.copy(alpha = 0.7f),
-                disabledTextColor = TextWhite.copy(alpha = 0.7f),
-                disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-                disabledBorderColor = DarkSurface.copy(alpha = 0.3f),
-                // disabledTrailingIconColor = TextWhite.copy(alpha = 0.5f) // Use default handling or customize if needed
-                // For ExposedDropdownMenu, the icon color is handled by ExposedDropdownMenuDefaults.TrailingIcon
-                // However, we might need to adjust the TextField's disabledTrailingIconColor if we weren't using ExposedDropdownMenuDefaults
-                 disabledTrailingIconColor = TextWhite.copy(alpha = 0.4f), // Explicitly set for disabled state
-                 focusedTrailingIconColor = TextWhite.copy(alpha = 0.7f),
-                 unfocusedTrailingIconColor = TextWhite.copy(alpha = 0.7f)
-            ),
+            colors = myAppTextFieldColors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(), // Important for ExposedDropdownMenuBox
@@ -133,16 +133,16 @@ fun DropdownMenuField(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.background(DarkSurface) // Set background for the dropdown menu itself
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant) // Set background for the dropdown menu itself
         ) {
             options.forEach { selectionOption ->
                 DropdownMenuItem(
-                    text = { Text(selectionOption, color = TextWhite) },
+                    text = { Text(selectionOption, color = MaterialTheme.colorScheme.onSurfaceVariant) },
                     onClick = {
                         onOptionSelected(selectionOption)
                         expanded = false
                     },
-                    modifier = Modifier.background(DarkSurface) // Ensure item background matches
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant) // Ensure item background matches
                 )
             }
         }
@@ -158,9 +158,26 @@ fun AddPlantScreen(
     onNavigateBack: () -> Unit,
     onPlantAdded: () -> Unit,
     viewModel: AddPlantViewModel = viewModel(factory = AddPlantViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Context for date picker
+    val context = LocalContext.current
+    
+    // Date picker dialog
+    val datePickerDialog = remember(uiState.startDate) { // Re-remember if initial date changes
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                viewModel.updateStartDate(LocalDate.of(year, month + 1, dayOfMonth))
+            },
+            uiState.startDate.year,
+            uiState.startDate.monthValue - 1,
+            uiState.startDate.dayOfMonth
+        )
+    }
     
     Scaffold(
         topBar = {
@@ -168,7 +185,7 @@ fun AddPlantScreen(
                 title = { 
                     Text(
                         "Add a Plant",
-                        color = TextWhite
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                     ) 
                 },
                 navigationIcon = {
@@ -176,20 +193,22 @@ fun AddPlantScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.AddPlant.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -197,7 +216,7 @@ fun AddPlantScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -206,48 +225,20 @@ fun AddPlantScreen(
             OutlinedTextField(
                 value = uiState.strainName,
                 onValueChange = { viewModel.updateStrainName(it) },
-                label = { Text("Enter Strain Name", color = TextWhite.copy(alpha = 0.8f)) },
+                label = { Text("Enter Strain Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                    unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                    focusedContainerColor = DarkSurface,
-                    unfocusedContainerColor = DarkSurface,
-                    focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                    unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                    cursorColor = PrimaryGreen,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite,
-                    disabledTextColor = TextWhite.copy(alpha = 0.7f),
-                    disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-                    disabledBorderColor = DarkSurface.copy(alpha = 0.3f),
-                    disabledTrailingIconColor = TextWhite.copy(alpha = 0.5f)
-                )
+                colors = myAppTextFieldColors()
             )
             
             // Batch Number
             OutlinedTextField(
                 value = uiState.batchNumber,
                 onValueChange = { viewModel.updateBatchNumber(it) },
-                label = { Text("Enter Batch Number", color = TextWhite.copy(alpha = 0.8f)) },
+                label = { Text("Enter Batch Number", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                    unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                    focusedContainerColor = DarkSurface,
-                    unfocusedContainerColor = DarkSurface,
-                    focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                    unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                    cursorColor = PrimaryGreen,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite,
-                    disabledTextColor = TextWhite.copy(alpha = 0.7f),
-                    disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-                    disabledBorderColor = DarkSurface.copy(alpha = 0.3f),
-                    disabledTrailingIconColor = TextWhite.copy(alpha = 0.5f)
-                )
+                colors = myAppTextFieldColors()
             )
 
             // Image Picker
@@ -310,143 +301,57 @@ fun AddPlantScreen(
                 OutlinedTextField(
                     value = uiState.durationText,
                     onValueChange = { viewModel.updateDurationText(it) },
-                    label = { Text(uiState.durationLabel, color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text(uiState.durationLabel, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
-                        disabledTextColor = TextWhite.copy(alpha = 0.7f),
-                        disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-                        disabledBorderColor = DarkSurface.copy(alpha = 0.3f),
-                        disabledTrailingIconColor = TextWhite.copy(alpha = 0.5f)
-                    )
+                    colors = myAppTextFieldColors()
                 )
             }
             
             // Start Date
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { viewModel.showStartDatePickerDialog() } // Apply clickable to the Box
+            Box( // Outer Box for layout and to contain the TextField and clickable overlay
+                modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
                     value = uiState.startDateText,
                     onValueChange = { /* Read-only, value updated via dialog */ },
-                    label = { Text("Start Date", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Start Date", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(), // TextField takes full width of the Box
                     readOnly = true,
-                    enabled = false, // Disable the TextField to prevent focus but allow Box to be clickable
+                    enabled = false, // Keep TextField visually disabled and non-interactive
                     shape = RoundedCornerShape(8.dp),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.DateRange,
                             contentDescription = "Select Date",
-                            tint = TextWhite.copy(alpha = 0.7f)
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
-                        disabledTextColor = TextWhite.copy(alpha = 0.8f), // Adjust for better visibility when disabled
-                        disabledLabelColor = TextWhite.copy(alpha = 0.7f), // Adjust for better visibility
-                        disabledBorderColor = DarkSurface.copy(alpha = 0.4f), // Keep border similar
-                        disabledTrailingIconColor = TextWhite.copy(alpha = 0.7f)
-                    )
+                    colors = myAppTextFieldColors() // Uses disabled state colors
                 )
-            }
-            
-            // DatePickerDialog
-            if (uiState.showStartDatePicker) {
-                val datePickerState = rememberDatePickerState(
-                    initialSelectedDateMillis = Instant.now().toEpochMilli() // Default to today
+                Box( // Clickable overlay
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { datePickerDialog.show() } // Show the Android DatePickerDialog
                 )
-                DatePickerDialog(
-                    onDismissRequest = { viewModel.dismissStartDatePickerDialog() },
-                    confirmButton = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-                            viewModel.updateStartDate(selectedDate)
-                        }
-                        viewModel.dismissStartDatePickerDialog()
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { viewModel.dismissStartDatePickerDialog() },
-                            colors = ButtonDefaults.textButtonColors(contentColor = TextWhite.copy(alpha = 0.7f))
-                        ) {
-                            Text("Cancel")
-                        }
-                    },
-                    colors = DatePickerDefaults.colors(
-                        containerColor = DarkSurface,
-                        titleContentColor = TextWhite,
-                        headlineContentColor = TextWhite,
-                        weekdayContentColor = TextWhite.copy(alpha = 0.7f),
-                        subheadContentColor = TextWhite.copy(alpha = 0.8f),
-                        yearContentColor = TextWhite,
-                        currentYearContentColor = PrimaryGreen,
-                        selectedYearContentColor = TextWhite,
-                        selectedYearContainerColor = PrimaryGreen.copy(alpha = 0.8f),
-                        dayContentColor = TextWhite,
-                        disabledDayContentColor = TextWhite.copy(alpha = 0.3f),
-                        selectedDayContentColor = DarkBackground, // Text color on selected day
-                        disabledSelectedDayContentColor = DarkBackground.copy(alpha = 0.5f),
-                        selectedDayContainerColor = PrimaryGreen, // Background of selected day
-                        disabledSelectedDayContainerColor = PrimaryGreen.copy(alpha = 0.3f),
-                        todayContentColor = PrimaryGreen, // Today's date (not selected)
-                        todayDateBorderColor = PrimaryGreen,
-                        dayInSelectionRangeContentColor = DarkBackground,
-                        dayInSelectionRangeContainerColor = PrimaryGreen.copy(alpha = 0.6f)
-                    )
-                ) {
-                    DatePicker(state = datePickerState)
-                }
             }
             
             // Nutrients Input Field
-            Text("Nutrients", style = MaterialTheme.typography.labelLarge, color = TextWhite.copy(alpha = 0.9f), modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
+            Text("Nutrients", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f), modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = uiState.currentNutrientInput,
                     onValueChange = { viewModel.updateCurrentNutrientInput(it) },
-                    label = { Text("Add Nutrient", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Add Nutrient", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
-                        disabledTextColor = TextWhite.copy(alpha = 0.7f),
-                        disabledLabelColor = TextWhite.copy(alpha = 0.5f),
-                        disabledBorderColor = DarkSurface.copy(alpha = 0.3f)
-                    )
+                    colors = myAppTextFieldColors()
                 )
                 IconButton(onClick = { viewModel.addNutrient() }, modifier = Modifier.padding(start = 8.dp)) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Add Nutrient",
-                        tint = PrimaryGreen // Matching EditPlantScreen's add button color
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -462,24 +367,24 @@ fun AddPlantScreen(
                         InputChip(
                             selected = false, // Not selectable, just for display and removal
                             onClick = { /* Chips are not clickable for selection here */ },
-                            label = { Text(nutrient, color = TextWhite) },
+                            label = { Text(nutrient) },
                             colors = InputChipDefaults.inputChipColors(
-                                containerColor = DarkSurface.copy(alpha = 0.8f),
-                                labelColor = TextWhite,
-                                trailingIconColor = TextWhite.copy(alpha = 0.7f)
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                trailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                             ),
                             trailingIcon = {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Remove $nutrient",
-                                    tint = TextWhite.copy(alpha = 0.7f),
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                                     modifier = Modifier
                                         .clickable { viewModel.removeNutrient(nutrient) }
-                                        .size(InputChipDefaults.IconSize) // Ensures IconSize is applied to Modifier
+                                        .size(InputChipDefaults.IconSize)
                                 )
                             },
                             shape = RoundedCornerShape(16.dp),
-                            border = null // No border or customize as needed
+                            border = null
                         )
                     }
                 }
@@ -506,10 +411,10 @@ fun AddPlantScreen(
                     .padding(vertical = 8.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryGreen,
-                    contentColor = TextWhite,
-                    disabledContainerColor = DarkSurface.copy(alpha = 0.5f),
-                    disabledContentColor = TextWhite.copy(alpha = 0.5f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                    disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 ),
                 enabled = uiState.isValid
             ) {

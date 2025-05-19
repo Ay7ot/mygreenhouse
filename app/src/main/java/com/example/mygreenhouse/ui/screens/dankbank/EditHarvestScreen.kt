@@ -60,7 +60,8 @@ fun EditHarvestScreen(
     onNavigateBack: () -> Unit,
     onHarvestUpdated: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     // State for form fields
     var strainName by remember { mutableStateOf("") }
@@ -127,7 +128,8 @@ fun EditHarvestScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->

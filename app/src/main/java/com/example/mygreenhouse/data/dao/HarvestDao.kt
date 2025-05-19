@@ -24,6 +24,9 @@ interface HarvestDao {
     @Query("SELECT * FROM harvests ORDER BY harvestDate DESC")
     fun getAllHarvests(): Flow<List<Harvest>>
     
+    @Query("SELECT * FROM harvests ORDER BY harvestDate DESC")
+    suspend fun getAllHarvestsOneShot(): List<Harvest>
+    
     @Query("SELECT * FROM harvests WHERE id = :harvestId")
     fun getHarvestById(harvestId: String): Flow<Harvest?>
     

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.TaskType
 import com.example.mygreenhouse.ui.theme.DarkBackground
+import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
 import kotlinx.coroutines.flow.first
 
@@ -27,7 +29,8 @@ fun EditTaskScreen(
     taskId: String,
     taskType: TaskType,
     viewModel: TaskViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    darkTheme: Boolean
 ) {
     var task by remember { mutableStateOf<Task?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -48,18 +51,19 @@ fun EditTaskScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground),
+            .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         when {
-            isLoading -> CircularProgressIndicator()
-            error != null -> Text(error!!, color = TextWhite)
+            isLoading -> CircularProgressIndicator(color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
+            error != null -> Text(error!!, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground)
             task != null -> ScheduleTaskScreen(
                 taskType = taskType,
                 onNavigateBack = onNavigateBack,
                 onSaveTask = { _, _, _, _ -> /* This parameter is unused as we use viewModel directly */ },
                 viewModel = viewModel,
-                existingTask = task
+                existingTask = task,
+                darkTheme = darkTheme
             )
             else -> {
                 // If task couldn't be loaded, go back

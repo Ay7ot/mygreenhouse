@@ -24,6 +24,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -59,7 +60,8 @@ fun AddSeedScreen(
     onNavigateBack: () -> Unit,
     onSeedAdded: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     // Form state
     var strainName by remember { mutableStateOf("") }
@@ -103,26 +105,27 @@ fun AddSeedScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Seeds", color = TextWhite) },
+                title = { Text("Add Seeds", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -130,7 +133,7 @@ fun AddSeedScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -139,8 +142,8 @@ fun AddSeedScreen(
             OutlinedTextField(
                 value = strainName,
                 onValueChange = { strainName = it },
-                label = { Text("Strain Name", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Strain Name", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
@@ -151,8 +154,8 @@ fun AddSeedScreen(
             OutlinedTextField(
                 value = batchNumber,
                 onValueChange = { batchNumber = it },
-                label = { Text("Batch Number", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Batch Number", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
@@ -167,8 +170,8 @@ fun AddSeedScreen(
                         seedCount = it
                     }
                 },
-                label = { Text("Seed Count", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Seed Count", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -180,8 +183,8 @@ fun AddSeedScreen(
             OutlinedTextField(
                 value = breeder,
                 onValueChange = { breeder = it },
-                label = { Text("Breeder (Optional)", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Breeder (Optional)", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
@@ -198,11 +201,11 @@ fun AddSeedScreen(
                     value = selectedSeedType.name.lowercase().replaceFirstChar { it.uppercase() },
                     onValueChange = { },
                     readOnly = true,
-                    label = { Text("Seed Type", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Seed Type", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = isSeedTypeExpanded)
                     },
-                    colors = textFieldColors(),
+                    colors = textFieldColors(darkTheme),
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(),
@@ -212,21 +215,21 @@ fun AddSeedScreen(
                 ExposedDropdownMenu(
                     expanded = isSeedTypeExpanded,
                     onDismissRequest = { isSeedTypeExpanded = false },
-                    modifier = Modifier.background(DarkSurface)
+                    modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                 ) {
                     SeedType.values().forEach { seedType ->
                         DropdownMenuItem(
                             text = { 
                                 Text(
                                     seedType.name.lowercase().replaceFirstChar { it.uppercase() },
-                                    color = TextWhite
+                                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                                 ) 
                             },
                             onClick = {
                                 selectedSeedType = seedType
                                 isSeedTypeExpanded = false
                             },
-                            modifier = Modifier.background(DarkSurface)
+                            modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
                     }
                 }
@@ -243,27 +246,27 @@ fun AddSeedScreen(
                 OutlinedTextField(
                     value = acquisitionDate.format(dateFormatter),
                     onValueChange = { },
-                    label = { Text("Acquisition Date", color = TextWhite.copy(alpha = 0.8f)) },
+                    label = { Text("Acquisition Date", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.DateRange,
                             contentDescription = "Select Date",
-                            tint = TextWhite.copy(alpha = 0.7f)
+                            tint = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     readOnly = true,
                     enabled = false,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        disabledTextColor = TextWhite.copy(alpha = 0.8f),
-                        disabledLabelColor = TextWhite.copy(alpha = 0.7f),
-                        disabledBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        disabledTrailingIconColor = TextWhite.copy(alpha = 0.7f)
+                        focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                        focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+                        unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                        disabledTrailingIconColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
@@ -276,8 +279,8 @@ fun AddSeedScreen(
             OutlinedTextField(
                 value = source,
                 onValueChange = { source = it },
-                label = { Text("Source (Optional)", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Source (Optional)", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
@@ -288,8 +291,8 @@ fun AddSeedScreen(
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Notes (Optional)", color = TextWhite.copy(alpha = 0.8f)) },
-                colors = textFieldColors(),
+                label = { Text("Notes (Optional)", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                colors = textFieldColors(darkTheme),
                 minLines = 3,
                 maxLines = 5,
                 modifier = Modifier.fillMaxWidth(),
@@ -315,9 +318,9 @@ fun AddSeedScreen(
                 },
                 enabled = isFormValid,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryGreen,
-                    contentColor = TextWhite,
-                    disabledContainerColor = DarkSurface
+                    containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -329,14 +332,14 @@ fun AddSeedScreen(
 }
 
 @Composable
-private fun textFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-    unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-    focusedContainerColor = DarkSurface,
-    unfocusedContainerColor = DarkSurface,
-    focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-    unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-    cursorColor = PrimaryGreen,
-    focusedTextColor = TextWhite,
-    unfocusedTextColor = TextWhite
+private fun textFieldColors(darkTheme: Boolean) = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+    unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+    focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+    unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+    focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+    cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+    focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
 ) 

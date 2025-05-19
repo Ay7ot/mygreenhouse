@@ -28,6 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,7 +67,8 @@ fun HarvestDetailScreen(
     onNavigateToEdit: (String) -> Unit,
     onDeleteHarvest: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     var harvest by remember { mutableStateOf<Harvest?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -99,7 +101,7 @@ fun HarvestDetailScreen(
                 title = { 
                     Text(
                         text = harvest?.strainName ?: "Harvest Details", 
-                        color = TextWhite
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                     ) 
                 },
                 navigationIcon = {
@@ -107,7 +109,7 @@ fun HarvestDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -120,27 +122,28 @@ fun HarvestDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -149,32 +152,37 @@ fun HarvestDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.CircularProgressIndicator(color = PrimaryGreen)
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                )
             }
         } else if (harvest == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Harvest not found", color = TextWhite)
+                Text(
+                    "Harvest not found", 
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground
+                )
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground)
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 // Status indicator
-                StatusCard(harvest!!)
+                StatusCard(harvest!!, darkTheme)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -182,14 +190,15 @@ fun HarvestDetailScreen(
                 DetailCard(
                     title = "Harvest Information",
                     content = {
-                        DetailRow("Strain Name", harvest!!.strainName)
-                        DetailRow("Batch Number", "#${harvest!!.batchNumber}")
-                        DetailRow("Harvest Date", harvest!!.harvestDate.format(dateFormatter))
+                        DetailRow("Strain Name", harvest!!.strainName, darkTheme)
+                        DetailRow("Batch Number", "#${harvest!!.batchNumber}", darkTheme)
+                        DetailRow("Harvest Date", harvest!!.harvestDate.format(dateFormatter), darkTheme)
                         
                         if (associatedPlantName != null) {
-                            DetailRow("From Plant", associatedPlantName!!)
+                            DetailRow("From Plant", associatedPlantName!!, darkTheme)
                         }
-                    }
+                    },
+                    darkTheme = darkTheme
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -199,32 +208,33 @@ fun HarvestDetailScreen(
                     title = "Weight Information",
                     content = {
                         harvest!!.wetWeight?.let {
-                            DetailRow("Wet Weight", "${String.format("%.1f", it)} grams")
+                            DetailRow("Wet Weight", "${String.format("%.1f", it)} grams", darkTheme)
                         }
                         
                         harvest!!.dryWeight?.let {
-                            DetailRow("Dry Weight", "${String.format("%.1f", it)} grams")
+                            DetailRow("Dry Weight", "${String.format("%.1f", it)} grams", darkTheme)
                             if (harvest!!.dryingCompleteDate != null) {
-                                DetailRow("Drying Completed", harvest!!.dryingCompleteDate!!.format(dateFormatter))
+                                DetailRow("Drying Completed", harvest!!.dryingCompleteDate!!.format(dateFormatter), darkTheme)
                             }
                         }
                         
                         harvest!!.finalCuredWeight?.let {
-                            DetailRow("Final Cured Weight", "${String.format("%.1f", it)} grams")
+                            DetailRow("Final Cured Weight", "${String.format("%.1f", it)} grams", darkTheme)
                             if (harvest!!.curingCompleteDate != null) {
-                                DetailRow("Curing Completed", harvest!!.curingCompleteDate!!.format(dateFormatter))
+                                DetailRow("Curing Completed", harvest!!.curingCompleteDate!!.format(dateFormatter), darkTheme)
                             }
                         }
                         
                         harvest!!.qualityRating?.let {
-                            DetailRow("Quality Rating", "$it/5")
+                            DetailRow("Quality Rating", "$it/5", darkTheme)
                         }
                         
                         if (harvest!!.wetWeight != null && harvest!!.finalCuredWeight != null) {
                             val yieldPercentage = (harvest!!.finalCuredWeight!! / harvest!!.wetWeight!!) * 100
-                            DetailRow("Yield Percentage", "${String.format("%.1f", yieldPercentage)}%")
+                            DetailRow("Yield Percentage", "${String.format("%.1f", yieldPercentage)}%", darkTheme)
                         }
-                    }
+                    },
+                    darkTheme = darkTheme
                 )
                 
                 if (harvest!!.notes.isNotBlank()) {
@@ -236,10 +246,11 @@ fun HarvestDetailScreen(
                         content = {
                             Text(
                                 text = harvest!!.notes,
-                                color = TextWhite,
+                                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.fillMaxWidth()
                             )
-                        }
+                        },
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -250,8 +261,8 @@ fun HarvestDetailScreen(
                     Button(
                         onClick = { showDryWeightDialog = true },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryGreen,
-                            contentColor = TextWhite
+                            containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                            contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
@@ -264,8 +275,8 @@ fun HarvestDetailScreen(
                     Button(
                         onClick = { showCuredWeightDialog = true },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = PrimaryGreen,
-                            contentColor = TextWhite
+                            containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                            contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
@@ -283,11 +294,16 @@ fun HarvestDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Harvest", color = TextWhite) },
+            title = { 
+                Text(
+                    "Delete Harvest", 
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                ) 
+            },
             text = { 
                 Text(
                     "Are you sure you want to delete this harvest? This action cannot be undone.",
-                    color = TextGrey
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
                 ) 
             },
             confirmButton = {
@@ -308,10 +324,13 @@ fun HarvestDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel", color = TextGrey)
+                    Text(
+                        "Cancel", 
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             },
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
         )
     }
     
@@ -323,7 +342,8 @@ fun HarvestDetailScreen(
             onConfirm = { dryWeight ->
                 viewModel.updateHarvestWithDryWeight(harvest!!.id, dryWeight)
                 showDryWeightDialog = false
-            }
+            },
+            darkTheme = darkTheme
         )
     }
     
@@ -335,13 +355,14 @@ fun HarvestDetailScreen(
             onConfirm = { finalCuredWeight, qualityRating ->
                 viewModel.completeHarvest(harvest!!.id, finalCuredWeight, qualityRating = qualityRating)
                 showCuredWeightDialog = false
-            }
+            },
+            darkTheme = darkTheme
         )
     }
 }
 
 @Composable
-fun StatusCard(harvest: Harvest) {
+fun StatusCard(harvest: Harvest, darkTheme: Boolean) {
     val statusText = when {
         harvest.isCompleted -> "Completed"
         harvest.isCuring -> "Curing"
@@ -350,16 +371,16 @@ fun StatusCard(harvest: Harvest) {
     }
     
     val statusColor = when {
-        harvest.isCompleted -> PrimaryGreen
-        harvest.isCuring -> PrimaryGreen.copy(alpha = 0.8f)
-        harvest.isDrying -> TextGrey
-        else -> TextGrey
+        harvest.isCompleted -> if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+        harvest.isCuring -> if (darkTheme) PrimaryGreen.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+        harvest.isDrying -> if (darkTheme) TextGrey else MaterialTheme.colorScheme.outline
+        else -> if (darkTheme) TextGrey else MaterialTheme.colorScheme.outline
     }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -380,7 +401,7 @@ fun StatusCard(harvest: Harvest) {
             
             Text(
                 text = "Status: $statusText",
-                color = TextWhite,
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp
             )
@@ -404,12 +425,13 @@ fun StatusCard(harvest: Harvest) {
 @Composable
 fun DetailCard(
     title: String,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+    darkTheme: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -421,7 +443,7 @@ fun DetailCard(
         ) {
             Text(
                 text = title,
-                color = PrimaryGreen,
+                color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -433,7 +455,7 @@ fun DetailCard(
 }
 
 @Composable
-fun DetailRow(label: String, value: String) {
+fun DetailRow(label: String, value: String, darkTheme: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -441,14 +463,14 @@ fun DetailRow(label: String, value: String) {
     ) {
         Text(
             text = "$label:",
-            color = TextGrey,
+            color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             fontWeight = FontWeight.Medium,
             modifier = Modifier.width(140.dp)
         )
         
         Text(
             text = value,
-            color = TextWhite,
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
     }

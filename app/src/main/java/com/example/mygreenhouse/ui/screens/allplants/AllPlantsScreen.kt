@@ -39,7 +39,8 @@ import java.time.format.FormatStyle
 fun AllPlantsScreen(
     viewModel: AllPlantsViewModel = viewModel(factory = AllPlantsViewModel.Factory),
     onNavigateBack: () -> Unit,
-    onEditPlant: (String) -> Unit
+    onEditPlant: (String) -> Unit,
+    darkTheme: Boolean
 ) {
     val plants by viewModel.allPlants.collectAsState()
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
@@ -48,20 +49,20 @@ fun AllPlantsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("All Plants", color = TextWhite, fontWeight = FontWeight.Bold) },
+                title = { Text("All Plants", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = TextWhite)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface)
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
             if (plants.isEmpty()) {
@@ -71,7 +72,7 @@ fun AllPlantsScreen(
                 ) {
                     Text(
                         "No plants in your greenhouse yet.", 
-                        color = TextGrey, 
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant, 
                         fontSize = 18.sp
                     )
                 }
@@ -86,7 +87,9 @@ fun AllPlantsScreen(
                         }, onDelete = {
                             plantToDelete = plant
                             showDeleteConfirmationDialog = true
-                        })
+                        },
+                        darkTheme = darkTheme
+                        )
                     }
                 }
             }
@@ -96,8 +99,8 @@ fun AllPlantsScreen(
     if (showDeleteConfirmationDialog && plantToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmationDialog = false },
-            title = { Text("Confirm Deletion", color = TextWhite) },
-            text = { Text("Are you sure you want to delete '${plantToDelete!!.strainName}'? This action cannot be undone.", color = TextGrey) },
+            title = { Text("Confirm Deletion", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
+            text = { Text("Are you sure you want to delete '${plantToDelete!!.strainName}'? This action cannot be undone.", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -105,17 +108,17 @@ fun AllPlantsScreen(
                         showDeleteConfirmationDialog = false
                         plantToDelete = null
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) Color.Red.copy(alpha = 0.8f) else MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Delete", color = TextWhite)
+                    Text("Delete", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onError)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmationDialog = false }) {
-                    Text("Cancel", color = PrimaryGreen)
+                    Text("Cancel", color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
         )
     }
 }
@@ -124,13 +127,14 @@ fun AllPlantsScreen(
 fun PlantListItem(
     plant: Plant,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    darkTheme: Boolean
 ) {
     val dateFormatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface.copy(alpha = 0.7f)),
+        colors = CardDefaults.cardColors(containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -143,7 +147,7 @@ fun PlantListItem(
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(DarkSurface.copy(alpha = 0.5f)),
+                    .background(if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center
             ) {
                 if (plant.imagePath != null) {
@@ -157,25 +161,25 @@ fun PlantListItem(
                     Icon(
                         imageVector = Icons.Default.Spa, // Placeholder icon
                         contentDescription = "Plant Image Placeholder",
-                        tint = PrimaryGreen.copy(alpha = 0.6f),
+                        tint = (if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.6f),
                         modifier = Modifier.size(40.dp)
                     )
                 }
             }
             Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(plant.strainName, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = TextWhite, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(plant.strainName, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
-                Text("Batch: ${plant.batchNumber}", fontSize = 14.sp, color = TextGrey, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("Batch: ${plant.batchNumber}", fontSize = 14.sp, color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
-                Text("Started: ${plant.startDate.format(dateFormatter)}", fontSize = 12.sp, color = TextGrey)
-                Text("Stage: ${plant.growthStage.name.replace("_", " ").lowercase().replaceFirstChar { it.titlecase() }}", fontSize = 12.sp, color = TextGrey)
+                Text("Started: ${plant.startDate.format(dateFormatter)}", fontSize = 12.sp, color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                Text("Stage: ${plant.growthStage.name.replace("_", " ").lowercase().replaceFirstChar { it.titlecase() }}", fontSize = 12.sp, color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, "Edit Plant", tint = PrimaryGreen)
+                Icon(Icons.Default.Edit, "Edit Plant", tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, "Delete Plant", tint = Color.Red.copy(alpha = 0.7f))
+                Icon(Icons.Default.Delete, "Delete Plant", tint = if (darkTheme) Color.Red.copy(alpha = 0.7f) else MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
             }
         }
     }

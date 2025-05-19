@@ -90,7 +90,8 @@ fun DankBankScreen(
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
     onNavigateToAddHarvest: () -> Unit = {},
     onNavigateToAddSeed: () -> Unit = {},
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState(initial = DankBankUiState())
     val selectedTab by viewModel.selectedTab.collectAsState()
@@ -114,26 +115,36 @@ fun DankBankScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(end = 8.dp),
-                            textStyle = TextStyle(color = TextWhite, fontSize = 16.sp),
-                            cursorBrush = SolidColor(PrimaryGreen),
+                            textStyle = TextStyle(
+                                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface, 
+                                fontSize = 16.sp
+                            ),
+                            cursorBrush = SolidColor(if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary),
                             singleLine = true,
                             decorationBox = { innerTextField ->
                                 Row(
                                     modifier = Modifier
-                                        .background(DarkSurface.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .background(
+                                            if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), 
+                                            RoundedCornerShape(8.dp)
+                                        )
                                         .padding(horizontal = 12.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         Icons.Default.Search,
                                         contentDescription = "Search Icon",
-                                        tint = TextGrey,
+                                        tint = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Box(Modifier.weight(1f)) {
                                         if (searchQuery.isEmpty()) {
-                                            Text("Search...", color = TextGrey, fontSize = 16.sp)
+                                            Text(
+                                                "Search...", 
+                                                color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), 
+                                                fontSize = 16.sp
+                                            )
                                         }
                                         innerTextField()
                                     }
@@ -141,7 +152,7 @@ fun DankBankScreen(
                             }
                         )
                     } else {
-                        Text("Dank Bank", color = TextWhite)
+                        Text("Dank Bank", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 navigationIcon = {
@@ -153,7 +164,7 @@ fun DankBankScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Exit Search",
-                                tint = TextWhite
+                                tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     } else {
@@ -161,7 +172,7 @@ fun DankBankScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = TextWhite
+                                tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -173,7 +184,7 @@ fun DankBankScreen(
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Clear Search",
-                                    tint = TextWhite
+                                    tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -182,28 +193,29 @@ fun DankBankScreen(
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "Search",
-                                tint = TextWhite
+                                tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                             )
                         }
                         IconButton(onClick = { showFilterDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.FilterList,
                                 contentDescription = "Filter",
-                                tint = TextWhite
+                                tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         },
         floatingActionButton = {
@@ -215,8 +227,8 @@ fun DankBankScreen(
                         onNavigateToAddSeed()
                     }
                 },
-                containerColor = PrimaryGreen,
-                contentColor = TextWhite,
+                containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
@@ -227,27 +239,27 @@ fun DankBankScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
         ) {
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = DarkBackground,
-                contentColor = PrimaryGreen,
+                containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background,
+                contentColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 divider = {}
             ) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { viewModel.setSelectedTab(0) },
                     text = { Text("Harvest Tracking") },
-                    selectedContentColor = PrimaryGreen,
-                    unselectedContentColor = TextGrey
+                    selectedContentColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { viewModel.setSelectedTab(1) },
                     text = { Text("Seed Bank") },
-                    selectedContentColor = PrimaryGreen,
-                    unselectedContentColor = TextGrey
+                    selectedContentColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
             
@@ -259,7 +271,8 @@ fun DankBankScreen(
                         HarvestFilterType.COMPLETED -> "Completed Only"
                         else -> ""
                     },
-                    onClear = { viewModel.setHarvestFilter(HarvestFilterType.ALL) }
+                    onClear = { viewModel.setHarvestFilter(HarvestFilterType.ALL) },
+                    darkTheme = darkTheme
                 )
             }
             
@@ -267,18 +280,24 @@ fun DankBankScreen(
             if (currentSeedTypeFilter != null && selectedTab == 1) {
                 FilterChip(
                     label = "Type: ${currentSeedTypeFilter.name.lowercase().replaceFirstChar { it.uppercase() }}",
-                    onClear = { viewModel.setSeedTypeFilter(null) }
+                    onClear = { viewModel.setSeedTypeFilter(null) },
+                    darkTheme = darkTheme
                 )
             }
             
             if (searchQuery.isNotEmpty() && !isSearchMode) {
                 FilterChip(
                     label = "Search: $searchQuery",
-                    onClear = { viewModel.setSearchQuery("") }
+                    onClear = { viewModel.setSearchQuery("") },
+                    darkTheme = darkTheme
                 )
             }
             
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 when (selectedTab) {
                     0 -> HarvestTrackingContent(
                         viewModel = viewModel,
@@ -286,13 +305,15 @@ fun DankBankScreen(
                         onMarkDryClick = { harvest -> showDryWeightDialog = harvest },
                         onMarkCuredClick = { harvest -> showCuredWeightDialog = harvest },
                         onEditHarvestClick = { harvest -> navController.navigate("editHarvest/${harvest.id}") },
-                        onHarvestClick = { harvest -> navController.navigate("harvestDetail/${harvest.id}") }
+                        onHarvestClick = { harvest -> navController.navigate("harvestDetail/${harvest.id}") },
+                        darkTheme = darkTheme
                     )
                     1 -> SeedBankContent(
                         viewModel = viewModel,
                         uiState = uiState,
                         onEditSeedClick = { seed -> navController.navigate("editSeed/${seed.id}") },
-                        onSeedClick = { seed -> navController.navigate("seedDetail/${seed.id}") }
+                        onSeedClick = { seed -> navController.navigate("seedDetail/${seed.id}") },
+                        darkTheme = darkTheme
                     )
                 }
             }
@@ -306,7 +327,8 @@ fun DankBankScreen(
             onConfirm = { dryWeight ->
                 viewModel.updateHarvestWithDryWeight(harvest.id, dryWeight)
                 showDryWeightDialog = null
-            }
+            },
+            darkTheme = darkTheme
         )
     }
 
@@ -317,7 +339,8 @@ fun DankBankScreen(
             onConfirm = { finalCuredWeight, qualityRating ->
                 viewModel.completeHarvest(harvest.id, finalCuredWeight, qualityRating = qualityRating)
                 showCuredWeightDialog = null
-            }
+            },
+            darkTheme = darkTheme
         )
     }
     
@@ -332,7 +355,8 @@ fun DankBankScreen(
             onSeedTypeFilterSelected = { type -> 
                 viewModel.setSeedTypeFilter(type)
             },
-            onDismiss = { showFilterDialog = false }
+            onDismiss = { showFilterDialog = false },
+            darkTheme = darkTheme
         )
     }
 }
@@ -341,18 +365,25 @@ fun DankBankScreen(
 fun FilterChip(
     label: String,
     onClear: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean
 ) {
     Row(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .background(PrimaryGreen.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+            .background(
+                if (darkTheme) 
+                    PrimaryGreen.copy(alpha = 0.1f) 
+                else 
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), 
+                RoundedCornerShape(16.dp)
+            )
             .padding(start = 12.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            color = PrimaryGreen,
+            color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
             fontSize = 14.sp
         )
         Spacer(modifier = Modifier.width(4.dp))
@@ -363,7 +394,7 @@ fun FilterChip(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear filter",
-                tint = PrimaryGreen,
+                tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -377,16 +408,23 @@ fun FilterDialog(
     currentSeedTypeFilter: SeedType?,
     onHarvestFilterSelected: (HarvestFilterType) -> Unit,
     onSeedTypeFilterSelected: (SeedType?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    darkTheme: Boolean
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter", color = TextWhite) },
+        title = { 
+            Text(
+                "Filter", 
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+            ) 
+        },
         text = {
             Column {
                 if (selectedTab == 0) {
-                    Text("Filter Harvests By Status", 
-                        color = TextWhite, 
+                    Text(
+                        "Filter Harvests By Status", 
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface, 
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -394,29 +432,34 @@ fun FilterDialog(
                     FilterOption(
                         text = "All Harvests",
                         isSelected = currentHarvestFilter == HarvestFilterType.ALL,
-                        onClick = { onHarvestFilterSelected(HarvestFilterType.ALL) }
+                        onClick = { onHarvestFilterSelected(HarvestFilterType.ALL) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Drying Only",
                         isSelected = currentHarvestFilter == HarvestFilterType.DRYING,
-                        onClick = { onHarvestFilterSelected(HarvestFilterType.DRYING) }
+                        onClick = { onHarvestFilterSelected(HarvestFilterType.DRYING) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Curing Only",
                         isSelected = currentHarvestFilter == HarvestFilterType.CURING,
-                        onClick = { onHarvestFilterSelected(HarvestFilterType.CURING) }
+                        onClick = { onHarvestFilterSelected(HarvestFilterType.CURING) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Completed Only",
                         isSelected = currentHarvestFilter == HarvestFilterType.COMPLETED,
-                        onClick = { onHarvestFilterSelected(HarvestFilterType.COMPLETED) }
+                        onClick = { onHarvestFilterSelected(HarvestFilterType.COMPLETED) },
+                        darkTheme = darkTheme
                     )
                 } else {
-                    Text("Filter Seeds By Type", 
-                        color = TextWhite, 
+                    Text(
+                        "Filter Seeds By Type", 
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface, 
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
@@ -424,35 +467,42 @@ fun FilterDialog(
                     FilterOption(
                         text = "All Types",
                         isSelected = currentSeedTypeFilter == null,
-                        onClick = { onSeedTypeFilterSelected(null) }
+                        onClick = { onSeedTypeFilterSelected(null) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Regular Seeds",
                         isSelected = currentSeedTypeFilter == SeedType.REGULAR,
-                        onClick = { onSeedTypeFilterSelected(SeedType.REGULAR) }
+                        onClick = { onSeedTypeFilterSelected(SeedType.REGULAR) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Feminized Seeds",
                         isSelected = currentSeedTypeFilter == SeedType.FEMINIZED,
-                        onClick = { onSeedTypeFilterSelected(SeedType.FEMINIZED) }
+                        onClick = { onSeedTypeFilterSelected(SeedType.FEMINIZED) },
+                        darkTheme = darkTheme
                     )
                     
                     FilterOption(
                         text = "Autoflower Seeds",
                         isSelected = currentSeedTypeFilter == SeedType.AUTOFLOWER,
-                        onClick = { onSeedTypeFilterSelected(SeedType.AUTOFLOWER) }
+                        onClick = { onSeedTypeFilterSelected(SeedType.AUTOFLOWER) },
+                        darkTheme = darkTheme
                     )
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close", color = PrimaryGreen)
+                Text(
+                    "Close", 
+                    color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                )
             }
         },
-        containerColor = DarkSurface
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
     )
 }
 
@@ -460,7 +510,8 @@ fun FilterDialog(
 fun FilterOption(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    darkTheme: Boolean
 ) {
     Row(
         modifier = Modifier
@@ -473,14 +524,14 @@ fun FilterOption(
             checked = isSelected,
             onCheckedChange = { onClick() },
             colors = CheckboxDefaults.colors(
-                checkedColor = PrimaryGreen,
-                uncheckedColor = TextGrey,
-                checkmarkColor = TextWhite
+                checkedColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                uncheckedColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                checkmarkColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
             )
         )
         Text(
             text = text,
-            color = TextWhite,
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 8.dp)
         )
     }
@@ -493,14 +544,15 @@ fun HarvestTrackingContent(
     onMarkDryClick: (Harvest) -> Unit,
     onMarkCuredClick: (Harvest) -> Unit,
     onEditHarvestClick: (Harvest) -> Unit,
-    onHarvestClick: (Harvest) -> Unit
+    onHarvestClick: (Harvest) -> Unit,
+    darkTheme: Boolean
 ) {
     val filteredHarvests by viewModel.filteredHarvests.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     
     when {
         uiState.isLoading || filteredHarvests == null -> {
-            HarvestTrackingSkeleton()
+            HarvestTrackingSkeleton(darkTheme = darkTheme)
         }
         filteredHarvests?.isEmpty() == true && searchQuery.isEmpty() && viewModel.harvestFilter.value == HarvestFilterType.ALL -> {
             Box(
@@ -511,7 +563,7 @@ fun HarvestTrackingContent(
             ) {
                 Text(
                     text = "No harvests recorded yet.\nTap the + button to add your first harvest.",
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -525,7 +577,7 @@ fun HarvestTrackingContent(
             ) {
                 Text(
                     text = "No harvests found with current filters.",
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -535,7 +587,7 @@ fun HarvestTrackingContent(
                 modifier = Modifier.fillMaxSize()
             ) {
                 item {
-                    HarvestStatsSection(uiState)
+                    HarvestStatsSection(uiState, darkTheme = darkTheme)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 items(filteredHarvests ?: emptyList()) { harvest ->
@@ -546,7 +598,8 @@ fun HarvestTrackingContent(
                         onDelete = { viewModel.deleteHarvest(it) },
                         onMarkDryClick = onMarkDryClick,
                         onMarkCuredClick = onMarkCuredClick,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -563,14 +616,15 @@ fun SeedBankContent(
     viewModel: DankBankViewModel,
     uiState: DankBankUiState,
     onEditSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit,
-    onSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit
+    onSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit,
+    darkTheme: Boolean
 ) {
     val filteredSeeds by viewModel.filteredSeeds.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     
     when {
         uiState.isLoading || filteredSeeds == null -> {
-            SeedBankSkeleton()
+            SeedBankSkeleton(darkTheme = darkTheme)
         }
         filteredSeeds?.isEmpty() == true && searchQuery.isEmpty() && viewModel.seedTypeFilter.value == null -> {
             Box(
@@ -581,7 +635,7 @@ fun SeedBankContent(
             ) {
                 Text(
                     text = "Your seed bank is empty.\nTap the + button to add seeds to your collection.",
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -595,7 +649,7 @@ fun SeedBankContent(
             ) {
                 Text(
                     text = "No seeds found with current filters.",
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
             }
@@ -605,7 +659,7 @@ fun SeedBankContent(
                 modifier = Modifier.fillMaxSize()
             ) {
                 item {
-                    SeedStatsSection(uiState)
+                    SeedStatsSection(uiState, darkTheme = darkTheme)
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 items(filteredSeeds ?: emptyList()) { seed ->
@@ -614,7 +668,8 @@ fun SeedBankContent(
                         onSeedClick = onSeedClick,
                         onEdit = onEditSeedClick,
                         onDelete = { viewModel.deleteSeed(it) },
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -631,17 +686,21 @@ fun SeedBankContent(
 fun DryWeightInputDialog(
     harvest: Harvest,
     onDismiss: () -> Unit,
-    onConfirm: (Double) -> Unit
+    onConfirm: (Double) -> Unit,
+    darkTheme: Boolean
 ) {
     var dryWeightInput by remember { mutableStateOf(harvest.dryWeight?.toString() ?: "") }
     val isError = dryWeightInput.toDoubleOrNull() == null && dryWeightInput.isNotEmpty()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Enter Dry Weight", color = TextWhite) },
+        title = { Text("Enter Dry Weight", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
         text = {
             Column {
-                Text("Enter the dry weight in grams for harvest of ${harvest.strainName} (Batch #${harvest.batchNumber}).", color = TextGrey)
+                Text(
+                    "Enter the dry weight in grams for harvest of ${harvest.strainName} (Batch #${harvest.batchNumber}).", 
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = dryWeightInput,
@@ -651,15 +710,15 @@ fun DryWeightInputDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = isError,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface.copy(alpha = 0.5f),
-                        unfocusedContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        disabledContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        cursorColor = PrimaryGreen,
-                        focusedIndicatorColor = PrimaryGreen,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.8f),
-                        unfocusedLabelColor = TextGrey,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
+                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         errorCursorColor = MaterialTheme.colorScheme.error,
                         errorIndicatorColor = MaterialTheme.colorScheme.error
                     )
@@ -678,15 +737,15 @@ fun DryWeightInputDialog(
                 },
                 enabled = dryWeightInput.toDoubleOrNull() != null
             ) {
-                Text("Confirm", color = PrimaryGreen)
+                Text("Confirm", color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextGrey)
+                Text("Cancel", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = DarkSurface
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
     )
 }
 
@@ -695,7 +754,8 @@ fun DryWeightInputDialog(
 fun CuredWeightInputDialog(
     harvest: Harvest,
     onDismiss: () -> Unit,
-    onConfirm: (Double, Int?) -> Unit
+    onConfirm: (Double, Int?) -> Unit,
+    darkTheme: Boolean
 ) {
     var finalCuredWeightInput by remember { mutableStateOf(harvest.finalCuredWeight?.toString() ?: "") }
     var qualityRatingInput by remember { mutableStateOf(harvest.qualityRating?.toString() ?: "") }
@@ -706,10 +766,13 @@ fun CuredWeightInputDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Enter Cured Weight & Quality", color = TextWhite) },
+        title = { Text("Enter Cured Weight & Quality", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
         text = {
             Column {
-                Text("Enter the final cured weight (grams) and optionally a quality rating (1-5) for ${harvest.strainName} (Batch #${harvest.batchNumber}).", color = TextGrey)
+                Text(
+                    "Enter the final cured weight (grams) and optionally a quality rating (1-5) for ${harvest.strainName} (Batch #${harvest.batchNumber}).", 
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
                     value = finalCuredWeightInput,
@@ -719,15 +782,15 @@ fun CuredWeightInputDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = isWeightError,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface.copy(alpha = 0.5f),
-                        unfocusedContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        disabledContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        cursorColor = PrimaryGreen,
-                        focusedIndicatorColor = PrimaryGreen,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.8f),
-                        unfocusedLabelColor = TextGrey,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
+                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         errorCursorColor = MaterialTheme.colorScheme.error,
                         errorIndicatorColor = MaterialTheme.colorScheme.error
                     )
@@ -744,15 +807,15 @@ fun CuredWeightInputDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = isRatingError,
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurface.copy(alpha = 0.5f),
-                        unfocusedContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        disabledContainerColor = DarkSurface.copy(alpha = 0.3f),
-                        cursorColor = PrimaryGreen,
-                        focusedIndicatorColor = PrimaryGreen,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.8f),
-                        unfocusedLabelColor = TextGrey,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite,
+                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
+                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         errorCursorColor = MaterialTheme.colorScheme.error,
                         errorIndicatorColor = MaterialTheme.colorScheme.error
                     )
@@ -771,22 +834,23 @@ fun CuredWeightInputDialog(
                 },
                 enabled = finalCuredWeightInput.toDoubleOrNull() != null && !isRatingError
             ) {
-                Text("Confirm", color = PrimaryGreen)
+                Text("Confirm", color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = TextGrey)
+                Text("Cancel", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
-        containerColor = DarkSurface
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
     )
 }
 
 @Composable
 fun SimpleBarChart(
     data: Map<String, Int>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
 ) {
     if (data.isEmpty() || data.values.sum() == 0) {
         Box(
@@ -795,13 +859,17 @@ fun SimpleBarChart(
         ) {
             Text(
                 text = "No harvest data available yet",
-                color = TextGrey,
+                color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }
         return
     }
 
+    // Define colors outside of Canvas scope
+    val gridColor = if (darkTheme) TextWhite.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+    val completedColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+    
     Box(
         modifier = modifier.padding(
             start = 32.dp, // Space for y-axis labels
@@ -821,7 +889,6 @@ fun SimpleBarChart(
             val yScale = if (maxValue > 0) size.height / maxValue.toFloat() else 1f
             
             // Draw grid lines
-            val gridColor = TextWhite.copy(alpha = 0.1f)
             for (i in 0..4) {
                 val y = size.height - (i * size.height / 4)
                 drawLine(
@@ -842,8 +909,8 @@ fun SimpleBarChart(
                     val barColor = when (entry.key) {
                         "Drying" -> Color(0xFFFFD54F) // Amber for drying
                         "Curing" -> Color(0xFFAED581) // Light green for curing
-                        "Completed" -> PrimaryGreen
-                        else -> PrimaryGreen
+                        "Completed" -> completedColor
+                        else -> completedColor
                     }
                     
                     drawRect(
@@ -865,10 +932,10 @@ fun SimpleBarChart(
         ) {
             for (i in 5 downTo 0) {
                 val value = if (maxValue > 0) ((maxValue * i) / 5) else i
-                if (i < 5) { // Skip the very top label to avoid overlap
+                if (i < 5 || (i == 0 && maxValue > 0) ) {
                     Text(
                         text = value.toString(),
-                        color = TextWhite.copy(alpha = 0.7f),
+                        color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         fontSize = 10.sp,
                         modifier = Modifier.padding(end = 4.dp)
                     )
@@ -882,13 +949,14 @@ fun SimpleBarChart(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .offset(y = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceAround
         ) {
             data.keys.forEach { label ->
                 Text(
                     text = label,
-                    color = TextWhite.copy(alpha = 0.7f),
-                    fontSize = 10.sp
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center
                 )
             }
         }
@@ -898,7 +966,8 @@ fun SimpleBarChart(
 @Composable
 fun SimplePieChart(
     data: Map<String, Int>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
 ) {
     if (data.isEmpty() || data.values.sum() == 0) {
         Box(
@@ -907,7 +976,7 @@ fun SimplePieChart(
         ) {
             Text(
                 text = "No seed data available yet",
-                color = TextGrey,
+                color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }
@@ -920,6 +989,9 @@ fun SimplePieChart(
         Color(0xFFE57373),  // Red for Feminized
         Color(0xFF64B5F6)   // Blue for Autoflower
     )
+    
+    // Define text color before Canvas scope
+    val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
     Box(modifier = modifier) {
         Canvas(
@@ -962,7 +1034,7 @@ fun SimplePieChart(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${entry.key} ($percentage%)",
-                        color = TextWhite,
+                        color = textColor,
                         fontSize = 12.sp
                     )
                 }
@@ -972,7 +1044,7 @@ fun SimplePieChart(
 }
 
 @Composable
-fun HarvestStatsSection(uiState: DankBankUiState) {
+fun HarvestStatsSection(uiState: DankBankUiState, darkTheme: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -980,7 +1052,7 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
     ) {
         Text(
             text = "Harvest Statistics",
-            color = TextWhite,
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -992,7 +1064,8 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
             StatCard(
                 title = "Total Harvested",
                 value = "${String.format("%.1f", uiState.totalHarvestedWeight)}g",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                darkTheme = darkTheme
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -1000,7 +1073,8 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
             StatCard(
                 title = "Current Status",
                 value = "${uiState.dryingCount + uiState.curingCount} Active",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                darkTheme = darkTheme
             )
         }
         
@@ -1009,7 +1083,7 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = DarkSurface
+                containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -1020,7 +1094,7 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
             ) {
                 Text(
                     text = "Harvest Status",
-                    color = TextWhite,
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -1034,7 +1108,8 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(200.dp),
+                    darkTheme = darkTheme
                 )
             }
         }
@@ -1042,7 +1117,7 @@ fun HarvestStatsSection(uiState: DankBankUiState) {
 }
 
 @Composable
-fun SeedStatsSection(uiState: DankBankUiState) {
+fun SeedStatsSection(uiState: DankBankUiState, darkTheme: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1050,7 +1125,7 @@ fun SeedStatsSection(uiState: DankBankUiState) {
     ) {
         Text(
             text = "Seed Bank Statistics",
-            color = TextWhite,
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -1062,7 +1137,8 @@ fun SeedStatsSection(uiState: DankBankUiState) {
             StatCard(
                 title = "Total Seeds",
                 value = "${uiState.totalSeedCount}",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                darkTheme = darkTheme
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -1070,7 +1146,8 @@ fun SeedStatsSection(uiState: DankBankUiState) {
             StatCard(
                 title = "Unique Strains",
                 value = "${uiState.uniqueStrainCount}",
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                darkTheme = darkTheme
             )
         }
         
@@ -1079,7 +1156,7 @@ fun SeedStatsSection(uiState: DankBankUiState) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = DarkSurface
+                containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -1090,7 +1167,7 @@ fun SeedStatsSection(uiState: DankBankUiState) {
             ) {
                 Text(
                     text = "Seed Type Distribution",
-                    color = TextWhite,
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -1105,7 +1182,8 @@ fun SeedStatsSection(uiState: DankBankUiState) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
-                        .padding(vertical = 8.dp)
+                        .padding(vertical = 8.dp),
+                    darkTheme = darkTheme
                 )
             }
         }
@@ -1116,12 +1194,13 @@ fun SeedStatsSection(uiState: DankBankUiState) {
 fun StatCard(
     title: String,
     value: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
 ) {
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(
@@ -1136,7 +1215,7 @@ fun StatCard(
         ) {
             Text(
                 text = title,
-                color = TextGrey,
+                color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurface,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -1145,7 +1224,7 @@ fun StatCard(
             
             Text(
                 text = value,
-                color = PrimaryGreen,
+                color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center

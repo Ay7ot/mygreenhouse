@@ -19,3 +19,16 @@ val LightSurface = Color(0xFFEBF5EB)
 val PrimaryGreenDark = Color(0xFF2E7D32)
 val TextDark = Color(0xFF1C2825)
 val TextGreyDark = Color(0xFF666666)
+
+// New/Updated Light Theme Colors
+val LightPrimary = Color(0xFF388E3C) // A slightly brighter green than PrimaryGreenDark
+val LightSecondary = Color(0xFF66BB6A) // A lighter, pleasant green
+val LightTertiary = Color(0xFF81C784)  // An even lighter green for accents
+val LightOnPrimary = Color(0xFFFFFFFF) // White text on primary color
+val LightOnSecondary = Color(0xFF000000) // Black text on secondary color
+val LightOnTertiary = Color(0xFF000000)  // Black text on tertiary color
+val LightOnBackground = PrimaryGreenDark // Dark green text on light background
+val LightOnSurface = PrimaryGreenDark    // Dark green text on light surface
+val LightSurfaceVariant = Color(0xFFDDE5DA)
+val LightOnSurfaceVariant = Color(0xFF424940)
+val LightOutline = Color(0xFF727970)

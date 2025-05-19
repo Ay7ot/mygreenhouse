@@ -39,4 +39,8 @@ class HarvestRepository(private val harvestDao: HarvestDao) {
     fun getHarvestsInDateRange(startDate: LocalDate, endDate: LocalDate): Flow<List<Harvest>> {
         return harvestDao.getHarvestsInDateRange(startDate, endDate)
     }
+    
+    suspend fun getAllHarvestsOneShot(): List<Harvest> {
+        return harvestDao.getAllHarvestsOneShot()
+    }
 } 

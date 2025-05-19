@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -71,6 +72,19 @@ dependencies {
     
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.9.0")
+    
+    // Datastore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Security Crypto for EncryptedSharedPreferences
+    implementation(libs.androidx.security.crypto)
+    
+    // Biometric Authentication
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.biometric.ktx)
+    
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -13,9 +13,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mygreenhouse.ui.navigation.GreenhouseNavGraph
+import com.example.mygreenhouse.ui.screens.settings.SettingsViewModel
+import com.example.mygreenhouse.ui.settings.ThemePreference
 import com.example.mygreenhouse.ui.theme.MyGreenHouseTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import android.graphics.Color
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import android.app.Activity
 
 class MainActivity : ComponentActivity() {
 
@@ -37,13 +48,48 @@ class MainActivity : ComponentActivity() {
         requestNotificationPermission()
 
         setContent {
-            MyGreenHouseTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = rememberNavController()
-                    GreenhouseNavGraph(navController = navController)
+            val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+            val themePreference by settingsViewModel.themePreference.collectAsState()
+            val isLoadingTheme by settingsViewModel.isLoadingTheme.collectAsState()
+
+            if (isLoadingTheme) {
+                // Display a simple Surface while the theme is loading to prevent FOIT.
+                // This Surface will adhere to the system theme briefly.
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    // Optionally, you can put a CircularProgressIndicator or a splash icon here
+                }
+            } else {
+                val useDarkTheme = when (themePreference) {
+                    ThemePreference.LIGHT -> false
+                    ThemePreference.DARK -> true
+                    ThemePreference.SYSTEM -> isSystemInDarkTheme()
+                }
+
+                MyGreenHouseTheme(darkTheme = useDarkTheme) {
+                    // Make status bar transparent for edge-to-edge
+                    val view = LocalView.current
+                    if (!view.isInEditMode) {
+                        SideEffect {
+                            val window = (view.context as Activity).window
+                            window.statusBarColor = Color.TRANSPARENT // Set status bar to transparent
+                            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !useDarkTheme
+                        }
+                    }
+
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val navController = rememberNavController()
+                        GreenhouseNavGraph(
+                            navController = navController,
+                            themePreferenceState = settingsViewModel.themePreference,
+                            onThemePreferenceChange = { newPreference ->
+                                settingsViewModel.setThemePreference(newPreference)
+                            },
+                            darkTheme = useDarkTheme
+                        )
+                    }
                 }
             }
         }

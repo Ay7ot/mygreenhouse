@@ -37,4 +37,8 @@ class SeedRepository(private val seedDao: SeedDao) {
     fun getSeedsByType(seedType: SeedType): Flow<List<Seed>> {
         return seedDao.getSeedsByType(seedType)
     }
+    
+    suspend fun getAllSeedsOneShot(): List<Seed> {
+        return seedDao.getAllSeedsOneShot()
+    }
 } 

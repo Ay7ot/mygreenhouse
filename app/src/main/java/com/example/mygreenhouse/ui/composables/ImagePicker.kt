@@ -29,6 +29,51 @@ import com.example.mygreenhouse.R // Assuming you have a placeholder drawable
 import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import android.content.Context
+import android.util.Log
+
+// Helper function to copy URI to app's internal storage
+private fun copyUriToAppStorage(context: Context, contentUri: Uri): String? {
+    try {
+        val inputStream = context.contentResolver.openInputStream(contentUri) ?: run {
+            Log.e("ImagePicker", "Failed to open input stream for URI: $contentUri")
+            return null
+        }
+
+        val imageDir = File(context.filesDir, "plant_images")
+        if (!imageDir.exists()) {
+            if (!imageDir.mkdirs()) {
+                Log.e("ImagePicker", "Failed to create directory: ${'$'}imageDir")
+                return null
+            }
+        }
+
+        // Use a more robust way to get file extension if needed, or stick to .jpg for simplicity
+        val extension = context.contentResolver.getType(contentUri)?.substringAfterLast('/') ?: "jpg"
+        val fileName = "plant_${System.currentTimeMillis()}.${'$'}extension"
+        val outputFile = File(imageDir, fileName)
+
+        FileOutputStream(outputFile).use { outputStream ->
+            inputStream.use { input ->
+                input.copyTo(outputStream)
+            }
+        }
+        Log.d("ImagePicker", "Image copied to: ${'$'}{outputFile.absolutePath}")
+        return outputFile.absolutePath
+    } catch (e: IOException) {
+        Log.e("ImagePicker", "Error copying image URI: $contentUri", e)
+        return null
+    } catch (e: SecurityException) {
+        Log.e("ImagePicker", "Security exception for URI: $contentUri", e)
+        return null
+    } catch (e: Exception) {
+        Log.e("ImagePicker", "Generic exception for URI: $contentUri", e)
+        return null
+    }
+}
 
 @Composable
 fun ImagePicker(
@@ -43,12 +88,22 @@ fun ImagePicker(
         contract = ActivityResultContracts.PickVisualMedia(),
         onResult = { uri ->
             if (uri != null) {
-                // Persist permission to access the URI
+                // Persist permission to access the URI - this might not be strictly necessary
+                // if we are immediately copying it to internal storage.
+                // However, it doesn't hurt for the brief moment we're accessing it.
+                try {
                 val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
                 context.contentResolver.takePersistableUriPermission(uri, flag)
-                onImageSelected(uri.toString())
+                } catch (e: SecurityException) {
+                    Log.w("ImagePicker", "Failed to take persistable URI permission for $uri: ${'$'}{e.message}")
+                    // Continue anyway, copying might still work if permission was already granted or not needed for copy.
+                }
+                
+                val filePath = copyUriToAppStorage(context, uri)
+                onImageSelected(filePath) // Pass the new file path (or null if copy failed)
             } else {
-                // Optionally handle if no image was selected
+                // Optionally handle if no image was selected, perhaps call onImageSelected(null)
+                 onImageSelected(null)
             }
         }
     )
@@ -84,7 +139,11 @@ fun ImagePicker(
                 )
                 // Clear button
                 IconButton(
-                    onClick = { onImageSelected(null) },
+                    onClick = { 
+                        // When clearing, we also need to potentially delete the backing file
+                        // For now, just set path to null. Deletion can be handled by PhotoManagementService.
+                        onImageSelected(null) 
+                    },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(4.dp)

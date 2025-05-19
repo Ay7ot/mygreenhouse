@@ -73,7 +73,8 @@ fun ScheduleTaskScreen(
     onNavigateBack: () -> Unit,
     onSaveTask: (taskType: TaskType, time: Calendar, repeatDays: List<String>, notes: String) -> Unit,
     viewModel: TaskViewModel = viewModel(),
-    existingTask: Task? = null // Optional task parameter for editing
+    existingTask: Task? = null, // Optional task parameter for editing
+    darkTheme: Boolean // Added darkTheme parameter
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -154,17 +155,17 @@ fun ScheduleTaskScreen(
                     Text(
                         if (existingTask != null) "Edit ${taskType.displayName()}" 
                         else taskType.displayName(), 
-                        color = TextWhite
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                     ) 
                 },
                 actions = {
                     TextButton(onClick = onNavigateBack) {
-                        Text("Cancel", color = DarkerGreenButton, fontSize = 16.sp)
+                        Text("Cancel", color = if (darkTheme) DarkerGreenButton else MaterialTheme.colorScheme.primary, fontSize = 16.sp)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -172,7 +173,7 @@ fun ScheduleTaskScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(scrollState),
@@ -186,7 +187,7 @@ fun ScheduleTaskScreen(
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
             ) {
-                Text(text = timeFormatter.format(selectedTime.time), fontSize = 18.sp, color = TextWhite)
+                Text(text = timeFormatter.format(selectedTime.time), fontSize = 18.sp, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -195,7 +196,7 @@ fun ScheduleTaskScreen(
             Text(
                 "Associate with plant", 
                 fontSize = 18.sp, 
-                color = TextWhite, 
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground, 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -212,15 +213,15 @@ fun ScheduleTaskScreen(
                     enabled = false,
                     shape = RoundedCornerShape(8.dp),
                     colors = TextFieldDefaults.colors(
-                        disabledContainerColor = PrimaryGreenLight.copy(alpha = 0.1f),
-                        disabledTextColor = if (selectedPlantId != null) TextWhite else TextGrey,
-                        disabledIndicatorColor = if (selectedPlantId != null) PrimaryGreen else Color.Transparent,
+                        disabledContainerColor = if (darkTheme) PrimaryGreenLight.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledTextColor = if (selectedPlantId != null) (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) else (if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant),
+                        disabledIndicatorColor = if (selectedPlantId != null) (if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary) else Color.Transparent,
                     ),
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Expand plant selection",
-                            tint = PrimaryGreen
+                            tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
                         )
                     }
                 )
@@ -235,11 +236,11 @@ fun ScheduleTaskScreen(
                 DropdownMenu(
                     expanded = expandPlantDropdown,
                     onDismissRequest = { expandPlantDropdown = false },
-                    modifier = Modifier.background(DarkBackground)
+                    modifier = Modifier.background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     // Option to clear selection
                     DropdownMenuItem(
-                        text = { Text("No plant (general task)", color = TextGrey) },
+                        text = { Text("No plant (general task)", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant) },
                         onClick = {
                             selectedPlantId = null
                             selectedPlantName = "Select a plant (optional)"
@@ -249,18 +250,18 @@ fun ScheduleTaskScreen(
                     
                     if (isLoadingPlants) {
                         DropdownMenuItem(
-                            text = { Text("Loading plants...", color = TextGrey) },
+                            text = { Text("Loading plants...", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant) },
                             onClick = { /* No action */ }
                         )
                     } else if (plants.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("No plants in greenhouse", color = TextGrey) },
+                            text = { Text("No plants in greenhouse", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant) },
                             onClick = { /* No action */ }
                         )
                     } else {
                         plants.forEach { plant ->
                             DropdownMenuItem(
-                                text = { Text(plant.strainName, color = TextWhite) },
+                                text = { Text(plant.strainName, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant) },
                                 onClick = {
                                     selectedPlantId = plant.id
                                     selectedPlantName = plant.strainName
@@ -277,7 +278,7 @@ fun ScheduleTaskScreen(
             Text(
                 "Repeat", 
                 fontSize = 18.sp, 
-                color = TextWhite, 
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground, 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -298,7 +299,8 @@ fun ScheduleTaskScreen(
                                 } else {
                                     selectedDayIds + dayInfo.id
                                 }
-                            }
+                            },
+                            darkTheme = darkTheme
                         )
                     }
                 }
@@ -309,7 +311,7 @@ fun ScheduleTaskScreen(
             Text(
                 "Notes:", 
                 fontSize = 18.sp, 
-                color = TextWhite, 
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground, 
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -323,16 +325,16 @@ fun ScheduleTaskScreen(
                     .height(200.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = PrimaryGreenLight.copy(alpha = 0.1f),
-                    unfocusedContainerColor = PrimaryGreenLight.copy(alpha = 0.1f),
-                    disabledContainerColor = PrimaryGreenLight.copy(alpha = 0.1f),
-                    focusedIndicatorColor = PrimaryGreen,
+                    focusedContainerColor = if (darkTheme) PrimaryGreenLight.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+                    unfocusedContainerColor = if (darkTheme) PrimaryGreenLight.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+                    disabledContainerColor = if (darkTheme) PrimaryGreenLight.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+                    focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = PrimaryGreen,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite
+                    cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 ),
-                placeholder = { Text("Add notes here...", color = TextGrey) }
+                placeholder = { Text("Add notes here...", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant) }
             )
 
             Spacer(modifier = Modifier.height(32.dp)) // Added more space
@@ -365,12 +367,12 @@ fun ScheduleTaskScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryGreen)
+                colors = ButtonDefaults.buttonColors(containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
             ) {
                 Text(
                     text = if (existingTask != null) "Update" else "Save", 
                     fontSize = 18.sp, 
-                    color = TextWhite
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -381,15 +383,16 @@ fun ScheduleTaskScreen(
 fun DayToggleButton(
     day: String,
     isSelected: Boolean,
-    onDaySelected: () -> Unit
+    onDaySelected: () -> Unit,
+    darkTheme: Boolean
 ) {
     Surface(
         modifier = Modifier
             .size(40.dp)
             .clickable(onClick = onDaySelected),
         shape = CircleShape,
-        color = if (isSelected) DarkerGreenButton else PrimaryGreenLight.copy(alpha = 0.2f),
-        contentColor = if (isSelected) TextWhite else TextGrey
+        color = if (isSelected) (if (darkTheme) DarkerGreenButton else MaterialTheme.colorScheme.primary) else (if (darkTheme) PrimaryGreenLight.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant),
+        contentColor = if (isSelected) (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary) else (if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(text = day, fontSize = 16.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)

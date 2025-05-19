@@ -24,6 +24,9 @@ interface SeedDao {
     @Query("SELECT * FROM seeds ORDER BY strainName ASC")
     fun getAllSeeds(): Flow<List<Seed>>
     
+    @Query("SELECT * FROM seeds ORDER BY strainName ASC")
+    suspend fun getAllSeedsOneShot(): List<Seed>
+    
     @Query("SELECT * FROM seeds WHERE id = :seedId")
     fun getSeedById(seedId: String): Flow<Seed?>
     

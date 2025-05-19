@@ -95,7 +95,8 @@ fun TaskScreen(
     onNavigateBack: () -> Unit,
     onTaskTypeSelected: (TaskType) -> Unit,
     onViewTaskList: () -> Unit,
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     // Task types to be displayed
     val taskTypesToDisplay = listOf(
@@ -113,7 +114,7 @@ fun TaskScreen(
                 title = { 
                     Text(
                         "Schedule Task", 
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     ) 
@@ -123,27 +124,28 @@ fun TaskScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.Task.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -152,7 +154,7 @@ fun TaskScreen(
             Text(
                 text = "Select a task type to schedule",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextWhite,
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .padding(bottom = 16.dp)
                     .align(Alignment.Start)
@@ -166,7 +168,8 @@ fun TaskScreen(
                 items(taskTypesToDisplay) { taskType ->
                     TaskTypeCard(
                         taskType = taskType,
-                        onClick = { onTaskTypeSelected(taskType) }
+                        onClick = { onTaskTypeSelected(taskType) },
+                        darkTheme = darkTheme
                     )
                 }
             }
@@ -179,8 +182,8 @@ fun TaskScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryGreen,
-                    contentColor = TextWhite
+                    containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                 ),
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -189,14 +192,14 @@ fun TaskScreen(
                     imageVector = Icons.AutoMirrored.Filled.FormatListBulleted,
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
-                    tint = TextWhite
+                    tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "View All Tasks", 
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextWhite
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -206,14 +209,15 @@ fun TaskScreen(
 @Composable
 fun TaskTypeCard(
     taskType: TaskType,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    darkTheme: Boolean
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp
@@ -231,7 +235,7 @@ fun TaskTypeCard(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        color = DarkerGreenButton,
+                        color = if (darkTheme) DarkerGreenButton else MaterialTheme.colorScheme.primaryContainer,
                         shape = RoundedCornerShape(24.dp)
                     ),
                 contentAlignment = Alignment.Center
@@ -240,7 +244,7 @@ fun TaskTypeCard(
                     imageVector = taskType.getIcon(),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = PrimaryGreen
+                    tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
                 )
             }
             
@@ -250,7 +254,7 @@ fun TaskTypeCard(
             Text(
                 text = taskType.displayName(),
                 style = MaterialTheme.typography.titleMedium,
-                color = TextWhite,
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
         }

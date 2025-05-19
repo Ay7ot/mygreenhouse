@@ -43,4 +43,8 @@ class TaskRepository(private val taskDao: TaskDao) {
     suspend fun markTaskAsIncomplete(taskId: String) {
         taskDao.markTaskAsIncomplete(taskId)
     }
+    
+    suspend fun getAllTasksOneShot(): List<Task> {
+        return taskDao.getAllTasksOneShot()
+    }
 } 

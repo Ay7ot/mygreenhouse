@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -40,7 +41,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +66,8 @@ fun SeedDetailScreen(
     onNavigateToEdit: (String) -> Unit,
     onDeleteSeed: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     var seed by remember { mutableStateOf<Seed?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -88,7 +89,7 @@ fun SeedDetailScreen(
                 title = { 
                     Text(
                         text = seed?.strainName ?: "Seed Details", 
-                        color = TextWhite
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                     ) 
                 },
                 navigationIcon = {
@@ -96,7 +97,7 @@ fun SeedDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -109,27 +110,28 @@ fun SeedDetailScreen(
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.Delete,
                             contentDescription = "Delete",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -138,32 +140,37 @@ fun SeedDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.CircularProgressIndicator(color = PrimaryGreen)
+                androidx.compose.material3.CircularProgressIndicator(
+                    color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                )
             }
         } else if (seed == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Seed not found", color = TextWhite)
+                Text(
+                    "Seed not found", 
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground
+                )
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground)
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 // Count and type card
-                SeedTypeCard(seed!!)
+                SeedTypeCard(seed!!, darkTheme)
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -171,19 +178,20 @@ fun SeedDetailScreen(
                 DetailCard(
                     title = "Seed Information",
                     content = {
-                        DetailRow("Strain Name", seed!!.strainName)
-                        DetailRow("Batch Number", "#${seed!!.batchNumber}")
-                        DetailRow("Seed Count", seed!!.seedCount.toString())
-                        DetailRow("Acquisition Date", seed!!.acquisitionDate.format(dateFormatter))
+                        DetailRow("Strain Name", seed!!.strainName, darkTheme)
+                        DetailRow("Batch Number", "#${seed!!.batchNumber}", darkTheme)
+                        DetailRow("Seed Count", seed!!.seedCount.toString(), darkTheme)
+                        DetailRow("Acquisition Date", seed!!.acquisitionDate.format(dateFormatter), darkTheme)
                         
                         if (seed!!.breeder.isNotBlank()) {
-                            DetailRow("Breeder", seed!!.breeder)
+                            DetailRow("Breeder", seed!!.breeder, darkTheme)
                         }
                         
                         if (seed!!.source.isNotBlank()) {
-                            DetailRow("Source", seed!!.source)
+                            DetailRow("Source", seed!!.source, darkTheme)
                         }
-                    }
+                    },
+                    darkTheme = darkTheme
                 )
                 
                 if (seed!!.notes.isNotBlank()) {
@@ -195,10 +203,11 @@ fun SeedDetailScreen(
                         content = {
                             Text(
                                 text = seed!!.notes,
-                                color = TextWhite,
+                                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.fillMaxWidth()
                             )
-                        }
+                        },
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -211,11 +220,16 @@ fun SeedDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Seed Entry", color = TextWhite) },
+            title = { 
+                Text(
+                    "Delete Seed Entry", 
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                ) 
+            },
             text = { 
                 Text(
                     "Are you sure you want to delete this seed entry? This action cannot be undone.",
-                    color = TextGrey
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
                 ) 
             },
             confirmButton = {
@@ -228,7 +242,7 @@ fun SeedDetailScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Red.copy(alpha = 0.8f)
+                        containerColor = androidx.compose.ui.graphics.Color.Red.copy(alpha = 0.8f)
                     )
                 ) {
                     Text("Delete")
@@ -236,20 +250,23 @@ fun SeedDetailScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel", color = TextGrey)
+                    Text(
+                        "Cancel", 
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             },
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
         )
     }
 }
 
 @Composable
-fun SeedTypeCard(seed: Seed) {
+fun SeedTypeCard(seed: Seed, darkTheme: Boolean) {
     val seedTypeColor = when (seed.seedType) {
-        SeedType.FEMINIZED -> Color(0xFFE57373) // Light red
-        SeedType.AUTOFLOWER -> Color(0xFF64B5F6) // Light blue
-        SeedType.REGULAR -> Color(0xFF81C784) // Light green
+        SeedType.FEMINIZED -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFFE57373) else androidx.compose.ui.graphics.Color(0xFFE57373).copy(alpha = 0.8f) // Light red
+        SeedType.AUTOFLOWER -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFF64B5F6) else androidx.compose.ui.graphics.Color(0xFF64B5F6).copy(alpha = 0.8f) // Light blue
+        SeedType.REGULAR -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFF81C784) else androidx.compose.ui.graphics.Color(0xFF81C784).copy(alpha = 0.8f) // Light green
     }
     
     val seedTypeName = seed.seedType.name.lowercase().replaceFirstChar { it.uppercase() }
@@ -257,7 +274,7 @@ fun SeedTypeCard(seed: Seed) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
         ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -278,7 +295,7 @@ fun SeedTypeCard(seed: Seed) {
             
             Text(
                 text = seedTypeName,
-                color = TextWhite,
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp
             )
@@ -287,7 +304,7 @@ fun SeedTypeCard(seed: Seed) {
             
             Text(
                 text = "${seed.seedCount} seeds",
-                color = PrimaryGreen,
+                color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )

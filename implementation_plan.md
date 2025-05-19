@@ -42,14 +42,14 @@ Based on `greenhouse.md`:
     *   [X] Charts (Pie: Stored strains proportion, Bar: Harvest trends)
 *   **Settings:**
     *   [X] Theme selection (Light/Dark)
-    *   [ ] Authentication (Password / Biometric)
-    *   [ ] Photo Management (View/delete uploaded images)
-    *   [ ] Data Management (Export/import logs, Clear all data with confirmation)
+    *   [X] Authentication (Password / Biometric)
+    *   [>] Photo Management (View/delete uploaded images)
+    *   [>] Data Management (Export/import logs, Clear all data with confirmation)
 
 ## 2. Core Functionalities (Technical)
 
 *   [X] Data Handling: Room Database, ViewModel + LiveData/StateFlow, Coroutines
-*   [>] Task Reminders: WorkManager for scheduling, System notifications
+*   [X] Task Reminders: WorkManager for scheduling, System notifications
 *   [X] Image Management: Local storage, (Optional Firebase backup), Timelapse view
 
 ## 3. Technical Stack (Confirmed/Planned)
@@ -176,19 +176,19 @@ Based on `greenhouse.md`:
 
 ### Milestone 5 (Optional/Later): Settings, Advanced Features & Testing
 
-*   [>] **Settings Screen:**
+*   [X] **Settings Screen:**
     *   [X] UI for all settings options.
     *   [X] Theme selection (Light/Dark) - connect to implementation from Milestone 1.
-*   [ ] **Authentication:**
-    *   [ ] Implement Password/PIN setup.
-    *   [ ] Implement Biometric authentication.
-*   [ ] **Photo Management (Advanced):**
-    *   [ ] Dedicated screen to view all plant photos.
-    *   [ ] Delete photos.
-*   [ ] **Data Management:**
-    *   [ ] Export logs/data (e.g., as CSV or JSON).
-    *   [ ] Import logs/data.
-    *   [ ] "Clear all data" functionality with confirmation.
+*   [X] **Authentication:**
+    *   [X] Implement Password/PIN setup.
+    *   [X] Implement Biometric authentication.
+*   [x] **Photo Management (Advanced):**
+    *   [x] Dedicated screen to view all plant photos.
+    *   [x] Delete photos.
+*   [x] **Data Management:**
+    *   [x] Export logs/data (e.g., as CSV or JSON).
+    *   [x] Import logs/data.
+    *   [x] "Clear all data" functionality with confirmation.
 *   [ ] **Image Management - Timelapse:**
     *   [ ] Logic to create a timelapse from a plant's images.
 *   [ ] **Firebase Integration (Optional):**

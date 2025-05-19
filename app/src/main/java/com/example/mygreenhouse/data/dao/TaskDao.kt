@@ -24,6 +24,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY scheduledDateTime ASC")
     fun getAllTasks(): Flow<List<Task>>
     
+    @Query("SELECT * FROM tasks ORDER BY scheduledDateTime ASC")
+    suspend fun getAllTasksOneShot(): List<Task>
+    
     @Query("SELECT * FROM tasks WHERE id = :taskId")
     fun getTaskById(taskId: String): Flow<Task?>
     

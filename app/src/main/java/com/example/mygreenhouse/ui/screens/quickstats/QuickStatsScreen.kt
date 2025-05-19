@@ -41,33 +41,35 @@ import androidx.navigation.NavController
 fun QuickStatsScreen(
     onNavigateBack: () -> Unit,
     navController: NavController,
-    viewModel: QuickStatsViewModel = viewModel(factory = QuickStatsViewModel.Factory)
+    viewModel: QuickStatsViewModel = viewModel(factory = QuickStatsViewModel.Factory),
+    darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Quick Stats", color = TextWhite) },
+                title = { Text("Quick Stats", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.QuickStats.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -76,11 +78,11 @@ fun QuickStatsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    color = PrimaryGreen,
+                    color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(48.dp)
                 )
             }
@@ -89,7 +91,7 @@ fun QuickStatsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground)
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -103,19 +105,22 @@ fun QuickStatsScreen(
                         title = "Active Plants",
                         value = uiState.totalActivePlants.toString(),
                         icon = Icons.Default.LocalFlorist,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        darkTheme = darkTheme
                     )
                     StatCard(
                         title = "Drying",
                         value = uiState.dryingCount.toString(),
                         icon = Icons.Default.Spa,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        darkTheme = darkTheme
                     )
                     StatCard(
                         title = "Curing",
                         value = uiState.curingCount.toString(),
                         icon = Icons.Default.Healing,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        darkTheme = darkTheme
                     )
                 }
                 
@@ -125,14 +130,14 @@ fun QuickStatsScreen(
                     Text(
                         text = "Plants by Growth Stage",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                     )
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = DarkSurface.copy(alpha = 0.7f)
+                            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -148,7 +153,8 @@ fun QuickStatsScreen(
                                     StageProgressBar(
                                         stage = stage,
                                         count = count,
-                                        percentage = percentage
+                                        percentage = percentage,
+                                        darkTheme = darkTheme
                                     )
                                 }
                             }
@@ -160,7 +166,7 @@ fun QuickStatsScreen(
                         Text(
                             text = "Growth Trends",
                             style = MaterialTheme.typography.titleMedium,
-                            color = TextWhite,
+                            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
                         )
                         Card(
@@ -169,7 +175,7 @@ fun QuickStatsScreen(
                                 .height(240.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = DarkSurface.copy(alpha = 0.7f)
+                                containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
                             ),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
@@ -186,12 +192,13 @@ fun QuickStatsScreen(
                                         labels = uiState.plantsCreatedByMonth.keys.map { 
                                             it.split(" ")[0].take(3) // Take first 3 chars of month name
                                         }.toList(),
-                                        modifier = Modifier.fillMaxSize()
+                                        modifier = Modifier.fillMaxSize(),
+                                        darkTheme = darkTheme
                                     )
                                 } else {
                                     Text(
                                         text = "No growth data available yet",
-                                        color = TextWhite.copy(alpha = 0.7f),
+                                        color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
                                         modifier = Modifier.align(Alignment.Center)
                                     )
                                 }
@@ -203,14 +210,14 @@ fun QuickStatsScreen(
                     Text(
                         text = "Average Days in Growth Stage",
                         style = MaterialTheme.typography.titleMedium,
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
                     )
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = DarkSurface.copy(alpha = 0.7f)
+                            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
@@ -232,16 +239,16 @@ fun QuickStatsScreen(
                                     ) {
                                         Text(
                                             text = formatGrowthStageName(stage),
-                                            color = TextWhite,
+                                            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontWeight = FontWeight.Medium
                                         )
                                         Text(
                                             text = "$days days",
-                                            color = PrimaryGreen,
+                                            color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
-                                    HorizontalDivider(color = TextWhite.copy(alpha = 0.1f))
+                                    HorizontalDivider(color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.1f))
                                 }
                             
                             if (uiState.averageDaysInStage.entries.none { 
@@ -249,7 +256,7 @@ fun QuickStatsScreen(
                             }) {
                                 Text(
                                     text = "No data available yet",
-                                    color = TextWhite.copy(alpha = 0.7f),
+                                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 16.dp),
@@ -260,7 +267,7 @@ fun QuickStatsScreen(
                     }
                 } else {
                     // No plants yet
-                    EmptyStatsView()
+                    EmptyStatsView(darkTheme = darkTheme)
                 }
             }
         }
@@ -272,8 +279,10 @@ fun SimpleLineChart(
     dataPoints: List<Int>,
     labels: List<String>,
     modifier: Modifier = Modifier,
-    lineColor: Color = PrimaryGreen
+    darkTheme: Boolean
 ) {
+    val lineColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+    val gridColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.1f)
     Box(
         modifier = modifier.padding(
             start = 32.dp, // Space for y-axis labels
@@ -291,7 +300,6 @@ fun SimpleLineChart(
             val yStep = size.height / maxValue.coerceAtLeast(1f)
             
             // Draw grid lines
-            val gridColor = TextWhite.copy(alpha = 0.1f)
             for (i in 0..4) {
                 val y = size.height - (i * size.height / 4)
                 drawLine(
@@ -350,7 +358,7 @@ fun SimpleLineChart(
                 if (i < 5) { // Skip the very top label to avoid overlap
                     Text(
                         text = value.toString(),
-                        color = TextWhite.copy(alpha = 0.7f),
+                        color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f),
                         fontSize = 10.sp,
                         modifier = Modifier.padding(end = 4.dp)
                     )
@@ -369,7 +377,7 @@ fun SimpleLineChart(
             labels.forEach { label ->
                 Text(
                     text = label,
-                    color = TextWhite.copy(alpha = 0.7f),
+                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.7f),
                     fontSize = 10.sp
                 )
             }
@@ -382,13 +390,14 @@ fun StatCard(
     title: String,
     value: String,
     icon: ImageVector,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean
 ) {
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -402,19 +411,19 @@ fun StatCard(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = PrimaryGreen,
+                tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
             Text(
                 text = value,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextWhite
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = title,
                 fontSize = 12.sp,
-                color = TextWhite.copy(alpha = 0.7f)
+                color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f)
             )
         }
     }
@@ -424,7 +433,8 @@ fun StatCard(
 fun StageProgressBar(
     stage: GrowthStage,
     count: Int,
-    percentage: Int
+    percentage: Int,
+    darkTheme: Boolean
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -437,12 +447,12 @@ fun StageProgressBar(
             Text(
                 text = formatGrowthStageName(stage),
                 fontSize = 14.sp,
-                color = TextWhite
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "$count plants ($percentage%)",
                 fontSize = 14.sp,
-                color = TextWhite.copy(alpha = 0.7f)
+                color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f)
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
@@ -451,21 +461,21 @@ fun StageProgressBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp),
-            color = PrimaryGreen,
-            trackColor = DarkSurface.copy(alpha = 0.3f),
+            color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+            trackColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         )
     }
 }
 
 @Composable
-fun EmptyStatsView() {
+fun EmptyStatsView(darkTheme: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 32.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -479,7 +489,7 @@ fun EmptyStatsView() {
             Icon(
                 imageVector = Icons.Default.LocalFlorist,
                 contentDescription = null,
-                tint = PrimaryGreen.copy(alpha = 0.7f),
+                tint = (if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary).copy(alpha = 0.7f),
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -487,13 +497,13 @@ fun EmptyStatsView() {
                 text = "No Plants Yet",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextWhite
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Add plants to your greenhouse to see statistics and growth trends.",
                 fontSize = 14.sp,
-                color = TextWhite.copy(alpha = 0.7f),
+                color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }

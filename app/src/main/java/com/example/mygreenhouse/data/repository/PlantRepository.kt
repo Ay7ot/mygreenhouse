@@ -37,6 +37,10 @@ class PlantRepository(private val plantDao: PlantDao) {
         return plantDao.getPlantByIdOnce(id)
     }
     
+    suspend fun getAllPlantsOneShot(): List<Plant> {
+        return plantDao.getAllPlantsOneShot()
+    }
+    
     fun getPlantCountByStage(stage: GrowthStage): Flow<Int> {
         return plantDao.getPlantCountByStage(stage)
     }

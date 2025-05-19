@@ -32,16 +32,19 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = PrimaryGreenDark,
-    secondary = SecondaryGreen,
-    tertiary = PrimaryGreen,
+    primary = LightPrimary,
+    secondary = LightSecondary,
+    tertiary = LightTertiary,
     background = LightBackground,
     surface = LightSurface,
-    onPrimary = TextWhite,
-    onSecondary = TextWhite,
-    onTertiary = TextWhite,
-    onBackground = TextDark,
-    onSurface = TextDark
+    onPrimary = LightOnPrimary,
+    onSecondary = LightOnSecondary,
+    onTertiary = LightOnTertiary,
+    onBackground = LightOnBackground,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline
 )
 
 @Composable
@@ -63,8 +66,8 @@ fun MyGreenHouseTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = DarkBackground.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 

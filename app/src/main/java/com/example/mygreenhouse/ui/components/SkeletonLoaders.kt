@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -300,7 +301,7 @@ fun TaskListSkeleton() {
  * Skeleton loader for harvest tracking
  */
 @Composable
-fun HarvestTrackingSkeleton() {
+fun HarvestTrackingSkeleton(darkTheme: Boolean = true) {
     val brush = shimmerBrush()
     
     Column(
@@ -312,7 +313,7 @@ fun HarvestTrackingSkeleton() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = DarkSurface.copy(alpha = 0.5f)
+                    containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -407,7 +408,7 @@ fun HarvestTrackingSkeleton() {
  * Skeleton loader for seed bank
  */
 @Composable
-fun SeedBankSkeleton() {
+fun SeedBankSkeleton(darkTheme: Boolean = true) {
     val brush = shimmerBrush()
     
     Column(
@@ -419,7 +420,7 @@ fun SeedBankSkeleton() {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = DarkSurface.copy(alpha = 0.5f)
+                    containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -468,7 +469,7 @@ fun SeedBankSkeleton() {
                         Box(
                             modifier = Modifier
                                 .width(80.dp)
-                                .height(28.dp)
+                                .height(24.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(brush)
                         )
@@ -477,21 +478,31 @@ fun SeedBankSkeleton() {
                         
                         Box(
                             modifier = Modifier
-                                .width(90.dp)
-                                .height(28.dp)
+                                .width(100.dp)
+                                .height(24.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(brush)
                         )
                         
                         Spacer(modifier = Modifier.weight(1f))
                         
-                        Box(
-                            modifier = Modifier
-                                .width(100.dp)
-                                .height(16.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(brush)
-                        )
+                        Row {
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(brush)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(brush)
+                            )
+                        }
                     }
                 }
             }

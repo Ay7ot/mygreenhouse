@@ -1,6 +1,8 @@
 package com.example.mygreenhouse.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -12,10 +14,14 @@ import com.example.mygreenhouse.data.AppDatabase
 import com.example.mygreenhouse.data.model.TaskType
 import com.example.mygreenhouse.data.repository.TaskRepository
 import com.example.mygreenhouse.ui.screens.addplant.AddPlantScreen
+import com.example.mygreenhouse.ui.screens.allplants.AllPlantsScreen
+import com.example.mygreenhouse.ui.screens.auth.AuthViewModel
+import com.example.mygreenhouse.ui.screens.auth.LockScreen
+import com.example.mygreenhouse.ui.screens.auth.SetupPinScreen
 import com.example.mygreenhouse.ui.screens.dashboard.DashboardScreen
-import com.example.mygreenhouse.ui.screens.dankbank.DankBankScreen
 import com.example.mygreenhouse.ui.screens.dankbank.AddHarvestScreen
 import com.example.mygreenhouse.ui.screens.dankbank.AddSeedScreen
+import com.example.mygreenhouse.ui.screens.dankbank.DankBankScreen
 import com.example.mygreenhouse.ui.screens.dankbank.EditHarvestScreen
 import com.example.mygreenhouse.ui.screens.dankbank.EditSeedScreen
 import com.example.mygreenhouse.ui.screens.dankbank.HarvestDetailScreen
@@ -28,7 +34,10 @@ import com.example.mygreenhouse.ui.screens.task.ScheduleTaskScreen
 import com.example.mygreenhouse.ui.screens.task.TaskListScreen
 import com.example.mygreenhouse.ui.screens.task.TaskScreen
 import com.example.mygreenhouse.ui.screens.task.TaskViewModel
-import com.example.mygreenhouse.ui.screens.allplants.AllPlantsScreen
+import com.example.mygreenhouse.ui.screens.photomanagement.PhotoManagementScreen
+import com.example.mygreenhouse.ui.screens.datamanagement.DataManagementScreen
+import com.example.mygreenhouse.ui.settings.ThemePreference
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Navigation destinations for the app
@@ -66,17 +75,59 @@ sealed class NavDestination(val route: String) {
         fun createRoute(seedId: String) = "seedDetail/$seedId"
     }
     object Settings : NavDestination("settings")
+    object PhotoManagement : NavDestination("photo_management")
+    object DataManagement : NavDestination("data_management")
+    
+    // Auth destinations
+    object Lock : NavDestination("lock")
+    object SetupPin : NavDestination("setup_pin")
 }
 
 /**
  * Navigation graph for the app
  */
 @Composable
-fun GreenhouseNavGraph(navController: NavHostController) {
+fun GreenhouseNavGraph(
+    navController: NavHostController,
+    themePreferenceState: StateFlow<ThemePreference>,
+    onThemePreferenceChange: (ThemePreference) -> Unit,
+    darkTheme: Boolean
+) {
+    // Get AuthViewModel to check if PIN lock is enabled
+    val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
+    val isPinLockEnabled by authViewModel.isPinLockEnabled.collectAsState()
+    
+    // Determine the start destination based on PIN lock status
+    val startDestination = if (isPinLockEnabled) {
+        NavDestination.Lock.route
+    } else {
+        NavDestination.Dashboard.route
+    }
+    
     NavHost(
         navController = navController,
-        startDestination = NavDestination.Dashboard.route
+        startDestination = startDestination
     ) {
+        // Lock Screen
+        composable(NavDestination.Lock.route) {
+            LockScreen(
+                onUnlockSuccess = {
+                    navController.navigate(NavDestination.Dashboard.route) {
+                        popUpTo(NavDestination.Lock.route) { inclusive = true }
+                    }
+                },
+                darkTheme = darkTheme
+            )
+        }
+        
+        // PIN Setup Screen
+        composable(NavDestination.SetupPin.route) {
+            SetupPinScreen(
+                onNavigateBack = { navController.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
+        
         composable(NavDestination.Dashboard.route) {
             DashboardScreen(
                 navigateToAddPlant = { navController.navigate(NavDestination.AddPlant.route) },
@@ -91,7 +142,9 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 },
                 navigateToQuickStats = { navController.navigate(NavDestination.QuickStats.route) },
                 navigateToDankBank = { navController.navigate(NavDestination.DankBank.route) },
-                navController = navController
+                navigateToSettings = { navController.navigate(NavDestination.Settings.route) },
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
@@ -99,7 +152,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
             AddPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPlantAdded = { navController.popBackStack() },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
@@ -112,7 +166,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
             EditPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPlantUpdated = { navController.popBackStack() },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
@@ -121,7 +176,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 onNavigateBack = { navController.popBackStack() },
                 onEditPlant = { plantId ->
                     navController.navigate(NavDestination.EditPlant.createRoute(plantId))
-                }
+                },
+                darkTheme = darkTheme
             )
         }
         
@@ -142,20 +198,20 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 onViewTaskList = {
                     navController.navigate(NavDestination.TaskList.route)
                 },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
         composable(NavDestination.TaskList.route) {
-            // Use the ViewModel's factory for instantiation
             val taskViewModel: TaskViewModel = viewModel(factory = TaskViewModel.Factory)
-            
             TaskListScreen(
                 viewModel = taskViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onEditTask = { task ->
                     navController.navigate(NavDestination.EditTask.createRoute(task.id, task.type.name))
-                }
+                },
+                darkTheme = darkTheme
             )
         }
         
@@ -165,21 +221,16 @@ fun GreenhouseNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val taskTypeName = backStackEntry.arguments?.getString("taskTypeName")
             val taskType = taskTypeName?.let { TaskType.valueOf(it) }
-
-            // Use the ViewModel's factory for instantiation
             val taskViewModel: TaskViewModel = viewModel(factory = TaskViewModel.Factory)
-
             if (taskType != null) {
                 ScheduleTaskScreen(
                     taskType = taskType,
                     onNavigateBack = { navController.popBackStack() },
-                    onSaveTask = { _, _, _, _ ->
-                        // This lambda is kept for signature compatibility but logic is in ViewModel
-                    },
-                    viewModel = taskViewModel
+                    onSaveTask = { _, _, _, _ -> },
+                    viewModel = taskViewModel,
+                    darkTheme = darkTheme
                 )
             } else {
-                // Handle error case where taskType is null, e.g. navigate back or show error
                 navController.popBackStack()
             }
         }
@@ -194,22 +245,16 @@ fun GreenhouseNavGraph(navController: NavHostController) {
             val taskId = backStackEntry.arguments?.getString("taskId")
             val taskTypeName = backStackEntry.arguments?.getString("taskTypeName")
             val taskType = taskTypeName?.let { TaskType.valueOf(it) }
-            
-            // Use the ViewModel's factory for instantiation
             val taskViewModel: TaskViewModel = viewModel(factory = TaskViewModel.Factory)
-            
-            // Correctly scope the composable function
             if (taskId != null && taskType != null) {
-                // We can't directly call the ViewModel here as it's not a Composable context
-                // Instead, we need to create another composable that handles this
                 EditTaskScreen(
                     taskId = taskId,
                     taskType = taskType,
                     viewModel = taskViewModel,
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    darkTheme = darkTheme
                 )
             } else {
-                // Handle error case where taskId or taskType is null
                 navController.popBackStack()
             }
         }
@@ -225,7 +270,8 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                         }
                     }
                 },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
@@ -240,35 +286,31 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                         }
                     }
                 },
-                onNavigateToAddHarvest = {
-                    navController.navigate(NavDestination.AddHarvest.route)
-                },
-                onNavigateToAddSeed = {
-                    navController.navigate(NavDestination.AddSeed.route)
-                },
-                navController = navController
+                onNavigateToAddHarvest = { navController.navigate(NavDestination.AddHarvest.route) },
+                onNavigateToAddSeed = { navController.navigate(NavDestination.AddSeed.route) },
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
-        // Add Harvest Screen
         composable(NavDestination.AddHarvest.route) {
             AddHarvestScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onHarvestAdded = { navController.popBackStack() },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
-        // Add Seed Screen
         composable(NavDestination.AddSeed.route) {
             AddSeedScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onSeedAdded = { navController.popBackStack() },
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
         
-        // Edit Harvest Screen
         composable(
             route = NavDestination.EditHarvest.route,
             arguments = listOf(navArgument("harvestId") { type = NavType.StringType })
@@ -279,14 +321,14 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                     harvestId = harvestId,
                     onNavigateBack = { navController.popBackStack() },
                     onHarvestUpdated = { navController.popBackStack() },
-                    navController = navController
+                    navController = navController,
+                    darkTheme = darkTheme
                 )
             } else {
-                navController.popBackStack() // Handle error: harvestId is null
+                navController.popBackStack()
             }
         }
         
-        // Edit Seed Screen
         composable(
             route = NavDestination.EditSeed.route,
             arguments = listOf(navArgument("seedId") { type = NavType.StringType })
@@ -297,14 +339,14 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                     seedId = seedId,
                     onNavigateBack = { navController.popBackStack() },
                     onSeedUpdated = { navController.popBackStack() },
-                    navController = navController
+                    navController = navController,
+                    darkTheme = darkTheme
                 )
             } else {
-                navController.popBackStack() // Handle error: seedId is null
+                navController.popBackStack()
             }
         }
         
-        // Harvest Detail Screen
         composable(
             route = NavDestination.HarvestDetail.route,
             arguments = listOf(navArgument("harvestId") { type = NavType.StringType })
@@ -314,18 +356,16 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 HarvestDetailScreen(
                     harvestId = harvestId,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { id -> 
-                        navController.navigate(NavDestination.EditHarvest.createRoute(id))
-                    },
+                    onNavigateToEdit = { id -> navController.navigate(NavDestination.EditHarvest.createRoute(id)) },
                     onDeleteHarvest = { navController.popBackStack() },
-                    navController = navController
+                    navController = navController,
+                    darkTheme = darkTheme
                 )
             } else {
-                navController.popBackStack() // Handle error: harvestId is null
+                navController.popBackStack()
             }
         }
         
-        // Seed Detail Screen
         composable(
             route = NavDestination.SeedDetail.route,
             arguments = listOf(navArgument("seedId") { type = NavType.StringType })
@@ -335,20 +375,39 @@ fun GreenhouseNavGraph(navController: NavHostController) {
                 SeedDetailScreen(
                     seedId = seedId,
                     onNavigateBack = { navController.popBackStack() },
-                    onNavigateToEdit = { id -> 
-                        navController.navigate(NavDestination.EditSeed.createRoute(id))
-                    },
+                    onNavigateToEdit = { id -> navController.navigate(NavDestination.EditSeed.createRoute(id)) },
                     onDeleteSeed = { navController.popBackStack() },
-                    navController = navController
+                    navController = navController,
+                    darkTheme = darkTheme
                 )
             } else {
-                navController.popBackStack() // Handle error: seedId is null
+                navController.popBackStack()
             }
         }
         
         composable(NavDestination.Settings.route) {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToSetupPin = { navController.navigate(NavDestination.SetupPin.route) },
+                onNavigateToPhotoManagement = { navController.navigate(NavDestination.PhotoManagement.route) },
+                onNavigateToDataManagement = { navController.navigate(NavDestination.DataManagement.route) },
+                currentThemePreferenceState = themePreferenceState,
+                onThemePreferenceChange = onThemePreferenceChange,
+                darkTheme = darkTheme
+            )
+        }
+        
+        composable(NavDestination.PhotoManagement.route) {
+            PhotoManagementScreen(
+                onNavigateBack = { navController.popBackStack() },
+                darkTheme = darkTheme
+            )
+        }
+        
+        composable(NavDestination.DataManagement.route) {
+            DataManagementScreen(
+                onNavigateBack = { navController.popBackStack() },
+                darkTheme = darkTheme
             )
         }
     }

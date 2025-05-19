@@ -21,6 +21,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,7 +50,8 @@ fun SeedListItem(
     onSeedClick: (Seed) -> Unit,
     onEdit: (Seed) -> Unit,
     onDelete: (Seed) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
 ) {
     // Menu state
     var showMenu by remember { mutableStateOf(false) }
@@ -69,7 +71,7 @@ fun SeedListItem(
             .clickable { onSeedClick(seed) },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp
@@ -91,7 +93,7 @@ fun SeedListItem(
                         text = seed.strainName,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -99,7 +101,7 @@ fun SeedListItem(
                     Text(
                         text = "Batch #${seed.batchNumber}",
                         fontSize = 14.sp,
-                        color = TextGrey,
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -111,31 +113,31 @@ fun SeedListItem(
                         Icon(
                             imageVector = Icons.Default.MoreVert,
                             contentDescription = "More options",
-                            tint = TextGrey
+                            tint = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                     
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false },
-                        modifier = Modifier.background(DarkSurface)
+                        modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Edit", color = TextWhite) },
+                            text = { Text("Edit", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 onEdit(seed)
                                 showMenu = false
                             },
-                            modifier = Modifier.background(DarkSurface)
+                            modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
                         
                         DropdownMenuItem(
-                            text = { Text("Delete", color = TextWhite) },
+                            text = { Text("Delete", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 onDelete(seed)
                                 showMenu = false
                             },
-                            modifier = Modifier.background(DarkSurface)
+                            modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
                     }
                 }
@@ -152,7 +154,7 @@ fun SeedListItem(
                 Box(
                     modifier = Modifier
                         .background(
-                            color = PrimaryGreen.copy(alpha = 0.15f),
+                            color = if (darkTheme) PrimaryGreen.copy(alpha = 0.15f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(8.dp)
                         )
                         .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -160,7 +162,7 @@ fun SeedListItem(
                     Text(
                         text = "${seed.seedCount} seeds",
                         fontSize = 14.sp,
-                        color = PrimaryGreen,
+                        color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -190,7 +192,7 @@ fun SeedListItem(
                 Text(
                     text = "Added: ${seed.acquisitionDate.format(dateFormatter)}",
                     fontSize = 12.sp,
-                    color = TextGrey
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
             
@@ -203,12 +205,12 @@ fun SeedListItem(
                     Text(
                         text = "Breeder: ",
                         fontSize = 14.sp,
-                        color = TextGrey
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                     Text(
                         text = seed.breeder,
                         fontSize = 14.sp,
-                        color = TextWhite.copy(alpha = 0.8f),
+                        color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -223,12 +225,12 @@ fun SeedListItem(
                     Text(
                         text = "Source: ",
                         fontSize = 14.sp,
-                        color = TextGrey
+                        color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                     Text(
                         text = seed.source,
                         fontSize = 14.sp,
-                        color = TextWhite.copy(alpha = 0.8f)
+                        color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -239,7 +241,7 @@ fun SeedListItem(
                 Text(
                     text = seed.notes,
                     fontSize = 14.sp,
-                    color = TextGrey,
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )

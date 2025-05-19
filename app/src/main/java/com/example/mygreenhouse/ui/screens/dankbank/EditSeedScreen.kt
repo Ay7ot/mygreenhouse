@@ -63,7 +63,8 @@ fun EditSeedScreen(
     onNavigateBack: () -> Unit,
     onSeedUpdated: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
-    navController: NavController
+    navController: NavController,
+    darkTheme: Boolean
 ) {
     // Form state
     var strainName by remember { mutableStateOf("") }
@@ -144,7 +145,8 @@ fun EditSeedScreen(
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.DankBank.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->

@@ -45,7 +45,6 @@ data class AddPlantUiState(
     val selectedSoilType: String? = null,
     val imageUri: String? = null,
     val isValid: Boolean = false,
-    val showStartDatePicker: Boolean = false
 )
 
 /**
@@ -221,14 +220,6 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                 startDateText = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
             )
         }
-    }
-
-    fun showStartDatePickerDialog() {
-        _uiState.update { it.copy(showStartDatePicker = true) }
-    }
-
-    fun dismissStartDatePickerDialog() {
-        _uiState.update { it.copy(showStartDatePicker = false) }
     }
     
     fun updateCurrentNutrientInput(input: String) {

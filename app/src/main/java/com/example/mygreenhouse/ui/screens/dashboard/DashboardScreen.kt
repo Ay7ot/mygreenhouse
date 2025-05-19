@@ -61,7 +61,6 @@ import com.example.mygreenhouse.ui.screens.task.displayName
 import com.example.mygreenhouse.ui.theme.DarkBackground
 import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
-import com.example.mygreenhouse.ui.theme.TaskAlertGreen
 import com.example.mygreenhouse.ui.theme.TextGrey
 import com.example.mygreenhouse.ui.theme.TextWhite
 import androidx.navigation.NavController
@@ -80,8 +79,10 @@ fun DashboardScreen(
     navigateToEditTask: (String, String) -> Unit,
     navigateToQuickStats: () -> Unit,
     navigateToDankBank: () -> Unit,
+    navigateToSettings: () -> Unit,
     navController: NavController,
-    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory)
+    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory),
+    darkTheme: Boolean
 ) {
     val plants by viewModel.plants.collectAsState(initial = null)
     val upcomingTasks by viewModel.upcomingTasks.collectAsState(initial = null)
@@ -95,30 +96,31 @@ fun DashboardScreen(
                 title = { 
                     Text(
                         "Dashboard",
-                        color = TextWhite,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     ) 
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* TODO: Open drawer */ }) {
+                    IconButton(onClick = { navigateToSettings() }) {
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Menu",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         bottomBar = {
             GreenhouseBottomNavigation(
                 currentRoute = NavDestination.Dashboard.route,
-                navController = navController
+                navController = navController,
+                darkTheme = darkTheme
             )
         }
     ) { paddingValues ->
@@ -126,7 +128,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // Section Header for Plants
             SectionHeader(
@@ -152,7 +154,10 @@ fun DashboardScreen(
                         }
                     }
                 }
-                else -> EmptyPlantsView(onAddPlantClick = navigateToAddPlant)
+                else -> EmptyPlantsView(
+                    onAddPlantClick = navigateToAddPlant,
+                    darkTheme = darkTheme
+                )
             }
             
             // Section header for tasks
@@ -175,12 +180,16 @@ fun DashboardScreen(
                             TaskAlert(
                                 task = task,
                                 daysUntil = daysUntil,
-                                onClick = { navigateToEditTask(task.id, task.type.name) }
+                                onClick = { navigateToEditTask(task.id, task.type.name) },
+                                darkTheme = darkTheme
                             )
                         }
                     }
                 }
-                else -> EmptyTasksView(onAddTaskClick = navigateToTask)
+                else -> EmptyTasksView(
+                    onAddTaskClick = navigateToTask,
+                    darkTheme = darkTheme
+                )
             }
         }
     }
@@ -206,14 +215,14 @@ fun SectionHeader(
             text = title,
             fontWeight = FontWeight.Bold,
             fontSize = 18.sp,
-            color = TextWhite
+            color = MaterialTheme.colorScheme.onBackground
         )
         
         if (actionText != null) {
             TextButton(
                 onClick = onActionClick,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = PrimaryGreen
+                    contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
                 Text(
@@ -229,7 +238,7 @@ fun SectionHeader(
  * Composable for displaying an empty state for the plants carousel.
  */
 @Composable
-fun EmptyPlantsView(onAddPlantClick: () -> Unit) {
+fun EmptyPlantsView(onAddPlantClick: () -> Unit, darkTheme: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -237,7 +246,7 @@ fun EmptyPlantsView(onAddPlantClick: () -> Unit) {
             .height(220.dp)
             .clickable { onAddPlantClick() },
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceContainerLowest
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
@@ -255,20 +264,20 @@ fun EmptyPlantsView(onAddPlantClick: () -> Unit) {
                 imageVector = Icons.Filled.AddCircleOutline,
                 contentDescription = "Add Plant",
                 modifier = Modifier.size(56.dp),
-                tint = PrimaryGreen
+                tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "Your greenhouse is empty!",
                 style = MaterialTheme.typography.titleMedium,
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Tap here to add your first plant and start tracking its growth.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextGrey,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }
@@ -279,7 +288,7 @@ fun EmptyPlantsView(onAddPlantClick: () -> Unit) {
  * Composable for displaying an empty state for task alerts.
  */
 @Composable
-fun EmptyTasksView(onAddTaskClick: () -> Unit) {
+fun EmptyTasksView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -287,7 +296,7 @@ fun EmptyTasksView(onAddTaskClick: () -> Unit) {
             .height(160.dp)
             .clickable { onAddTaskClick() },
         colors = CardDefaults.cardColors(
-            containerColor = DarkSurface.copy(alpha = 0.7f)
+            containerColor = if (darkTheme) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceContainerLowest
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
@@ -305,20 +314,20 @@ fun EmptyTasksView(onAddTaskClick: () -> Unit) {
                 imageVector = Icons.Filled.NotificationsNone,
                 contentDescription = "No Tasks",
                 modifier = Modifier.size(48.dp),
-                tint = PrimaryGreen
+                tint = if (darkTheme) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "No upcoming tasks",
                 style = MaterialTheme.typography.titleSmall,
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Tap here to schedule a new task and keep your plants healthy.",
                 style = MaterialTheme.typography.bodySmall,
-                color = TextGrey,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
             )
         }
@@ -344,7 +353,7 @@ fun PlantCard(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(DarkSurface.copy(alpha = 0.5f))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             if (imageUrl != null) {
                 AsyncImage(
@@ -361,8 +370,8 @@ fun PlantCard(
                         .background(
                             Brush.radialGradient(
                                 colors = listOf(
-                                    DarkSurface,
-                                    Color(0xFF1A2134)
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surface
                                 )
                             )
                         ),
@@ -371,7 +380,7 @@ fun PlantCard(
                     Icon(
                         imageVector = Icons.Filled.AddCircleOutline,
                         contentDescription = null,
-                        tint = PrimaryGreen.copy(alpha = 0.5f),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                         modifier = Modifier.size(48.dp)
                     )
                 }
@@ -388,7 +397,7 @@ fun PlantCard(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
             modifier = Modifier.width(80.dp),
-            color = TextWhite,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -402,25 +411,44 @@ fun TaskAlert(
     task: Task,
     daysUntil: Long,
     onClick: () -> Unit,
+    darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
     val viewModel: DashboardViewModel = viewModel()
     val plantNameCache by viewModel.plantNameCache.collectAsState()
+    
+    // Define card colors based on urgency and theme
+    val cardColor = if (darkTheme) {
+        // Dark theme cards
+        if (daysUntil == 0L) PrimaryGreen.copy(alpha = 0.2f) else DarkSurface
+    } else {
+        // Light theme cards - more distinctive
+        if (daysUntil == 0L) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    }
+    
+    // Title colors
+    val titleColor = if (darkTheme) {
+        // Dark theme text
+        if (daysUntil == 0L) PrimaryGreen else TextWhite
+    } else {
+        // Light theme text
+        if (daysUntil == 0L) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+    }
+    
+    // Description colors
+    val descriptionColor = if (darkTheme) {
+        TextWhite.copy(alpha = 0.8f)
+    } else {
+        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+    }
     
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (daysUntil == 0L) 
-                PrimaryGreen.copy(alpha = 0.15f) 
-            else 
-                DarkSurface.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
-        )
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (darkTheme) 0.dp else 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -432,7 +460,7 @@ fun TaskAlert(
                 text = task.type.displayName(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = TextWhite
+                color = titleColor
             )
             
             // Task description if available
@@ -441,7 +469,7 @@ fun TaskAlert(
                 Text(
                     text = task.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextWhite.copy(alpha = 0.8f),
+                    color = descriptionColor,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -465,13 +493,23 @@ fun TaskAlert(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (daysUntil == 0L) TaskAlertGreen else TextGrey.copy(alpha = 0.5f))
+                        .background(
+                            if (daysUntil == 0L) {
+                                if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                            } else {
+                                if (darkTheme) TextWhite.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                            }
+                        )
                 )
                 
                 Text(
                     text = daysText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (daysUntil == 0L) PrimaryGreen else TextGrey,
+                    color = if (daysUntil == 0L) {
+                        if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                    } else {
+                        if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                    },
                     fontWeight = if (daysUntil == 0L) FontWeight.SemiBold else FontWeight.Normal
                 )
                 
@@ -481,7 +519,7 @@ fun TaskAlert(
                     Text(
                         text = "For: $plantName",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextGrey,
+                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
                         fontWeight = FontWeight.Medium
                     )
                 }
