@@ -59,9 +59,10 @@ fun SeedListItem(
     
     // Color for seed type
     val seedTypeColor = when (seed.seedType) {
-        SeedType.FEMINIZED -> Color(0xFFE57373) // Light red
-        SeedType.AUTOFLOWER -> Color(0xFF64B5F6) // Light blue
-        SeedType.REGULAR -> Color(0xFF81C784) // Light green
+        SeedType.AUTOFLOWER_REGULAR -> Color(0xFF64B5F6) // Light blue
+        SeedType.AUTOFLOWER_FEMINIZED -> Color(0xFFBA68C8) // Light purple for distinction
+        SeedType.PHOTOPERIOD_REGULAR -> Color(0xFF81C784) // Light green
+        SeedType.PHOTOPERIOD_FEMINIZED -> Color(0xFFE57373) // Light red
     }
     
     Card(
@@ -179,7 +180,7 @@ fun SeedListItem(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = seed.seedType.name.lowercase().replaceFirstChar { it.uppercase() },
+                        text = seed.seedType.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
                         fontSize = 14.sp,
                         color = seedTypeColor,
                         fontWeight = FontWeight.Medium

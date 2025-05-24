@@ -151,7 +151,11 @@ fun GreenhouseNavGraph(
         composable(NavDestination.AddPlant.route) {
             AddPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onPlantAdded = { navController.popBackStack() },
+                onNavigateToDashboard = { 
+                    navController.navigate(NavDestination.Dashboard.route) {
+                        popUpTo(NavDestination.AddPlant.route) { inclusive = true }
+                    }
+                },
                 navController = navController,
                 darkTheme = darkTheme
             )

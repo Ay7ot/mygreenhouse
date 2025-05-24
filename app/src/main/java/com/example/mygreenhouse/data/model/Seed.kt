@@ -20,7 +20,7 @@ data class Seed(
     
     // Strain information
     val breeder: String = "",
-    val seedType: SeedType = SeedType.REGULAR,
+    val seedType: SeedType = SeedType.AUTOFLOWER_REGULAR,
     
     // Acquisition information
     val acquisitionDate: LocalDate = LocalDate.now(),
@@ -34,5 +34,8 @@ data class Seed(
  * Enum representing types of seeds
  */
 enum class SeedType {
-    REGULAR, FEMINIZED, AUTOFLOWER
+    AUTOFLOWER_REGULAR,
+    AUTOFLOWER_FEMINIZED,
+    PHOTOPERIOD_REGULAR,
+    PHOTOPERIOD_FEMINIZED
 } 

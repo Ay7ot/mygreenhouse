@@ -71,7 +71,7 @@ fun EditSeedScreen(
     var batchNumber by remember { mutableStateOf("") }
     var seedCount by remember { mutableStateOf("") }
     var breeder by remember { mutableStateOf("") }
-    var selectedSeedType by remember { mutableStateOf(SeedType.REGULAR) }
+    var selectedSeedType by remember { mutableStateOf(SeedType.AUTOFLOWER_REGULAR) }
     var acquisitionDate by remember { mutableStateOf(LocalDate.now()) }
     var source by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
@@ -230,7 +230,7 @@ fun EditSeedScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedTextField(
-                        value = selectedSeedType.name.lowercase().replaceFirstChar { it.uppercase() },
+                        value = selectedSeedType.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
                         onValueChange = { },
                         readOnly = true,
                         label = { Text("Seed Type", color = TextWhite.copy(alpha = 0.8f)) },
@@ -253,7 +253,7 @@ fun EditSeedScreen(
                             DropdownMenuItem(
                                 text = { 
                                     Text(
-                                        seedType.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        seedType.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
                                         color = TextWhite
                                     ) 
                                 },

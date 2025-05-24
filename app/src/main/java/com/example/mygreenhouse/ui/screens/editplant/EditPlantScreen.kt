@@ -168,11 +168,10 @@ fun EditPlantScreen(
                 if (uiState.source == PlantSource.SEED) {
                     DropdownMenuField(
                         label = "Plant Type",
-                        selectedValue = uiState.typeDisplay,
-                        options = PlantType.values().map { it.name.lowercase().replaceFirstChar(Char::titlecase) },
+                        selectedValue = uiState.plantTypeSelection,
+                        options = viewModel.plantTypeSelectionOptions,
                         onOptionSelected = { selectedString ->
-                            val type = PlantType.values().find { it.name.equals(selectedString, ignoreCase = true) }
-                            viewModel.updatePlantType(type)
+                            viewModel.updatePlantTypeSelection(selectedString)
                         },
                         enabled = true
                     )

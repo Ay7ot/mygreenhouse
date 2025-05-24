@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -264,12 +265,13 @@ fun SeedDetailScreen(
 @Composable
 fun SeedTypeCard(seed: Seed, darkTheme: Boolean) {
     val seedTypeColor = when (seed.seedType) {
-        SeedType.FEMINIZED -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFFE57373) else androidx.compose.ui.graphics.Color(0xFFE57373).copy(alpha = 0.8f) // Light red
-        SeedType.AUTOFLOWER -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFF64B5F6) else androidx.compose.ui.graphics.Color(0xFF64B5F6).copy(alpha = 0.8f) // Light blue
-        SeedType.REGULAR -> if (darkTheme) androidx.compose.ui.graphics.Color(0xFF81C784) else androidx.compose.ui.graphics.Color(0xFF81C784).copy(alpha = 0.8f) // Light green
+        SeedType.AUTOFLOWER_REGULAR -> if (darkTheme) Color(0xFF64B5F6) else Color(0xFF64B5F6).copy(alpha = 0.8f) // Light blue
+        SeedType.AUTOFLOWER_FEMINIZED -> if (darkTheme) Color(0xFFBA68C8) else Color(0xFFBA68C8).copy(alpha = 0.8f) // Light purple
+        SeedType.PHOTOPERIOD_REGULAR -> if (darkTheme) Color(0xFF81C784) else Color(0xFF81C784).copy(alpha = 0.8f) // Light green
+        SeedType.PHOTOPERIOD_FEMINIZED -> if (darkTheme) Color(0xFFE57373) else Color(0xFFE57373).copy(alpha = 0.8f) // Light red
     }
     
-    val seedTypeName = seed.seedType.name.lowercase().replaceFirstChar { it.uppercase() }
+    val seedTypeName = seed.seedType.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
     
     Card(
         modifier = Modifier.fillMaxWidth(),

@@ -29,8 +29,8 @@ data class AddPlantUiState(
     val batchNumber: String = "",
     val source: PlantSource? = null,
     val sourceDisplay: String = "Select",
+    val plantTypeSelection: String = "Select",
     val type: PlantType? = null,
-    val typeDisplay: String = "Select",
     val growthStage: GrowthStage? = null,
     val growthStageDisplay: String = "Select",
     val availableGrowthStages: List<GrowthStage> = emptyList(),
@@ -45,6 +45,8 @@ data class AddPlantUiState(
     val selectedSoilType: String? = null,
     val imageUri: String? = null,
     val isValid: Boolean = false,
+    val showSaveConfirmationDialog: Boolean = false,
+    val plantJustSaved: Boolean = false
 )
 
 /**
@@ -58,6 +60,8 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     
     val soilTypeOptions = listOf("Select", "Coco Coir", "Soil", "Hydroponics", "Aeroponics", "Other")
     
+    val plantTypeSelectionOptions = listOf("Select", "Autoflower Regular", "Autoflower Feminized", "Photoperiod Regular", "Photoperiod Feminized")
+    
     fun updateStrainName(name: String) {
         _uiState.update { 
             it.copy(
@@ -66,6 +70,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     strainName = name,
                     batchNumber = it.batchNumber,
                     source = it.source,
+                    type = it.type,
                     stage = it.growthStage
                 )
             )
@@ -80,6 +85,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     strainName = it.strainName,
                     batchNumber = number,
                     source = it.source,
+                    type = it.type,
                     stage = it.growthStage
                 )
             )
@@ -118,52 +124,37 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                 growthStage = null,
                 growthStageDisplay = "Select",
                 availableGrowthStages = newAvailableGrowthStages,
-                type = if (source == PlantSource.CLONE) null else it.type,
-                typeDisplay = if (source == PlantSource.CLONE) "Select" else it.typeDisplay,
-                showDurationField = if (source == PlantSource.CLONE) false else it.showDurationField,
-                durationLabel = if (source == PlantSource.CLONE) "Duration (days)" 
-                              else if (it.type == PlantType.AUTOFLOWER) "Seed to Harvest (days)"
-                              else if (it.type == PlantType.PHOTOPERIOD) "Flower Duration (days)"
-                              else "Duration (days)",
+                plantTypeSelection = "Select",
+                type = null,
+                showDurationField = if (source == PlantSource.CLONE) false else determineShowDurationField(null),
+                durationLabel = determineDurationLabel(null, source),
                 durationText = if (source == PlantSource.CLONE) "" else it.durationText,
                 isValid = validateForm(
                     strainName = it.strainName,
                     batchNumber = it.batchNumber,
                     source = source,
+                    type = null,
                     stage = null
                 )
             )
         }
     }
     
-    fun updatePlantType(type: PlantType?) {
-        val durationLabelText: String
-        val showField: Boolean
-        val typeDisplayText: String
-
-        when (type) {
-            PlantType.AUTOFLOWER -> {
-                durationLabelText = "Seed to Harvest (days)"
-                showField = true
-                typeDisplayText = "Autoflower"
-            }
-            PlantType.PHOTOPERIOD -> {
-                durationLabelText = "Flower Duration (days)"
-                showField = true
-                typeDisplayText = "Photoperiod"
-            }
-            null -> {
-                durationLabelText = "Duration (days)"
-                showField = false
-                typeDisplayText = "Select"
-            }
+    fun updatePlantTypeSelection(selectedDisplayString: String) {
+        val newPlantType: PlantType? = when {
+            selectedDisplayString.startsWith("Autoflower") -> PlantType.AUTOFLOWER
+            selectedDisplayString.startsWith("Photoperiod") -> PlantType.PHOTOPERIOD
+            else -> null
         }
+
+        val showField = determineShowDurationField(newPlantType)
+        val durationLabelText = determineDurationLabel(newPlantType, _uiState.value.source)
         
         _uiState.update { 
             if (it.source == PlantSource.CLONE) {
                  it.copy(
+                    plantTypeSelection = "Select",
                     type = null,
-                    typeDisplay = "Select",
                     showDurationField = false,
                     durationLabel = "Duration (days)",
                     durationText = "",
@@ -171,13 +162,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                         strainName = it.strainName,
                         batchNumber = it.batchNumber,
                         source = it.source,
+                        type = null,
                         stage = it.growthStage
                     )
                 )
             } else {
                 it.copy(
-                    type = type,
-                    typeDisplay = typeDisplayText,
+                    plantTypeSelection = selectedDisplayString,
+                    type = newPlantType,
                     durationLabel = durationLabelText,
                     showDurationField = showField,
                     durationText = if (!showField) "" else it.durationText,
@@ -185,10 +177,24 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                         strainName = it.strainName,
                         batchNumber = it.batchNumber,
                         source = it.source,
+                        type = newPlantType,
                         stage = it.growthStage
                     )
                 )
             }
+        }
+    }
+
+    private fun determineShowDurationField(plantType: PlantType?): Boolean {
+        return plantType != null
+    }
+
+    private fun determineDurationLabel(plantType: PlantType?, plantSource: PlantSource?): String {
+        if (plantSource == PlantSource.CLONE) return "Duration (days)"
+        return when (plantType) {
+            PlantType.AUTOFLOWER -> "Seed to Harvest (days)"
+            PlantType.PHOTOPERIOD -> "Flower Duration (days)"
+            null -> "Duration (days)"
         }
     }
     
@@ -203,6 +209,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     strainName = it.strainName,
                     batchNumber = it.batchNumber,
                     source = it.source,
+                    type = it.type,
                     stage = stage
                 )
             )
@@ -264,7 +271,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     fun savePlant() {
         val currentState = uiState.value
         
-        if (!currentState.isValid) return
+        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage)) return
         
         val seedToHarvestDays = if (currentState.type == PlantType.AUTOFLOWER) {
             currentState.durationText.toIntOrNull()
@@ -291,18 +298,37 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         
         viewModelScope.launch {
             repository.insertPlant(plant)
+            _uiState.update {
+                it.copy(plantJustSaved = true, showSaveConfirmationDialog = true)
+            }
         }
+    }
+
+    fun onConfirmAddAnother() {
+        _uiState.update { AddPlantUiState() }
+    }
+
+    fun onDismissAddAnotherDialog(navigateToDashboard: Boolean) {
+        _uiState.update { it.copy(showSaveConfirmationDialog = false, plantJustSaved = navigateToDashboard) }
+    }
+
+    fun resetPlantJustSavedFlag() {
+        _uiState.update { it.copy(plantJustSaved = false) }
     }
     
     private fun validateForm(
         strainName: String,
         batchNumber: String,
         source: PlantSource?,
+        type: PlantType?,
         stage: GrowthStage?
     ): Boolean {
+        val typeValid = if (source == PlantSource.SEED) type != null else true
+        
         return strainName.isNotEmpty() &&
                 batchNumber.isNotEmpty() &&
                 source != null &&
+                typeValid &&
                 stage != null
     }
     

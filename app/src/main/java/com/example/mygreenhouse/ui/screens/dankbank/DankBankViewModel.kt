@@ -41,9 +41,10 @@ data class DankBankUiState(
     // Seeds
     val totalSeedCount: Int = 0,
     val uniqueStrainCount: Int = 0,
-    val regularSeedCount: Int = 0,
-    val feminizedSeedCount: Int = 0,
-    val autoflowerSeedCount: Int = 0,
+    val autoflowerRegularSeedCount: Int = 0,
+    val autoflowerFeminizedSeedCount: Int = 0,
+    val photoperiodRegularSeedCount: Int = 0,
+    val photoperiodFeminizedSeedCount: Int = 0,
     
     // Search and filter
     val searchQuery: String = "",
@@ -245,9 +246,10 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         val currentAllSeeds = values[11] as List<Seed>? // Now nullable
         
         // Calculate seed counts by type, handling nullable currentAllSeeds
-        val regularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.REGULAR }?.sumOf { it.seedCount } ?: 0
-        val feminizedSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.FEMINIZED }?.sumOf { it.seedCount } ?: 0
-        val autoflowerSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.AUTOFLOWER }?.sumOf { it.seedCount } ?: 0
+        val autoflowerRegularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.AUTOFLOWER_REGULAR }?.sumOf { it.seedCount } ?: 0
+        val autoflowerFeminizedSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.AUTOFLOWER_FEMINIZED }?.sumOf { it.seedCount } ?: 0
+        val photoperiodRegularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.PHOTOPERIOD_REGULAR }?.sumOf { it.seedCount } ?: 0
+        val photoperiodFeminizedSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.PHOTOPERIOD_FEMINIZED }?.sumOf { it.seedCount } ?: 0
 
         DankBankUiState(
             isLoading = isLoading,
@@ -258,9 +260,10 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             completedCount = completedHarvestsList.size,
             totalSeedCount = totalSeedCount,
             uniqueStrainCount = uniqueStrainCount,
-            regularSeedCount = regularSeedCount,
-            feminizedSeedCount = feminizedSeedCount,
-            autoflowerSeedCount = autoflowerSeedCount,
+            autoflowerRegularSeedCount = autoflowerRegularSeedCount,
+            autoflowerFeminizedSeedCount = autoflowerFeminizedSeedCount,
+            photoperiodRegularSeedCount = photoperiodRegularSeedCount,
+            photoperiodFeminizedSeedCount = photoperiodFeminizedSeedCount,
             searchQuery = searchQuery,
             showDryingOnly = harvestFilter == HarvestFilterType.DRYING,
             showCuringOnly = harvestFilter == HarvestFilterType.CURING,
@@ -433,7 +436,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         batchNumber: String,
         seedCount: Int,
         breeder: String = "",
-        seedType: SeedType = SeedType.REGULAR,
+        seedType: SeedType = SeedType.AUTOFLOWER_REGULAR,
         acquisitionDate: LocalDate = LocalDate.now(),
         source: String = "",
         notes: String = ""

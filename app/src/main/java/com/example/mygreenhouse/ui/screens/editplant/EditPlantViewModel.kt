@@ -32,8 +32,8 @@ data class EditPlantUiState(
     val batchNumber: String = "",
     val source: PlantSource? = null,
     val sourceDisplay: String = "Select",
+    val plantTypeSelection: String = "Select",
     val type: PlantType? = null,
-    val typeDisplay: String = "Select",
     val growthStage: GrowthStage? = null,
     val growthStageDisplay: String = "Select",
     val availableGrowthStages: List<GrowthStage> = emptyList(),
@@ -66,6 +66,7 @@ class EditPlantViewModel(
     val uiState: StateFlow<EditPlantUiState> = _uiState.asStateFlow()
 
     val soilTypeOptions = listOf("Select", "Coco Coir", "Soil", "Hydroponics", "Aeroponics", "Other")
+    val plantTypeSelectionOptions = listOf("Select", "Autoflower Regular", "Autoflower Feminized", "Photoperiod Regular", "Photoperiod Feminized")
 
     init {
         if (plantId.isNotEmpty()) {
@@ -83,11 +84,10 @@ class EditPlantViewModel(
                 val sourceDisplay = when (plant.source) {
                     PlantSource.SEED -> "Seed"
                     PlantSource.CLONE -> "Clone"
-                    else -> "Select"
                 }
-                val typeDisplay = when (plant.type) {
-                    PlantType.AUTOFLOWER -> "Autoflower"
-                    PlantType.PHOTOPERIOD -> "Photoperiod"
+                val initialPlantTypeSelection = when (plant.type) {
+                    PlantType.AUTOFLOWER -> "Autoflower Regular"
+                    PlantType.PHOTOPERIOD -> "Photoperiod Regular"
                     null -> "Select"
                 }
                 val growthStageDisplay = plant.growthStage.name.replace("_", " ").lowercase().capitalizeWords()
@@ -107,7 +107,7 @@ class EditPlantViewModel(
                         source = plant.source,
                         sourceDisplay = sourceDisplay,
                         type = plant.type,
-                        typeDisplay = typeDisplay,
+                        plantTypeSelection = initialPlantTypeSelection,
                         growthStage = plant.growthStage,
                         growthStageDisplay = growthStageDisplay,
                         availableGrowthStages = availableStages,
@@ -125,6 +125,7 @@ class EditPlantViewModel(
                             strainName = plant.strainName,
                             batchNumber = plant.batchNumber,
                             source = plant.source,
+                            type = plant.type,
                             stage = plant.growthStage
                         )
                     )
@@ -157,7 +158,7 @@ class EditPlantViewModel(
         _uiState.update {
             it.copy(
                 strainName = name,
-                isValid = validateForm(name, it.batchNumber, it.source, it.growthStage)
+                isValid = validateForm(name, it.batchNumber, it.source, it.type, it.growthStage)
             )
         }
     }
@@ -166,7 +167,7 @@ class EditPlantViewModel(
         _uiState.update {
             it.copy(
                 batchNumber = number,
-                isValid = validateForm(it.strainName, number, it.source, it.growthStage)
+                isValid = validateForm(it.strainName, number, it.source, it.type, it.growthStage)
             )
         }
     }
@@ -177,51 +178,53 @@ class EditPlantViewModel(
             PlantSource.CLONE -> "Clone"
         }
         val newAvailableGrowthStages = determineAvailableGrowthStages(source)
-        val (durationLabel, showDuration) = determineDurationFieldVisibilityAndLabel(source, if (source == PlantSource.CLONE) null else _uiState.value.type)
+        val (durationLabel, showDuration) = determineDurationFieldVisibilityAndLabel(source, null)
         
         _uiState.update {
             it.copy(
                 source = source,
                 sourceDisplay = displayText,
-                growthStage = null, // Reset growth stage when source changes
+                growthStage = null,
                 growthStageDisplay = "Select",
                 availableGrowthStages = newAvailableGrowthStages,
-                type = if (source == PlantSource.CLONE) null else it.type,
-                typeDisplay = if (source == PlantSource.CLONE) "Select" else it.typeDisplay,
+                plantTypeSelection = "Select",
+                type = null,
                 showDurationField = showDuration,
                 durationLabel = durationLabel,
                 durationText = if (!showDuration || source == PlantSource.CLONE) "" else it.durationText,
-                isValid = validateForm(it.strainName, it.batchNumber, source, null)
+                isValid = validateForm(it.strainName, it.batchNumber, source, null, null)
             )
         }
     }
 
-    fun updatePlantType(type: PlantType?) {
-         val (durationLabel, showDuration) = determineDurationFieldVisibilityAndLabel(_uiState.value.source, type)
-         val typeDisplayText = when (type) {
-            PlantType.AUTOFLOWER -> "Autoflower"
-            PlantType.PHOTOPERIOD -> "Photoperiod"
-            null -> "Select"
+    fun updatePlantTypeSelection(selectedDisplayString: String) {
+        val newPlantType: PlantType? = when {
+            selectedDisplayString.startsWith("Autoflower") -> PlantType.AUTOFLOWER
+            selectedDisplayString.startsWith("Photoperiod") -> PlantType.PHOTOPERIOD
+            else -> null
         }
 
+        val showField = determineDurationFieldVisibilityAndLabel(_uiState.value.source, newPlantType).second
+        val durationLabelText = determineDurationFieldVisibilityAndLabel(_uiState.value.source, newPlantType).first
+        
         _uiState.update {
-            if (it.source == PlantSource.CLONE) { // Clones don't have a type
+            if (it.source == PlantSource.CLONE) {
                  it.copy(
+                    plantTypeSelection = "Select",
                     type = null,
-                    typeDisplay = "Select",
                     showDurationField = false,
                     durationLabel = "Duration (days)",
                     durationText = "",
-                    isValid = validateForm(it.strainName, it.batchNumber, it.source, it.growthStage)
+                    isValid = validateForm(it.strainName, it.batchNumber, it.source, null, it.growthStage)
                 )
             } else {
                 it.copy(
-                    type = type,
-                    typeDisplay = typeDisplayText,
-                    durationLabel = durationLabel,
-                    showDurationField = showDuration,
-                    durationText = if (!showDuration) "" else it.durationText,
-                    isValid = validateForm(it.strainName, it.batchNumber, it.source, it.growthStage)
+                    plantTypeSelection = selectedDisplayString,
+                    type = newPlantType,
+                    durationLabel = durationLabelText,
+                    showDurationField = showField,
+                    durationText = if (!showField) "" else it.durationText,
+                    isValid = validateForm(it.strainName, it.batchNumber, it.source, newPlantType, it.growthStage)
                 )
             }
         }
@@ -233,7 +236,7 @@ class EditPlantViewModel(
             it.copy(
                 growthStage = stage,
                 growthStageDisplay = displayText,
-                isValid = validateForm(it.strainName, it.batchNumber, it.source, stage)
+                isValid = validateForm(it.strainName, it.batchNumber, it.source, it.type, stage)
             )
         }
     }
@@ -292,7 +295,7 @@ class EditPlantViewModel(
 
     fun updatePlant() {
         val currentState = uiState.value
-        if (!currentState.isValid || currentState.originalPlant == null) return
+        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage) || currentState.originalPlant == null) return
 
         val seedToHarvest = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.AUTOFLOWER) currentState.durationText.toIntOrNull() else currentState.originalPlant.seedToHarvestDays
         val flowerDuration = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.PHOTOPERIOD) currentState.durationText.toIntOrNull() else currentState.originalPlant.flowerDurationDays
@@ -300,9 +303,9 @@ class EditPlantViewModel(
         val updatedPlant = currentState.originalPlant.copy(
             strainName = currentState.strainName,
             batchNumber = currentState.batchNumber,
-            source = currentState.source!!, // Validation ensures not null
+            source = currentState.source!!,
             type = if(currentState.source == PlantSource.SEED) currentState.type else null,
-            growthStage = currentState.growthStage!!, // Validation ensures not null
+            growthStage = currentState.growthStage!!,
             startDate = currentState.startDate,
             lastUpdated = LocalDate.now(),
             seedToHarvestDays = seedToHarvest,
@@ -322,11 +325,15 @@ class EditPlantViewModel(
         strainName: String,
         batchNumber: String,
         source: PlantSource?,
+        type: PlantType?,
         stage: GrowthStage?
     ): Boolean {
+        val typeValid = if (source == PlantSource.SEED) type != null else true
+        
         return strainName.isNotEmpty() &&
                 batchNumber.isNotEmpty() &&
                 source != null &&
+                typeValid &&
                 stage != null
     }
 

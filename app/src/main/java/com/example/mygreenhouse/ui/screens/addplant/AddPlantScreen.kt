@@ -43,6 +43,7 @@ import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +73,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import androidx.navigation.NavController
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material3.AlertDialog
 
 @Composable
 fun myAppTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
@@ -156,7 +158,7 @@ fun DropdownMenuField(
 @Composable
 fun AddPlantScreen(
     onNavigateBack: () -> Unit,
-    onPlantAdded: () -> Unit,
+    onNavigateToDashboard: () -> Unit,
     viewModel: AddPlantViewModel = viewModel(factory = AddPlantViewModel.Factory),
     navController: NavController,
     darkTheme: Boolean
@@ -264,15 +266,10 @@ fun AddPlantScreen(
             // Plant Type (Autoflower/Photoperiod) Dropdown
             DropdownMenuField(
                 label = "Plant Type",
-                selectedValue = uiState.typeDisplay, // Using typeDisplay from ViewModel
-                options = listOf("Select", "Autoflower", "Photoperiod"), // "Select" as the first option
+                selectedValue = uiState.plantTypeSelection,
+                options = viewModel.plantTypeSelectionOptions,
                 onOptionSelected = { selectedString ->
-                    val type = when(selectedString) {
-                        "Autoflower" -> PlantType.AUTOFLOWER
-                        "Photoperiod" -> PlantType.PHOTOPERIOD
-                        else -> null
-                    }
-                    viewModel.updatePlantType(type)
+                    viewModel.updatePlantTypeSelection(selectedString)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.source == PlantSource.SEED // Only enable if source is SEED
@@ -404,7 +401,6 @@ fun AddPlantScreen(
             Button(
                 onClick = {
                     viewModel.savePlant()
-                    onPlantAdded()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -423,6 +419,41 @@ fun AddPlantScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
+        }
+    }
+
+    // Confirmation Dialog
+    if (uiState.showSaveConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onDismissAddAnotherDialog(navigateToDashboard = false) }, // Or handle as cancel
+            title = { Text("Plant Saved") },
+            text = { Text("Would you like to add another Plant?") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        viewModel.onConfirmAddAnother() 
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        viewModel.onDismissAddAnotherDialog(navigateToDashboard = true) 
+                    }
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
+    // Effect to handle navigation after "No" is clicked on the dialog
+    LaunchedEffect(uiState.plantJustSaved, uiState.showSaveConfirmationDialog) {
+        if (uiState.plantJustSaved && !uiState.showSaveConfirmationDialog) {
+            onNavigateToDashboard()
+            viewModel.resetPlantJustSavedFlag() // Reset flag after navigation
         }
     }
 } 

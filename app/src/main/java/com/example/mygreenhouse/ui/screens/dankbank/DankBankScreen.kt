@@ -472,23 +472,30 @@ fun FilterDialog(
                     )
                     
                     FilterOption(
-                        text = "Regular Seeds",
-                        isSelected = currentSeedTypeFilter == SeedType.REGULAR,
-                        onClick = { onSeedTypeFilterSelected(SeedType.REGULAR) },
+                        text = "Autoflower Regular",
+                        isSelected = currentSeedTypeFilter == SeedType.AUTOFLOWER_REGULAR,
+                        onClick = { onSeedTypeFilterSelected(SeedType.AUTOFLOWER_REGULAR) },
                         darkTheme = darkTheme
                     )
                     
                     FilterOption(
-                        text = "Feminized Seeds",
-                        isSelected = currentSeedTypeFilter == SeedType.FEMINIZED,
-                        onClick = { onSeedTypeFilterSelected(SeedType.FEMINIZED) },
+                        text = "Autoflower Feminized",
+                        isSelected = currentSeedTypeFilter == SeedType.AUTOFLOWER_FEMINIZED,
+                        onClick = { onSeedTypeFilterSelected(SeedType.AUTOFLOWER_FEMINIZED) },
                         darkTheme = darkTheme
                     )
                     
                     FilterOption(
-                        text = "Autoflower Seeds",
-                        isSelected = currentSeedTypeFilter == SeedType.AUTOFLOWER,
-                        onClick = { onSeedTypeFilterSelected(SeedType.AUTOFLOWER) },
+                        text = "Photoperiod Regular",
+                        isSelected = currentSeedTypeFilter == SeedType.PHOTOPERIOD_REGULAR,
+                        onClick = { onSeedTypeFilterSelected(SeedType.PHOTOPERIOD_REGULAR) },
+                        darkTheme = darkTheme
+                    )
+                    
+                    FilterOption(
+                        text = "Photoperiod Feminized",
+                        isSelected = currentSeedTypeFilter == SeedType.PHOTOPERIOD_FEMINIZED,
+                        onClick = { onSeedTypeFilterSelected(SeedType.PHOTOPERIOD_FEMINIZED) },
                         darkTheme = darkTheme
                     )
                 }
@@ -1175,9 +1182,10 @@ fun SeedStatsSection(uiState: DankBankUiState, darkTheme: Boolean) {
                 
                 SimplePieChart(
                     data = mapOf(
-                        "Regular" to uiState.regularSeedCount,
-                        "Feminized" to uiState.feminizedSeedCount,
-                        "Autoflower" to uiState.autoflowerSeedCount
+                        "Autoflower Regular" to uiState.autoflowerRegularSeedCount,
+                        "Autoflower Feminized" to uiState.autoflowerFeminizedSeedCount,
+                        "Photoperiod Regular" to uiState.photoperiodRegularSeedCount,
+                        "Photoperiod Feminized" to uiState.photoperiodFeminizedSeedCount
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
