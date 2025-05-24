@@ -232,22 +232,16 @@ Based on `greenhouse.md`:
     *   [X] Seed Types: Autoflower Regular, Autoflower Feminized, Photoperiod Regular, Photoperiod Feminized.
     *   [X] "Save" prompt: "Would you like to add another Plant?" (Yes/No). Yes: fresh Add Plant screen. No: return to Dashboard.
 *   **Edit Plant Screen and Add Plant Screen:**
-    *   [ ] Input for Quantity (below Batch Number).
-    *   [ ] Add Plant Gender: Male, Female, Unknown.
-*   **Growth Stages & Tracking:**
-    *   [ ] Seed to Harvest: Visible countdown to harvest day.
-    *   [ ] Drying and Curing: Start Date picker with a visible counter (days drying/curing).
-*   **Grow Medium:**
+    *   [X] Input for Quantity (below Batch Number).
+    *   [X] Add Plant Gender: Male, Female, Unknown.
+    *   [X] Seed to Harvest: Visible countdown to harvest day.
+    *   [X] Drying and Curing: Start Date picker with a visible counter (days drying/curing).
+    *   [ ] Image Selection: Allow taking a picture with the camera (in addition to gallery).
     *   [ ] Change "Soil Type" to "Grow Medium".
     *   [ ] Add to "Grow Medium": Deep Water Culture, Nutrient Film Technique, Wick System, Ebb and Flow, Drip System.
     *   [ ] Change "Hydroponic" to "Hydroponic: Other".
-*   **Image Selection:**
-    *   [ ] Allow taking a picture with the camera (in addition to gallery).
 *   **Dank Bank, Add Plant, Edit Plant:**
     *   [ ] Replace "Unique Strain" with "Custom Strain" (checkbox near Strain Name).
-*   **Quick Stats:**
-    *   [ ] Remove Growth Trends.
-    *   [ ] Average Days In Growth Stage: Bar graph based on Strain Name selection (Dropdown: "Across All Strains" default). Data excludes Drying and Curing.
 
 ## Progress Tracking
 

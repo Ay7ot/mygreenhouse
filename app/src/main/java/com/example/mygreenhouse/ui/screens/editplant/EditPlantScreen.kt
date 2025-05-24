@@ -43,6 +43,7 @@ import com.example.mygreenhouse.ui.theme.TextWhite
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
 import com.example.mygreenhouse.data.model.GrowthStage
+import com.example.mygreenhouse.data.model.PlantGender
 
 // Java Time
 import java.time.Instant
@@ -74,8 +75,8 @@ fun EditPlantScreen(
     // Context for date picker
     val context = LocalContext.current
 
-    // Date picker dialog
-    val datePickerDialog = remember(uiState.startDate) { // Re-remember if initial date changes
+    // Date picker dialog for StartDate
+    val datePickerDialog = remember(uiState.startDate) { 
         android.app.DatePickerDialog(
             context,
             { _, year, month, dayOfMonth ->
@@ -84,6 +85,32 @@ fun EditPlantScreen(
             uiState.startDate.year,
             uiState.startDate.monthValue - 1,
             uiState.startDate.dayOfMonth
+        )
+    }
+
+    // Date picker dialog for Drying Start Date
+    val dryingDatePickerDialog = remember(uiState.dryingStartDate) {
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                viewModel.updateDryingStartDate(LocalDate.of(year, month + 1, dayOfMonth))
+            },
+            uiState.dryingStartDate?.year ?: LocalDate.now().year,
+            uiState.dryingStartDate?.monthValue?.minus(1) ?: LocalDate.now().monthValue - 1,
+            uiState.dryingStartDate?.dayOfMonth ?: LocalDate.now().dayOfMonth
+        )
+    }
+
+    // Date picker dialog for Curing Start Date
+    val curingDatePickerDialog = remember(uiState.curingStartDate) {
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                viewModel.updateCuringStartDate(LocalDate.of(year, month + 1, dayOfMonth))
+            },
+            uiState.curingStartDate?.year ?: LocalDate.now().year,
+            uiState.curingStartDate?.monthValue?.minus(1) ?: LocalDate.now().monthValue - 1,
+            uiState.curingStartDate?.dayOfMonth ?: LocalDate.now().dayOfMonth
         )
     }
 
@@ -147,6 +174,16 @@ fun EditPlantScreen(
                     colors = textFieldColors()
                 )
 
+                OutlinedTextField(
+                    value = uiState.quantity,
+                    onValueChange = { viewModel.updateQuantity(it) },
+                    label = { Text("Quantity", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = textFieldColors(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+
                 ImagePicker(
                     imageUri = uiState.imageUri,
                     onImageSelected = { viewModel.updateImageUri(it) },
@@ -162,6 +199,14 @@ fun EditPlantScreen(
                         val source = PlantSource.values().find { it.name.equals(selectedString, ignoreCase = true) }
                         source?.let { viewModel.updateSource(it) }
                     },
+                    enabled = true
+                )
+
+                DropdownMenuField(
+                    label = "Plant Gender",
+                    selectedValue = uiState.plantGenderDisplay,
+                    options = viewModel.plantGenderOptions,
+                    onOptionSelected = { viewModel.updatePlantGender(it) },
                     enabled = true
                 )
 
@@ -189,6 +234,55 @@ fun EditPlantScreen(
                     },
                     enabled = uiState.availableGrowthStages.isNotEmpty()
                 )
+
+                // Display Days in Drying/Curing or Days Until Harvest
+                val daysInDrying = uiState.daysInDrying
+                val daysInCuring = uiState.daysInCuring
+                val daysUntilHarvestLocal = uiState.daysUntilHarvest
+
+                if (uiState.growthStage == GrowthStage.DRYING && daysInDrying != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp)) {
+                        Text(
+                            text = "Days in Drying: $daysInDrying", 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { dryingDatePickerDialog.show() }) {
+                            Icon(Icons.Default.DateRange, "Change Drying Start Date", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+                if (uiState.growthStage == GrowthStage.CURING && daysInCuring != null) {
+                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 8.dp)) {
+                        Text(
+                            text = "Days in Curing: $daysInCuring", 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { curingDatePickerDialog.show() }) {
+                            Icon(Icons.Default.DateRange, "Change Curing Start Date", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
+                if (uiState.type == PlantType.AUTOFLOWER && uiState.source == PlantSource.SEED && daysUntilHarvestLocal != null) {
+                    if (daysUntilHarvestLocal >= 0) {
+                        Text(
+                            text = "Days Until Harvest: $daysUntilHarvestLocal", 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Harvest was ${-daysUntilHarvestLocal} days ago", 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                        )
+                    }
+                }
                 
                 if (uiState.showDurationField) {
                     OutlinedTextField(

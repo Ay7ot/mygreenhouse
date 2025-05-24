@@ -31,6 +31,13 @@ enum class GrowthStage {
 }
 
 /**
+ * Enum representing the gender of a plant
+ */
+enum class PlantGender {
+    MALE, FEMALE, UNKNOWN
+}
+
+/**
  * Entity class representing a plant in the greenhouse
  */
 @Entity(tableName = "plants")
@@ -41,15 +48,19 @@ data class Plant(
     // Basic information
     val strainName: String,
     val batchNumber: String,
+    val quantity: Int = 1,
     
     // Plant characteristics
     val source: PlantSource,
     val type: PlantType?,  // null for clones
+    val gender: PlantGender = PlantGender.UNKNOWN,
     val growthStage: GrowthStage,
     
     // Dates
     val startDate: LocalDate,
     val lastUpdated: LocalDate,
+    val dryingStartDate: LocalDate? = null,
+    val curingStartDate: LocalDate? = null,
     
     // Specific growth parameters based on plant type
     val seedToHarvestDays: Int? = null, // For autoflowers

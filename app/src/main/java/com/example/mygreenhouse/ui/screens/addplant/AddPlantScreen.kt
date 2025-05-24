@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -52,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
 import com.example.mygreenhouse.data.model.GrowthStage
+import com.example.mygreenhouse.data.model.PlantGender
 import com.example.mygreenhouse.ui.components.GreenhouseBottomNavigation
 import com.example.mygreenhouse.ui.navigation.NavDestination
 import com.example.mygreenhouse.ui.theme.DarkBackground
@@ -243,6 +246,17 @@ fun AddPlantScreen(
                 colors = myAppTextFieldColors()
             )
 
+            // Quantity
+            OutlinedTextField(
+                value = uiState.quantity,
+                onValueChange = { viewModel.updateQuantity(it) },
+                label = { Text("Quantity", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = myAppTextFieldColors(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
             // Image Picker
             ImagePicker(
                 imageUri = uiState.imageUri,
@@ -258,6 +272,18 @@ fun AddPlantScreen(
                 onOptionSelected = { selectedString ->
                     val source = PlantSource.values().find { it.name.equals(selectedString, ignoreCase = true) }
                     source?.let { viewModel.updateSource(it) }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = true
+            )
+            
+            // Plant Gender Dropdown
+            DropdownMenuField(
+                label = "Plant Gender",
+                selectedValue = uiState.plantGenderDisplay,
+                options = viewModel.plantGenderOptions,
+                onOptionSelected = { selectedString ->
+                    viewModel.updatePlantGender(selectedString)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = true
@@ -292,6 +318,45 @@ fun AddPlantScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState.source != null // Enable only if a source is selected
             )
+
+            // Display Days in Drying/Curing or Days Until Harvest
+            val daysInDrying = uiState.daysInDrying
+            val daysInCuring = uiState.daysInCuring
+            val daysUntilHarvestLocal = uiState.daysUntilHarvest
+
+            if (uiState.growthStage == GrowthStage.DRYING && daysInDrying != null) {
+                Text(
+                    text = "Days in Drying: $daysInDrying",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                )
+            }
+            if (uiState.growthStage == GrowthStage.CURING && daysInCuring != null) {
+                Text(
+                    text = "Days in Curing: $daysInCuring",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                )
+            }
+            if (uiState.type == PlantType.AUTOFLOWER && uiState.source == PlantSource.SEED && daysUntilHarvestLocal != null) {
+                if (daysUntilHarvestLocal >= 0) {
+                    Text(
+                        text = "Days Until Harvest: $daysUntilHarvestLocal",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                    )
+                } else {
+                    Text(
+                        text = "Harvest was ${-daysUntilHarvestLocal} days ago",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                    )
+                }
+            }
             
             // Seed to Harvest / Flower Duration (Conditionally Displayed)
             if (uiState.showDurationField) {

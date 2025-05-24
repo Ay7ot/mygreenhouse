@@ -12,6 +12,7 @@ import com.example.mygreenhouse.data.model.GrowthStage
 import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
+import com.example.mygreenhouse.data.model.PlantGender
 import com.example.mygreenhouse.data.repository.PlantRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * UI state for the Add Plant screen
@@ -27,8 +29,11 @@ import java.time.format.DateTimeFormatter
 data class AddPlantUiState(
     val strainName: String = "",
     val batchNumber: String = "",
+    val quantity: String = "1",
     val source: PlantSource? = null,
     val sourceDisplay: String = "Select",
+    val plantGender: PlantGender = PlantGender.UNKNOWN,
+    val plantGenderDisplay: String = "Unknown",
     val plantTypeSelection: String = "Select",
     val type: PlantType? = null,
     val growthStage: GrowthStage? = null,
@@ -39,6 +44,11 @@ data class AddPlantUiState(
     val showDurationField: Boolean = false,
     val startDate: LocalDate = LocalDate.now(),
     val startDateText: String = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE),
+    val dryingStartDate: LocalDate? = null,
+    val curingStartDate: LocalDate? = null,
+    val daysInDrying: Long? = null,
+    val daysInCuring: Long? = null,
+    val daysUntilHarvest: Long? = null,
     val currentNutrientInput: String = "",
     val nutrientsList: List<String> = emptyList(),
     val soilTypeDisplay: String = "Select",
@@ -62,6 +72,16 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     
     val plantTypeSelectionOptions = listOf("Select", "Autoflower Regular", "Autoflower Feminized", "Photoperiod Regular", "Photoperiod Feminized")
     
+    val plantGenderOptions = PlantGender.values().map { it.name.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } }
+    
+    private fun calculateDaysUntilHarvest(startDate: LocalDate, durationText: String, plantType: PlantType?, plantSource: PlantSource?): Long? {
+        val seedToHarvestDays = durationText.toIntOrNull()
+        return if (plantType == PlantType.AUTOFLOWER && seedToHarvestDays != null && plantSource == PlantSource.SEED) {
+            val harvestDate = startDate.plusDays(seedToHarvestDays.toLong())
+            ChronoUnit.DAYS.between(LocalDate.now(), harvestDate).coerceAtLeast(0) // Display 0 if past due for new plants
+        } else null
+    }
+    
     fun updateStrainName(name: String) {
         _uiState.update { 
             it.copy(
@@ -71,7 +91,8 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     batchNumber = it.batchNumber,
                     source = it.source,
                     type = it.type,
-                    stage = it.growthStage
+                    stage = it.growthStage,
+                    quantity = it.quantity
                 )
             )
         }
@@ -86,7 +107,25 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     batchNumber = number,
                     source = it.source,
                     type = it.type,
-                    stage = it.growthStage
+                    stage = it.growthStage,
+                    quantity = it.quantity
+                )
+            )
+        }
+    }
+    
+    fun updateQuantity(quantityStr: String) {
+        val quantity = quantityStr.toIntOrNull() ?: 1
+        _uiState.update { 
+            it.copy(
+                quantity = quantityStr,
+                isValid = validateForm(
+                    strainName = it.strainName,
+                    batchNumber = it.batchNumber,
+                    source = it.source,
+                    type = it.type,
+                    stage = it.growthStage,
+                    quantity = quantityStr
                 )
             )
         }
@@ -129,12 +168,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                 showDurationField = if (source == PlantSource.CLONE) false else determineShowDurationField(null),
                 durationLabel = determineDurationLabel(null, source),
                 durationText = if (source == PlantSource.CLONE) "" else it.durationText,
+                daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, if (source == PlantSource.CLONE) "" else it.durationText, null, source),
                 isValid = validateForm(
                     strainName = it.strainName,
                     batchNumber = it.batchNumber,
                     source = source,
                     type = null,
-                    stage = null
+                    stage = null,
+                    quantity = it.quantity
                 )
             )
         }
@@ -158,12 +199,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     showDurationField = false,
                     durationLabel = "Duration (days)",
                     durationText = "",
+                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, "", null, it.source),
                     isValid = validateForm(
                         strainName = it.strainName,
                         batchNumber = it.batchNumber,
                         source = it.source,
                         type = null,
-                        stage = it.growthStage
+                        stage = it.growthStage,
+                        quantity = it.quantity
                     )
                 )
             } else {
@@ -173,12 +216,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     durationLabel = durationLabelText,
                     showDurationField = showField,
                     durationText = if (!showField) "" else it.durationText,
+                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, if (!showField) "" else it.durationText, newPlantType, it.source),
                     isValid = validateForm(
                         strainName = it.strainName,
                         batchNumber = it.batchNumber,
                         source = it.source,
                         type = newPlantType,
-                        stage = it.growthStage
+                        stage = it.growthStage,
+                        quantity = it.quantity
                     )
                 )
             }
@@ -199,32 +244,50 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     }
     
     fun updateGrowthStage(stage: GrowthStage) {
-        val displayText = stage.name.replace("_", " ").lowercase().capitalize()
+        val displayText = stage.name.replace("_", " ").lowercase().capitalizeWords()
         
-        _uiState.update { 
-            it.copy(
+        _uiState.update { currentState ->
+            val newDryingStartDate = if (stage == GrowthStage.DRYING && currentState.growthStage != GrowthStage.DRYING) LocalDate.now() else if (stage != GrowthStage.DRYING) null else currentState.dryingStartDate
+            val newCuringStartDate = if (stage == GrowthStage.CURING && currentState.growthStage != GrowthStage.CURING) LocalDate.now() else if (stage != GrowthStage.CURING) null else currentState.curingStartDate
+            
+            val seedToHarvestDays = currentState.durationText.toIntOrNull()
+            val daysUntilHarvest = calculateDaysUntilHarvest(currentState.startDate, currentState.durationText, currentState.type, currentState.source)
+
+            currentState.copy(
                 growthStage = stage,
                 growthStageDisplay = displayText,
+                dryingStartDate = newDryingStartDate,
+                curingStartDate = newCuringStartDate,
+                daysInDrying = newDryingStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) },
+                daysInCuring = newCuringStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) },
+                daysUntilHarvest = daysUntilHarvest,
                 isValid = validateForm(
-                    strainName = it.strainName,
-                    batchNumber = it.batchNumber,
-                    source = it.source,
-                    type = it.type,
-                    stage = stage
+                    strainName = currentState.strainName,
+                    batchNumber = currentState.batchNumber,
+                    source = currentState.source,
+                    type = currentState.type,
+                    stage = stage,
+                    quantity = currentState.quantity
                 )
             )
         }
     }
     
     fun updateDurationText(duration: String) {
-        _uiState.update { it.copy(durationText = duration) }
+        _uiState.update { 
+            it.copy(
+                durationText = duration,
+                daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, duration, it.type, it.source)
+            ) 
+        }
     }
     
     fun updateStartDate(date: LocalDate) {
         _uiState.update { 
             it.copy(
                 startDate = date,
-                startDateText = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                startDateText = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                daysUntilHarvest = calculateDaysUntilHarvest(date, it.durationText, it.type, it.source)
             )
         }
     }
@@ -268,18 +331,39 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         _uiState.update { it.copy(imageUri = uri) }
     }
     
+    fun updatePlantGender(genderString: String) {
+        val gender = PlantGender.values().find { it.name.equals(genderString, ignoreCase = true) } ?: PlantGender.UNKNOWN
+        _uiState.update {
+            it.copy(
+                plantGender = gender,
+                plantGenderDisplay = genderString.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
+                isValid = validateForm(
+                    strainName = it.strainName,
+                    batchNumber = it.batchNumber,
+                    source = it.source,
+                    type = it.type,
+                    stage = it.growthStage,
+                    quantity = it.quantity
+                )
+            )
+        }
+    }
+    
     fun savePlant() {
         val currentState = uiState.value
         
-        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage)) return
+        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage, currentState.quantity)) return
         
-        val seedToHarvestDays = if (currentState.type == PlantType.AUTOFLOWER) {
+        val seedToHarvestDays = if (currentState.type == PlantType.AUTOFLOWER && currentState.source == PlantSource.SEED) {
             currentState.durationText.toIntOrNull()
         } else null
         
-        val flowerDurationDays = if (currentState.type == PlantType.PHOTOPERIOD) {
+        val flowerDurationDays = if (currentState.type == PlantType.PHOTOPERIOD && currentState.source == PlantSource.SEED) {
             currentState.durationText.toIntOrNull()
         } else null
+
+        val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else null
+        val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else null
         
         val plant = Plant(
             strainName = currentState.strainName,
@@ -288,12 +372,16 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
             type = currentState.type,
             growthStage = currentState.growthStage ?: GrowthStage.GERMINATION,
             startDate = currentState.startDate,
+            dryingStartDate = finalDryingStartDate,
+            curingStartDate = finalCuringStartDate,
             lastUpdated = LocalDate.now(),
             seedToHarvestDays = seedToHarvestDays,
             flowerDurationDays = flowerDurationDays,
             soilType = currentState.selectedSoilType,
             nutrients = currentState.nutrientsList,
-            imagePath = currentState.imageUri
+            imagePath = currentState.imageUri,
+            quantity = currentState.quantity.toIntOrNull() ?: 1,
+            gender = currentState.plantGender
         )
         
         viewModelScope.launch {
@@ -321,20 +409,22 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         batchNumber: String,
         source: PlantSource?,
         type: PlantType?,
-        stage: GrowthStage?
+        stage: GrowthStage?,
+        quantity: String
     ): Boolean {
         val typeValid = if (source == PlantSource.SEED) type != null else true
+        val quantityValid = quantity.toIntOrNull()?.let { it > 0 } ?: false
         
         return strainName.isNotEmpty() &&
                 batchNumber.isNotEmpty() &&
                 source != null &&
                 typeValid &&
-                stage != null
+                stage != null &&
+                quantityValid
     }
     
-    private fun String.capitalize(): String {
-        return if (this.isEmpty()) this
-        else this[0].uppercaseChar() + this.substring(1)
+    private fun String.capitalizeWords(): String = split(" ").joinToString(" ") { word ->
+        word.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
     
     companion object {
