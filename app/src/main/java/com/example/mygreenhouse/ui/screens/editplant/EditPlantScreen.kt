@@ -312,23 +312,23 @@ fun EditPlantScreen(
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = "Select Date",
-                                tint = TextWhite.copy(alpha = 0.7f)
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                            unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                            focusedContainerColor = DarkSurface,
-                            unfocusedContainerColor = DarkSurface,
-                            focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                            unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                            cursorColor = PrimaryGreen,
-                            focusedTextColor = TextWhite,
-                            unfocusedTextColor = TextWhite,
-                            disabledTextColor = TextWhite.copy(alpha = 0.8f),
-                            disabledLabelColor = TextWhite.copy(alpha = 0.7f),
-                            disabledBorderColor = DarkSurface.copy(alpha = 0.4f),
-                            disabledTrailingIconColor = TextWhite.copy(alpha = 0.7f)
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                            unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f),
+                            focusedLabelColor = MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                            cursorColor = MaterialTheme.colorScheme.primary,
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                         )
                     )
                     Box(
