@@ -56,7 +56,8 @@ data class AddPlantUiState(
     val imageUri: String? = null,
     val isValid: Boolean = false,
     val showSaveConfirmationDialog: Boolean = false,
-    val plantJustSaved: Boolean = false
+    val plantJustSaved: Boolean = false,
+    val isCustomStrain: Boolean = false
 )
 
 /**
@@ -393,7 +394,8 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
             nutrients = currentState.nutrientsList,
             imagePath = currentState.imageUri,
             quantity = currentState.quantity.toIntOrNull() ?: 1,
-            gender = currentState.plantGender
+            gender = currentState.plantGender,
+            isCustomStrain = currentState.isCustomStrain
         )
         
         viewModelScope.launch {
@@ -414,6 +416,10 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
 
     fun resetPlantJustSavedFlag() {
         _uiState.update { it.copy(plantJustSaved = false) }
+    }
+
+    fun updateIsCustomStrain(isCustom: Boolean) {
+        _uiState.update { it.copy(isCustomStrain = isCustom) }
     }
     
     private fun validateForm(

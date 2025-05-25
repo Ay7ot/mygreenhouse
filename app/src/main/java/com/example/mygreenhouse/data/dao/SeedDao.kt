@@ -40,5 +40,8 @@ interface SeedDao {
     fun getTotalSeedCount(): Flow<Int?>
     
     @Query("SELECT COUNT(DISTINCT strainName) FROM seeds")
-    fun getUniqueStrainCount(): Flow<Int?>
+    fun getOldUniqueStrainCount(): Flow<Int?>
+
+    @Query("SELECT COUNT(*) FROM seeds WHERE isCustomStrain = 1")
+    fun getCustomStrainCount(): Flow<Int?>
 } 

@@ -55,6 +55,7 @@ data class Plant(
     val type: PlantType?,  // null for clones
     val gender: PlantGender = PlantGender.UNKNOWN,
     val growthStage: GrowthStage,
+    val isCustomStrain: Boolean = false,
     
     // Dates
     val startDate: LocalDate,

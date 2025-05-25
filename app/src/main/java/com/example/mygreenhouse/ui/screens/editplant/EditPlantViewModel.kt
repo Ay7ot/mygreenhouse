@@ -60,6 +60,7 @@ data class EditPlantUiState(
     val originalPlant: Plant? = null, // To compare for changes or use for update
     val isLoading: Boolean = true,
     val isValid: Boolean = false,
+    val isCustomStrain: Boolean = false
 )
 
 /**
@@ -171,7 +172,8 @@ class EditPlantViewModel(
                             type = plant.type,
                             stage = plant.growthStage,
                             quantity = plant.quantity.toString()
-                        )
+                        ),
+                        isCustomStrain = plant.isCustomStrain
                     )
                 }
             } else {
@@ -397,6 +399,10 @@ class EditPlantViewModel(
         }
     }
 
+    fun updateIsCustomStrain(isCustom: Boolean) {
+        _uiState.update { it.copy(isCustomStrain = isCustom) }
+    }
+
     fun updatePlant() {
         val currentState = uiState.value
         if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage, currentState.quantity) || currentState.originalPlant == null) return
@@ -425,6 +431,7 @@ class EditPlantViewModel(
             dryingStartDate = finalDryingStartDate,
             curingStartDate = finalCuringStartDate,
             seedToHarvestDays = seedToHarvest, // Ensure this is assigned
+            isCustomStrain = currentState.isCustomStrain
         )
 
         viewModelScope.launch {

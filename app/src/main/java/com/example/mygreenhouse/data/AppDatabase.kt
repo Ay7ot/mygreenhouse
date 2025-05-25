@@ -22,7 +22,7 @@ import com.example.mygreenhouse.data.model.Seed
  */
 @Database(
     entities = [Plant::class, Task::class, Harvest::class, Seed::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -67,6 +67,13 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE plants_new RENAME TO plants")
             }
         }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE plants ADD COLUMN isCustomStrain INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE seeds ADD COLUMN isCustomStrain INTEGER NOT NULL DEFAULT 0")
+            }
+        }
         
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -75,7 +82,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "greenhouse_db"
                 )
-                .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
                 .build()
                 INSTANCE = instance
                 instance

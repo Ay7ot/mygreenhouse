@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -235,6 +237,23 @@ fun AddPlantScreen(
                 shape = RoundedCornerShape(8.dp),
                 colors = myAppTextFieldColors()
             )
+
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = uiState.isCustomStrain,
+                    onCheckedChange = { viewModel.updateIsCustomStrain(it) },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = MaterialTheme.colorScheme.primary,
+                        uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+                Text(
+                    text = "Custom Strain",
+                    modifier = Modifier.padding(start = 4.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+            }
             
             // Batch Number
             OutlinedTextField(

@@ -21,6 +21,7 @@ data class Seed(
     // Strain information
     val breeder: String = "",
     val seedType: SeedType = SeedType.AUTOFLOWER_REGULAR,
+    val isCustomStrain: Boolean = false,
     
     // Acquisition information
     val acquisitionDate: LocalDate = LocalDate.now(),

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -76,6 +79,7 @@ fun EditSeedScreen(
     var source by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
+    var isCustomStrain by remember { mutableStateOf(false) }
     
     // UI state for seed type dropdown
     var isSeedTypeExpanded by remember { mutableStateOf(false) }
@@ -99,6 +103,7 @@ fun EditSeedScreen(
             source = seed.source
             notes = seed.notes
             isLoading = false
+            isCustomStrain = seed.isCustomStrain
         }
     }
     
@@ -179,6 +184,23 @@ fun EditSeedScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
+                
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = isCustomStrain,
+                        onCheckedChange = { isCustomStrain = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = PrimaryGreen,
+                            uncheckedColor = TextWhite.copy(alpha = 0.6f),
+                            checkmarkColor = DarkSurface
+                        )
+                    )
+                    Text(
+                        text = "Custom Strain",
+                        modifier = Modifier.padding(start = 4.dp),
+                        color = TextWhite.copy(alpha = 0.8f)
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -345,7 +367,8 @@ fun EditSeedScreen(
                             seedType = selectedSeedType,
                             acquisitionDate = acquisitionDate,
                             source = source,
-                            notes = notes
+                            notes = notes,
+                            isCustomStrain = isCustomStrain
                         )
                         viewModel.updateSeed(updatedSeed)
                         onSeedUpdated()

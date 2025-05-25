@@ -165,6 +165,23 @@ fun EditPlantScreen(
                     colors = textFieldColors()
                 )
 
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = uiState.isCustomStrain,
+                        onCheckedChange = { viewModel.updateIsCustomStrain(it) },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = MaterialTheme.colorScheme.primary,
+                            uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            checkmarkColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                    Text(
+                        text = "Custom Strain",
+                        modifier = Modifier.padding(start = 4.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+
                 OutlinedTextField(
                     value = uiState.batchNumber,
                     onValueChange = { viewModel.updateBatchNumber(it) },

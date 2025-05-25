@@ -12,7 +12,8 @@ class SeedRepository(private val seedDao: SeedDao) {
     
     val allSeeds: Flow<List<Seed>> = seedDao.getAllSeeds()
     val totalSeedCount: Flow<Int?> = seedDao.getTotalSeedCount()
-    val uniqueStrainCount: Flow<Int?> = seedDao.getUniqueStrainCount()
+    val uniqueStrainCount: Flow<Int?> = seedDao.getOldUniqueStrainCount()
+    val customStrainCount: Flow<Int?> = seedDao.getCustomStrainCount()
     
     suspend fun insertSeed(seed: Seed) {
         seedDao.insertSeed(seed)

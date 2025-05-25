@@ -40,7 +40,8 @@ data class DankBankUiState(
     
     // Seeds
     val totalSeedCount: Int = 0,
-    val uniqueStrainCount: Int = 0,
+    val oldUniqueStrainCount: Int = 0,
+    val customStrainCount: Int = 0,
     val autoflowerRegularSeedCount: Int = 0,
     val autoflowerFeminizedSeedCount: Int = 0,
     val photoperiodRegularSeedCount: Int = 0,
@@ -209,7 +210,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             initialValue = 0
         )
         
-    val uniqueStrainCount: StateFlow<Int> = seedRepository.uniqueStrainCount
+    val oldUniqueStrainCount: StateFlow<Int> = seedRepository.uniqueStrainCount
         .map { it ?: 0 }
         .stateIn(
             scope = viewModelScope,
@@ -217,6 +218,14 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             initialValue = 0
         )
         
+    val customStrainCount: StateFlow<Int> = seedRepository.customStrainCount
+        .map { it ?: 0 }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0
+        )
+
     // Combined UI state
     val uiState: StateFlow<DankBankUiState> = combine(
         _isLoading,
@@ -226,7 +235,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         curingHarvests,  // Stays List<Harvest>, initial emptyList()
         completedHarvests, // Stays List<Harvest>, initial emptyList()
         totalSeedCount,
-        uniqueStrainCount,
+        oldUniqueStrainCount,
+        customStrainCount,
         _searchQuery,
         _harvestFilter,
         _seedTypeFilter,
@@ -239,11 +249,12 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         val curingHarvestsList = values[4] as List<Harvest>
         val completedHarvestsList = values[5] as List<Harvest>
         val totalSeedCount = values[6] as Int
-        val uniqueStrainCount = values[7] as Int
-        val searchQuery = values[8] as String
-        val harvestFilter = values[9] as HarvestFilterType
-        val seedTypeFilter = values[10] as SeedType?
-        val currentAllSeeds = values[11] as List<Seed>? // Now nullable
+        val oldUniqueStrainCount = values[7] as Int
+        val customStrainCount = values[8] as Int
+        val searchQuery = values[9] as String
+        val harvestFilter = values[10] as HarvestFilterType
+        val seedTypeFilter = values[11] as SeedType?
+        val currentAllSeeds = values[12] as List<Seed>? // Now nullable
         
         // Calculate seed counts by type, handling nullable currentAllSeeds
         val autoflowerRegularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.AUTOFLOWER_REGULAR }?.sumOf { it.seedCount } ?: 0
@@ -259,7 +270,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             curingCount = curingHarvestsList.size,
             completedCount = completedHarvestsList.size,
             totalSeedCount = totalSeedCount,
-            uniqueStrainCount = uniqueStrainCount,
+            oldUniqueStrainCount = oldUniqueStrainCount,
+            customStrainCount = customStrainCount,
             autoflowerRegularSeedCount = autoflowerRegularSeedCount,
             autoflowerFeminizedSeedCount = autoflowerFeminizedSeedCount,
             photoperiodRegularSeedCount = photoperiodRegularSeedCount,
@@ -439,7 +451,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         seedType: SeedType = SeedType.AUTOFLOWER_REGULAR,
         acquisitionDate: LocalDate = LocalDate.now(),
         source: String = "",
-        notes: String = ""
+        notes: String = "",
+        isCustomStrain: Boolean = false
     ) {
         viewModelScope.launch {
             val seed = Seed(
@@ -450,7 +463,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
                 seedType = seedType,
                 acquisitionDate = acquisitionDate,
                 source = source,
-                notes = notes
+                notes = notes,
+                isCustomStrain = isCustomStrain
             )
             seedRepository.insertSeed(seed)
         }

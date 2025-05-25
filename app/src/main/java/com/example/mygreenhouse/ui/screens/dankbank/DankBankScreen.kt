@@ -1151,8 +1151,8 @@ fun SeedStatsSection(uiState: DankBankUiState, darkTheme: Boolean) {
             Spacer(modifier = Modifier.width(16.dp))
             
             StatCard(
-                title = "Unique Strains",
-                value = "${uiState.uniqueStrainCount}",
+                title = "Custom Strains",
+                value = "${uiState.customStrainCount}",
                 modifier = Modifier.weight(1f),
                 darkTheme = darkTheme
             )

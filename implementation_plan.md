@@ -241,7 +241,7 @@ Based on `greenhouse.md`:
     *   [X] Add to "Grow Medium": Deep Water Culture, Nutrient Film Technique, Wick System, Ebb and Flow, Drip System.
     *   [X] Change "Hydroponic" to "Hydroponic: Other".
 *   **Dank Bank, Add Plant, Edit Plant:**
-    *   [ ] Replace "Unique Strain" with "Custom Strain" (checkbox near Strain Name).
+    *   [X] Replace "Unique Strain" with "Custom Strain" (checkbox near Strain Name).
 
 ## Progress Tracking
 

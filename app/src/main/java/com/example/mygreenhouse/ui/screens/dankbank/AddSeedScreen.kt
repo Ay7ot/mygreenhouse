@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -72,6 +75,7 @@ fun AddSeedScreen(
     var acquisitionDate by remember { mutableStateOf(LocalDate.now()) }
     var source by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    var isCustomStrain by remember { mutableStateOf(false) }
     
     // UI state for seed type dropdown
     var isSeedTypeExpanded by remember { mutableStateOf(false) }
@@ -147,6 +151,23 @@ fun AddSeedScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
             )
+            
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isCustomStrain,
+                    onCheckedChange = { isCustomStrain = it },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        uncheckedColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.6f),
+                        checkmarkColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+                Text(
+                    text = "Custom Strain",
+                    modifier = Modifier.padding(start = 4.dp),
+                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.8f)
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -312,7 +333,8 @@ fun AddSeedScreen(
                         seedType = selectedSeedType,
                         acquisitionDate = acquisitionDate,
                         source = source,
-                        notes = notes
+                        notes = notes,
+                        isCustomStrain = isCustomStrain
                     )
                     onSeedAdded()
                 },
