@@ -468,10 +468,10 @@ fun AddPlantScreen(
             
             // Soil Type Dropdown
             DropdownMenuField(
-                label = "Soil Type",
-                selectedValue = uiState.soilTypeDisplay,
-                options = viewModel.soilTypeOptions,
-                onOptionSelected = { viewModel.updateSoilType(it) },
+                label = "Grow Medium",
+                selectedValue = uiState.growMediumDisplay,
+                options = viewModel.growMediumOptions,
+                onOptionSelected = { viewModel.updateGrowMedium(it) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = true
             )

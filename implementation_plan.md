@@ -236,10 +236,10 @@ Based on `greenhouse.md`:
     *   [X] Add Plant Gender: Male, Female, Unknown.
     *   [X] Seed to Harvest: Visible countdown to harvest day.
     *   [X] Drying and Curing: Start Date picker with a visible counter (days drying/curing).
-    *   [ ] Image Selection: Allow taking a picture with the camera (in addition to gallery).
-    *   [ ] Change "Soil Type" to "Grow Medium".
-    *   [ ] Add to "Grow Medium": Deep Water Culture, Nutrient Film Technique, Wick System, Ebb and Flow, Drip System.
-    *   [ ] Change "Hydroponic" to "Hydroponic: Other".
+    *   [X] Image Selection: Allow taking a picture with the camera (in addition to gallery).
+    *   [X] Change "Soil Type" to "Grow Medium".
+    *   [X] Add to "Grow Medium": Deep Water Culture, Nutrient Film Technique, Wick System, Ebb and Flow, Drip System.
+    *   [X] Change "Hydroponic" to "Hydroponic: Other".
 *   **Dank Bank, Add Plant, Edit Plant:**
     *   [ ] Replace "Unique Strain" with "Custom Strain" (checkbox near Strain Name).
 
@@ -250,3 +250,9 @@ Based on `greenhouse.md`:
 *   **Done:** [X]
 
 *(We will update the checkboxes as we complete tasks)* 
+
+*   **Quick Stats:**
+    *   [ ] Remove Growth Trends line graph.
+    *   [ ] Add Bar Graph for "Average Days In Growth Stage":
+        *   Dropdown menu for Strain Name selection (default: "Across All Strains").
+        *   Graph displays average days for each growth stage (excluding Drying and Curing) based on selection. 

@@ -51,8 +51,8 @@ data class AddPlantUiState(
     val daysUntilHarvest: Long? = null,
     val currentNutrientInput: String = "",
     val nutrientsList: List<String> = emptyList(),
-    val soilTypeDisplay: String = "Select",
-    val selectedSoilType: String? = null,
+    val growMediumDisplay: String = "Select",
+    val selectedGrowMedium: String? = null,
     val imageUri: String? = null,
     val isValid: Boolean = false,
     val showSaveConfirmationDialog: Boolean = false,
@@ -68,7 +68,19 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     private val _uiState = MutableStateFlow(AddPlantUiState())
     val uiState: StateFlow<AddPlantUiState> = _uiState.asStateFlow()
     
-    val soilTypeOptions = listOf("Select", "Coco Coir", "Soil", "Hydroponics", "Aeroponics", "Other")
+    val growMediumOptions = listOf(
+        "Select", 
+        "Coco Coir", 
+        "Soil", 
+        "Hydroponic: Other",
+        "Aeroponics", 
+        "Deep Water Culture", 
+        "Nutrient Film Technique", 
+        "Wick System", 
+        "Ebb and Flow", 
+        "Drip System",
+        "Other"
+    )
     
     val plantTypeSelectionOptions = listOf("Select", "Autoflower Regular", "Autoflower Feminized", "Photoperiod Regular", "Photoperiod Feminized")
     
@@ -318,11 +330,11 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         }
     }
     
-    fun updateSoilType(soilType: String) {
+    fun updateGrowMedium(growMedium: String) {
         _uiState.update {
             it.copy(
-                soilTypeDisplay = soilType,
-                selectedSoilType = if (soilType == "Select") null else soilType
+                growMediumDisplay = growMedium,
+                selectedGrowMedium = if (growMedium == "Select") null else growMedium
             )
         }
     }
@@ -377,7 +389,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
             lastUpdated = LocalDate.now(),
             seedToHarvestDays = seedToHarvestDays,
             flowerDurationDays = flowerDurationDays,
-            soilType = currentState.selectedSoilType,
+            growMedium = currentState.selectedGrowMedium,
             nutrients = currentState.nutrientsList,
             imagePath = currentState.imageUri,
             quantity = currentState.quantity.toIntOrNull() ?: 1,

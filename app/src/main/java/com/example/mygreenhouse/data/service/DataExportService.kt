@@ -214,7 +214,7 @@ class DataExportService(private val context: Context) {
             put("lastUpdated", JsonPrimitive(plant.lastUpdated.format(DateTimeFormatter.ISO_LOCAL_DATE)))
             plant.seedToHarvestDays?.let { put("seedToHarvestDays", JsonPrimitive(it)) }
             plant.flowerDurationDays?.let { put("flowerDurationDays", JsonPrimitive(it)) }
-            plant.soilType?.let { put("soilType", JsonPrimitive(it)) }
+            plant.growMedium?.let { put("growMedium", JsonPrimitive(it)) }
             put("nutrients", buildJsonArray { plant.nutrients.forEach { add(JsonPrimitive(it)) } })
             plant.imagePath?.let { put("imagePath", JsonPrimitive(it)) }
             put("isArchived", JsonPrimitive(plant.isArchived))
@@ -280,7 +280,7 @@ class DataExportService(private val context: Context) {
             lastUpdated = LocalDate.parse(jsonObj["lastUpdated"]!!.jsonPrimitive.content, DateTimeFormatter.ISO_LOCAL_DATE),
             seedToHarvestDays = jsonObj["seedToHarvestDays"]?.jsonPrimitive?.content?.toIntOrNull(),
             flowerDurationDays = jsonObj["flowerDurationDays"]?.jsonPrimitive?.content?.toIntOrNull(),
-            soilType = jsonObj["soilType"]?.jsonPrimitive?.content,
+            growMedium = jsonObj["growMedium"]?.jsonPrimitive?.content,
             nutrients = jsonObj["nutrients"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
             imagePath = jsonObj["imagePath"]?.jsonPrimitive?.content,
             isArchived = jsonObj["isArchived"]!!.jsonPrimitive.content.toBoolean()

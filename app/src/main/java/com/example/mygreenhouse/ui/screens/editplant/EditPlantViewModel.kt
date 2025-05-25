@@ -54,8 +54,8 @@ data class EditPlantUiState(
     val daysUntilHarvest: Long? = null,
     val currentNutrientInput: String = "",
     val nutrientsList: List<String> = emptyList(),
-    val soilTypeDisplay: String = "Select",
-    val selectedSoilType: String? = null,
+    val growMediumDisplay: String = "Select",
+    val selectedGrowMedium: String? = null,
     val imageUri: String? = null,
     val originalPlant: Plant? = null, // To compare for changes or use for update
     val isLoading: Boolean = true,
@@ -75,7 +75,19 @@ class EditPlantViewModel(
     private val _uiState = MutableStateFlow(EditPlantUiState(plantId = plantId))
     val uiState: StateFlow<EditPlantUiState> = _uiState.asStateFlow()
 
-    val soilTypeOptions = listOf("Select", "Coco Coir", "Soil", "Hydroponics", "Aeroponics", "Other")
+    val growMediumOptions = listOf(
+        "Select", 
+        "Coco Coir", 
+        "Soil", 
+        "Hydroponic: Other",
+        "Aeroponics", 
+        "Deep Water Culture", 
+        "Nutrient Film Technique", 
+        "Wick System", 
+        "Ebb and Flow", 
+        "Drip System",
+        "Other"
+    )
     val plantTypeSelectionOptions = listOf("Select", "Autoflower Regular", "Autoflower Feminized", "Photoperiod Regular", "Photoperiod Feminized")
     val plantGenderOptions = PlantGender.values().map { it.name.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() } }
 
@@ -148,8 +160,8 @@ class EditPlantViewModel(
                         daysInCuring = daysInCuring,
                         daysUntilHarvest = daysUntilHarvest,
                         nutrientsList = plant.nutrients,
-                        soilTypeDisplay = plant.soilType ?: "Select",
-                        selectedSoilType = plant.soilType,
+                        growMediumDisplay = plant.growMedium ?: "Select",
+                        selectedGrowMedium = plant.growMedium,
                         imageUri = plant.imagePath,
                         isLoading = false,
                         isValid = validateForm(
@@ -356,11 +368,11 @@ class EditPlantViewModel(
         }
     }
 
-    fun updateSoilType(soilType: String) {
+    fun updateGrowMedium(growMedium: String) {
         _uiState.update {
             it.copy(
-                soilTypeDisplay = soilType,
-                selectedSoilType = if (soilType == "Select") null else soilType
+                growMediumDisplay = growMedium,
+                selectedGrowMedium = if (growMedium == "Select") null else growMedium
             )
         }
     }
@@ -406,7 +418,7 @@ class EditPlantViewModel(
             startDate = currentState.startDate,
             lastUpdated = LocalDate.now(),
             flowerDurationDays = flowerDuration,
-            soilType = currentState.selectedSoilType,
+            growMedium = currentState.selectedGrowMedium,
             nutrients = currentState.nutrientsList,
             imagePath = currentState.imageUri,
             quantity = currentState.quantity.toIntOrNull() ?: 1,

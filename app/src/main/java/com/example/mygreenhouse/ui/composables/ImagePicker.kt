@@ -134,8 +134,8 @@ fun ImagePicker(
         onResult = { uri ->
             if (uri != null) {
                 try {
-                    val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    context.contentResolver.takePersistableUriPermission(uri, flag)
+                val flag = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(uri, flag)
                 } catch (e: SecurityException) {
                     Log.w("ImagePicker", "Failed to take persistable URI permission for $uri: ${'$'}{e.message}")
                 }
@@ -176,7 +176,7 @@ fun ImagePicker(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(label, style = MaterialTheme.typography.labelLarge)
             
             // Only show the toggle if an image is selected
             if (imageUri != null) {
@@ -239,7 +239,7 @@ fun ImagePicker(
                 }
                 
                 // Change image button
-                Button(
+                 Button(
                     onClick = { showImageSourceDialog = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = PrimaryGreen.copy(alpha = 0.8f),
@@ -257,20 +257,20 @@ fun ImagePicker(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.AddAPhoto,
-                        contentDescription = "Add plant image",
-                        modifier = Modifier.size(48.dp),
-                        tint = TextWhite.copy(alpha = 0.7f)
-                    )
+                Icon(
+                    imageVector = Icons.Filled.AddAPhoto,
+                    contentDescription = "Add plant image",
+                    modifier = Modifier.size(48.dp),
+                    tint = TextWhite.copy(alpha = 0.7f)
+                )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "Tap to add image",
                         color = TextWhite.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.bodyMedium
                     )
-                }
             }
+        }
         }
     }
 

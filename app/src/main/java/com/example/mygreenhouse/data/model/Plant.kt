@@ -67,7 +67,7 @@ data class Plant(
     val flowerDurationDays: Int? = null, // For photoperiods
     
     // Other properties
-    val soilType: String? = null,
+    val growMedium: String? = null,
     val nutrients: List<String> = emptyList(), // Reverted to original name
     
     // Image path (URI as String)
