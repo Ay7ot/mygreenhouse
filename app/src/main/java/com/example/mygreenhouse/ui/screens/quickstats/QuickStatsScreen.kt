@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.LocalFlorist
 import androidx.compose.material.icons.filled.Spa
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,8 @@ import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
 import androidx.navigation.NavController
+import com.example.mygreenhouse.ui.screens.addplant.DropdownMenuField
+import androidx.compose.material3.HorizontalDivider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,7 +121,7 @@ fun QuickStatsScreen(
                     StatCard(
                         title = "Curing",
                         value = uiState.curingCount.toString(),
-                        icon = Icons.Default.Healing,
+                        icon = Icons.Filled.Inventory2,
                         modifier = Modifier.weight(1f),
                         darkTheme = darkTheme
                     )
@@ -161,110 +164,58 @@ fun QuickStatsScreen(
                         }
                     }
                     
-                    // Plants Added Over Time (Line Chart)
-                    if (uiState.plantsCreatedByMonth.isNotEmpty()) {
+                    // Average Days in Growth Stage Section
+                    if (uiState.totalActivePlants > 0) { // Conditionally display this whole section
                         Text(
-                            text = "Growth Trends",
+                            text = "Average Days in Growth Stage",
                             style = MaterialTheme.typography.titleMedium,
                             color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
                         )
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
                             ),
                             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
-                            Box(
+                            Column(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Get data points for chart
-                                val dataPoints = uiState.plantsCreatedByMonth.values.toList()
-                                if (dataPoints.isNotEmpty()) {
-                                    SimpleLineChart(
-                                        dataPoints = dataPoints,
-                                        labels = uiState.plantsCreatedByMonth.keys.map { 
-                                            it.split(" ")[0].take(3) // Take first 3 chars of month name
-                                        }.toList(),
-                                        modifier = Modifier.fillMaxSize(),
+                                // Strain Name Dropdown
+                                DropdownMenuField(
+                                    label = "Select Strain",
+                                    selectedValue = uiState.selectedStrain,
+                                    options = uiState.strainNameOptions,
+                                    onOptionSelected = { viewModel.updateSelectedStrain(it) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) // Separator
+
+                                if (uiState.averageDaysInStage.any { it.value > 0f }) {
+                                    AverageDaysInStageBarChart(
+                                        averageDaysData = uiState.averageDaysInStage.filterKeys { 
+                                            it !in listOf(GrowthStage.DRYING, GrowthStage.CURING)
+                                        },
                                         darkTheme = darkTheme
                                     )
                                 } else {
                                     Text(
-                                        text = "No growth data available yet",
+                                        text = "No data available for the selected strain to display average days in growth stage.",
                                         color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
-                                        modifier = Modifier.align(Alignment.Center)
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
                                     )
                                 }
                             }
                         }
                     }
-                    
-                    // Days in Growth Stage
-                    Text(
-                        text = "Average Days in Growth Stage",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp)
-                    )
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            uiState.averageDaysInStage.entries
-                                .filter { (stage, days) -> 
-                                    uiState.plantsByStage[stage] ?: 0 > 0 && days > 0 
-                                }
-                                .forEach { (stage, days) ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = formatGrowthStageName(stage),
-                                            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                        Text(
-                                            text = "$days days",
-                                            color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    HorizontalDivider(color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.1f))
-                                }
-                            
-                            if (uiState.averageDaysInStage.entries.none { 
-                                (uiState.plantsByStage[it.key] ?: 0) > 0 && it.value > 0 
-                            }) {
-                                Text(
-                                    text = "No data available yet",
-                                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 16.dp),
-                                    textAlign = TextAlign.Center
-                                )
-                            }
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(16.dp)) // Add some space at the bottom
                 } else {
                     // No plants yet
                     EmptyStatsView(darkTheme = darkTheme)
@@ -517,4 +468,120 @@ fun formatGrowthStageName(stage: GrowthStage): String {
         .lowercase()
         .split(" ")
         .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+}
+
+@Composable
+fun AverageDaysInStageBarChart(
+    averageDaysData: Map<GrowthStage, Float>,
+    darkTheme: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val validStages = averageDaysData.filter { it.value > 0f }
+    if (validStages.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(250.dp) // Increased height for potentially taller text
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No average day data to display for selected strain and stages.",
+                color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        return
+    }
+
+    val maxValue = validStages.values.maxOrNull() ?: 1f
+    val barColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+    val labelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+    val gridColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.2f)
+    val yAxisLabelColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.6f)
+    val yAxisLabelPadding = 30.dp // Space for Y-axis labels
+
+    Column(modifier = modifier
+        .fillMaxWidth()
+        .height(280.dp)) { 
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)) {
+            // Y-axis Labels
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(end = 8.dp, top = 8.dp, bottom = 8.dp) // Added top/bottom padding
+                    .width(yAxisLabelPadding), // Fixed width for Y-axis labels
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.End // Align text to the right
+            ) {
+                val yGridLines = 5
+                for (i in yGridLines downTo 0) {
+                    Text(
+                        text = "${(maxValue * i / yGridLines).toInt()}", 
+                        fontSize = 10.sp, 
+                        color = yAxisLabelColor,
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
+
+            // Chart Area
+            Canvas(modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp, bottom = 8.dp)) { 
+                val barCount = validStages.size
+                if (barCount == 0) return@Canvas
+
+                val barWidthRatio = 0.6f
+                val totalBarAndSpacingWidth = size.width / barCount
+                val barWidth = totalBarAndSpacingWidth * barWidthRatio
+                val spacing = totalBarAndSpacingWidth * (1 - barWidthRatio)
+                val yGridLines = 5
+
+                // Draw Y-axis grid lines
+                for (i in 0..yGridLines) {
+                    val yPos = size.height * (i.toFloat() / yGridLines)
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(0f, size.height - yPos), 
+                        end = Offset(size.width, size.height - yPos),
+                        strokeWidth = 1f
+                    )
+                }
+
+                // Draw bars
+                validStages.entries.toList().forEachIndexed { index, (stage, avgDays) ->
+                    val barHeight = (avgDays / maxValue) * size.height // Ensure avgDays is positive
+                    val xOffset = index * totalBarAndSpacingWidth + spacing / 2
+                    if (barHeight > 0) { 
+                        drawRect(
+                            color = barColor,
+                            topLeft = Offset(xOffset, size.height - barHeight),
+                            size = androidx.compose.ui.geometry.Size(barWidth, barHeight) // barHeight is already Float
+                        )
+                    }
+                }
+            }
+        }
+        // X-axis labels
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp, start = yAxisLabelPadding + 8.dp), // Align with chart content
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            validStages.keys.forEach {
+                Text(
+                    text = formatGrowthStageName(it).take(3).uppercase(),
+                    fontSize = 10.sp,
+                    color = labelColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f) 
+                )
+            }
+        }
+    }
 } 

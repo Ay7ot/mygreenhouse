@@ -306,14 +306,18 @@ fun DankBankScreen(
                         onMarkCuredClick = { harvest -> showCuredWeightDialog = harvest },
                         onEditHarvestClick = { harvest -> navController.navigate("editHarvest/${harvest.id}") },
                         onHarvestClick = { harvest -> navController.navigate("harvestDetail/${harvest.id}") },
-                        darkTheme = darkTheme
+                        darkTheme = darkTheme,
+                        passedSearchQuery = searchQuery,
+                        passedHarvestFilter = harvestFilter
                     )
                     1 -> SeedBankContent(
                         viewModel = viewModel,
                         uiState = uiState,
                         onEditSeedClick = { seed -> navController.navigate("editSeed/${seed.id}") },
                         onSeedClick = { seed -> navController.navigate("seedDetail/${seed.id}") },
-                        darkTheme = darkTheme
+                        darkTheme = darkTheme,
+                        passedSearchQuery = searchQuery,
+                        passedSeedTypeFilter = seedTypeFilter
                     )
                 }
             }
@@ -552,16 +556,17 @@ fun HarvestTrackingContent(
     onMarkCuredClick: (Harvest) -> Unit,
     onEditHarvestClick: (Harvest) -> Unit,
     onHarvestClick: (Harvest) -> Unit,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    passedSearchQuery: String,
+    passedHarvestFilter: HarvestFilterType
 ) {
     val filteredHarvests by viewModel.filteredHarvests.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
     
     when {
         uiState.isLoading || filteredHarvests == null -> {
             HarvestTrackingSkeleton(darkTheme = darkTheme)
         }
-        filteredHarvests?.isEmpty() == true && searchQuery.isEmpty() && viewModel.harvestFilter.value == HarvestFilterType.ALL -> {
+        filteredHarvests?.isEmpty() == true && passedSearchQuery.isEmpty() && passedHarvestFilter == HarvestFilterType.ALL -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -624,16 +629,17 @@ fun SeedBankContent(
     uiState: DankBankUiState,
     onEditSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit,
     onSeedClick: (com.example.mygreenhouse.data.model.Seed) -> Unit,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    passedSearchQuery: String,
+    passedSeedTypeFilter: SeedType?
 ) {
     val filteredSeeds by viewModel.filteredSeeds.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
     
     when {
         uiState.isLoading || filteredSeeds == null -> {
             SeedBankSkeleton(darkTheme = darkTheme)
         }
-        filteredSeeds?.isEmpty() == true && searchQuery.isEmpty() && viewModel.seedTypeFilter.value == null -> {
+        filteredSeeds?.isEmpty() == true && passedSearchQuery.isEmpty() && passedSeedTypeFilter == null -> {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

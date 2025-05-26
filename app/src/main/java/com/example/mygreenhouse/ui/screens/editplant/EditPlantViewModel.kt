@@ -15,7 +15,9 @@ import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
 import com.example.mygreenhouse.data.model.PlantGender
+import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
+import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -70,7 +72,8 @@ class EditPlantViewModel(
     application: Application,
     private val savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
-    private val repository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
     private val plantId: String = savedStateHandle.get<String>("plantId") ?: ""
 
     private val _uiState = MutableStateFlow(EditPlantUiState(plantId = plantId))
@@ -111,7 +114,7 @@ class EditPlantViewModel(
 
     private fun loadPlantDetails(id: String) {
         viewModelScope.launch {
-            val plant = repository.getPlantByIdOnce(id)
+            val plant = plantRepository.getPlantByIdOnce(id)
             if (plant != null) {
                 val sourceDisplay = when (plant.source) {
                     PlantSource.SEED -> "Seed"
@@ -409,10 +412,10 @@ class EditPlantViewModel(
 
         val flowerDuration = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.PHOTOPERIOD) currentState.durationText.toIntOrNull() else currentState.originalPlant.flowerDurationDays
 
-        val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else currentState.originalPlant.dryingStartDate // Preserve if not changed, or set if new
-        val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else currentState.originalPlant.curingStartDate // Preserve if not changed, or set if new
+        val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else currentState.originalPlant.dryingStartDate
+        val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else currentState.originalPlant.curingStartDate
 
-        val seedToHarvest = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.AUTOFLOWER) currentState.durationText.toIntOrNull() else currentState.originalPlant.seedToHarvestDays // Ensure this line is present
+        val seedToHarvest = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.AUTOFLOWER) currentState.durationText.toIntOrNull() else currentState.originalPlant.seedToHarvestDays
 
         val updatedPlant = currentState.originalPlant.copy(
             strainName = currentState.strainName,
@@ -430,13 +433,26 @@ class EditPlantViewModel(
             quantity = currentState.quantity.toIntOrNull() ?: 1,
             dryingStartDate = finalDryingStartDate,
             curingStartDate = finalCuringStartDate,
-            seedToHarvestDays = seedToHarvest, // Ensure this is assigned
+            seedToHarvestDays = seedToHarvest,
             isCustomStrain = currentState.isCustomStrain
         )
 
         viewModelScope.launch {
-            repository.updatePlant(updatedPlant)
-            // Optionally, trigger navigation or show a success message
+            plantRepository.updatePlant(updatedPlant)
+            if (currentState.growthStage != null && currentState.originalPlant.growthStage != currentState.growthStage) {
+                val transitionDate = when(currentState.growthStage) {
+                    GrowthStage.DRYING -> finalDryingStartDate ?: LocalDate.now()
+                    GrowthStage.CURING -> finalCuringStartDate ?: LocalDate.now()
+                    else -> LocalDate.now()
+                }
+                stageTransitionRepository.insertTransition(
+                    PlantStageTransition(
+                        plantId = updatedPlant.id,
+                        stage = currentState.growthStage,
+                        transitionDate = transitionDate
+                    )
+                )
+            }
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -109,19 +110,19 @@ fun EditHarvestScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Harvest", color = TextWhite) },
+                title = { Text("Edit Harvest", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextWhite
+                            tint = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground,
-                    titleContentColor = TextWhite
+                    containerColor = if (darkTheme) DarkBackground else MaterialTheme.colorScheme.surface,
+                    titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -138,17 +139,17 @@ fun EditHarvestScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground),
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                androidx.compose.material3.CircularProgressIndicator(color = PrimaryGreen)
+                androidx.compose.material3.CircularProgressIndicator(color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
             }
         } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(DarkBackground)
+                    .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -157,18 +158,8 @@ fun EditHarvestScreen(
                 OutlinedTextField(
                     value = strainName,
                     onValueChange = { strainName = it },
-                    label = { Text("Strain Name", color = TextWhite.copy(alpha = 0.8f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
-                    ),
+                    label = { Text("Strain Name", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                    colors = editTextFieldColors(darkTheme = darkTheme),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -179,18 +170,8 @@ fun EditHarvestScreen(
                 OutlinedTextField(
                     value = batchNumber,
                     onValueChange = { batchNumber = it },
-                    label = { Text("Batch Number", color = TextWhite.copy(alpha = 0.8f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
-                    ),
+                    label = { Text("Batch Number", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                    colors = editTextFieldColors(darkTheme = darkTheme),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -206,27 +187,27 @@ fun EditHarvestScreen(
                     OutlinedTextField(
                         value = harvestDate.format(dateFormatter),
                         onValueChange = { },
-                        label = { Text("Harvest Date", color = TextWhite.copy(alpha = 0.8f)) },
+                        label = { Text("Harvest Date", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = "Select Date",
-                                tint = TextWhite.copy(alpha = 0.7f)
+                                tint = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
                         readOnly = true,
                         enabled = false,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                            unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                            focusedContainerColor = DarkSurface,
-                            unfocusedContainerColor = DarkSurface,
-                            focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                            unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                            disabledTextColor = TextWhite.copy(alpha = 0.8f),
-                            disabledLabelColor = TextWhite.copy(alpha = 0.7f),
-                            disabledBorderColor = DarkSurface.copy(alpha = 0.4f),
-                            disabledTrailingIconColor = TextWhite.copy(alpha = 0.7f)
+                            focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                            focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+                            focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
+                            unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                            disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                            disabledTrailingIconColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
@@ -239,22 +220,12 @@ fun EditHarvestScreen(
                 OutlinedTextField(
                     value = wetWeight,
                     onValueChange = { 
-                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
+                        if (it.isEmpty() || it.matches(Regex("^\\\\d*\\\\.?\\\\d*$"))) {
                             wetWeight = it
                         }
                     },
-                    label = { Text("Wet Weight (grams)", color = TextWhite.copy(alpha = 0.8f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
-                    ),
+                    label = { Text("Wet Weight (grams)", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                    colors = editTextFieldColors(darkTheme = darkTheme),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
@@ -266,18 +237,8 @@ fun EditHarvestScreen(
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Notes", color = TextWhite.copy(alpha = 0.8f)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = DarkSurface.copy(alpha = 0.6f),
-                        unfocusedBorderColor = DarkSurface.copy(alpha = 0.4f),
-                        focusedContainerColor = DarkSurface,
-                        unfocusedContainerColor = DarkSurface,
-                        focusedLabelColor = TextWhite.copy(alpha = 0.9f),
-                        unfocusedLabelColor = TextWhite.copy(alpha = 0.7f),
-                        cursorColor = PrimaryGreen,
-                        focusedTextColor = TextWhite,
-                        unfocusedTextColor = TextWhite
-                    ),
+                    label = { Text("Notes", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                    colors = editTextFieldColors(darkTheme = darkTheme),
                     minLines = 3,
                     maxLines = 5,
                     modifier = Modifier.fillMaxWidth(),
@@ -301,9 +262,9 @@ fun EditHarvestScreen(
                     },
                     enabled = isFormValid,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryGreen,
-                        contentColor = TextWhite,
-                        disabledContainerColor = DarkSurface
+                        containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
@@ -313,4 +274,17 @@ fun EditHarvestScreen(
             }
         }
     }
-} 
+}
+
+@Composable
+private fun editTextFieldColors(darkTheme: Boolean) = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+    unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+    focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+    unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
+    focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+    cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+    focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+) 

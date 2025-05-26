@@ -252,7 +252,7 @@ Based on `greenhouse.md`:
 *(We will update the checkboxes as we complete tasks)* 
 
 *   **Quick Stats:**
-    *   [ ] Remove Growth Trends line graph.
+    *   [X] Remove Growth Trends line graph.
     *   [ ] Add Bar Graph for "Average Days In Growth Stage":
         *   Dropdown menu for Strain Name selection (default: "Across All Strains").
         *   Graph displays average days for each growth stage (excluding Drying and Curing) based on selection. 

@@ -13,7 +13,9 @@ import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
 import com.example.mygreenhouse.data.model.PlantGender
+import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
+import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,7 +66,8 @@ data class AddPlantUiState(
  * ViewModel for the Add Plant screen
  */
 class AddPlantViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
     
     private val _uiState = MutableStateFlow(AddPlantUiState())
     val uiState: StateFlow<AddPlantUiState> = _uiState.asStateFlow()
@@ -399,7 +402,20 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         )
         
         viewModelScope.launch {
-            repository.insertPlant(plant)
+            plantRepository.insertPlant(plant)
+            val initialStage = currentState.growthStage ?: GrowthStage.GERMINATION
+            val transitionDate = when(initialStage) {
+                GrowthStage.DRYING -> finalDryingStartDate ?: currentState.startDate
+                GrowthStage.CURING -> finalCuringStartDate ?: currentState.startDate
+                else -> currentState.startDate
+            }
+            stageTransitionRepository.insertTransition(
+                PlantStageTransition(
+                    plantId = plant.id,
+                    stage = initialStage,
+                    transitionDate = transitionDate
+                )
+            )
             _uiState.update {
                 it.copy(plantJustSaved = true, showSaveConfirmationDialog = true)
             }

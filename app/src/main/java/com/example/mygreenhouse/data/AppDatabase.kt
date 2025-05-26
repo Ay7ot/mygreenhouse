@@ -11,18 +11,20 @@ import com.example.mygreenhouse.data.dao.PlantDao
 import com.example.mygreenhouse.data.dao.TaskDao
 import com.example.mygreenhouse.data.dao.HarvestDao
 import com.example.mygreenhouse.data.dao.SeedDao
+import com.example.mygreenhouse.data.dao.PlantStageTransitionDao
 import com.example.mygreenhouse.data.model.Converters
 import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.Harvest
 import com.example.mygreenhouse.data.model.Seed
+import com.example.mygreenhouse.data.model.PlantStageTransition
 
 /**
  * Main database class for the app
  */
 @Database(
-    entities = [Plant::class, Task::class, Harvest::class, Seed::class],
-    version = 4,
+    entities = [Plant::class, Task::class, Harvest::class, Seed::class, PlantStageTransition::class],
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -32,6 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun harvestDao(): HarvestDao
     abstract fun seedDao(): SeedDao
+    abstract fun plantStageTransitionDao(): PlantStageTransitionDao
     
     companion object {
         @Volatile
@@ -74,6 +77,13 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE seeds ADD COLUMN isCustomStrain INTEGER NOT NULL DEFAULT 0")
             }
         }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `plant_stage_transitions` (`id` TEXT NOT NULL, `plantId` TEXT NOT NULL, `stage` TEXT NOT NULL, `transitionDate` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`plantId`) REFERENCES `plants`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+                database.execSQL("CREATE INDEX IF NOT EXISTS `index_plant_stage_transitions_plantId` ON `plant_stage_transitions` (`plantId`)")
+            }
+        }
         
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -82,7 +92,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "greenhouse_db"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 INSTANCE = instance
                 instance

@@ -9,11 +9,16 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mygreenhouse.data.AppDatabase
 import com.example.mygreenhouse.data.model.GrowthStage
 import com.example.mygreenhouse.data.model.Plant
+import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
+import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+    import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -23,100 +28,120 @@ import java.time.temporal.ChronoUnit
  */
 data class QuickStatsUiState(
     val isLoading: Boolean = true,
-    val totalActivePlants: Int = 0, // Renamed for clarity
+    val totalActivePlants: Int = 0,
     val dryingCount: Int = 0,
     val curingCount: Int = 0,
     val plantsByStage: Map<GrowthStage, Int> = emptyMap(),
-    val averageDaysInStage: Map<GrowthStage, Int> = emptyMap(),
-    val plantsCreatedByMonth: Map<String, Int> = emptyMap() // Month name to count
+    val averageDaysInStage: Map<GrowthStage, Float> = emptyMap(),
+    val selectedStrain: String = "Across All Strains",
+    val strainNameOptions: List<String> = emptyList()
 )
 
 /**
  * ViewModel for the Quick Stats screen
  */
 class QuickStatsViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
     
     private val _uiState = MutableStateFlow(QuickStatsUiState())
     val uiState: StateFlow<QuickStatsUiState> = _uiState.asStateFlow()
     
     init {
         viewModelScope.launch {
-            loadStatistics()
+            plantRepository.allActivePlants.combine(_uiState.map { it.selectedStrain }.distinctUntilChanged()) { plants, strain ->
+                Pair(plants, strain)
+            }.collect { (plants, strain) -> 
+                loadStatistics(plants, strain)
+            }
         }
     }
     
-    private suspend fun loadStatistics() {
-        repository.allPlants.collect { plants -> // Still collect all plants for other stats
-            // Filter out archived plants for general display unless explicitly needed for historical data
-            val activeDisplayPlants = plants.filter { !it.isArchived }
+    fun updateSelectedStrain(strain: String) {
+        _uiState.update { currentState ->
+            currentState.copy(selectedStrain = strain)
+        }
+    }
 
-            // Basic counts
-            val dryingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.DRYING }
-            val curingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.CURING }
-            // Total plants EXCLUDING drying and curing, and also EXCLUDING archived
-            val totalActivePlants = activeDisplayPlants.count { 
-                it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING 
-            }
-            
-            // Plants by growth stage (based on active, non-archived plants)
-            val plantsByStage = GrowthStage.values().associateWith { stage ->
-                activeDisplayPlants.count { it.growthStage == stage }
-            }
-            
-            // Calculate average days in current growth stage (based on active, non-archived plants)
-            val today = LocalDate.now()
-            val averageDaysInStage = GrowthStage.values().associateWith { stage ->
-                val plantsInStage = activeDisplayPlants.filter { it.growthStage == stage }
-                if (plantsInStage.isEmpty()) 0 else {
-                    plantsInStage.sumOf { 
-                        ChronoUnit.DAYS.between(it.lastUpdated, today).toInt().coerceAtLeast(0)
-                    } / plantsInStage.size
+    private suspend fun loadStatistics(plants: List<Plant>?, selectedStrainFilter: String) {
+        if (plants == null) {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            return
+        }
+        val activeDisplayPlants = plants
+
+        val dryingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.DRYING }
+        val curingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.CURING }
+        val totalActivePlants = activeDisplayPlants.count { 
+            it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING 
+        }
+        
+        val plantsByStage = GrowthStage.values().associateWith { stage ->
+            activeDisplayPlants.count { it.growthStage == stage }
+        }
+        
+        val strainOptions = mutableListOf("Across All Strains")
+        strainOptions.addAll(activeDisplayPlants.map { it.strainName }.distinct().sorted())
+
+        val plantsForAvgCalc = if (selectedStrainFilter == "Across All Strains") {
+            activeDisplayPlants
+        } else {
+            activeDisplayPlants.filter { it.strainName == selectedStrainFilter }
+        }
+
+        val today = LocalDate.now()
+        val relevantStages = GrowthStage.values().filter { 
+            it !in listOf(GrowthStage.DRYING, GrowthStage.CURING)
+        }
+
+        val stageDurations = mutableMapOf<GrowthStage, MutableList<Long>>()
+
+        for (plant in plantsForAvgCalc) {
+            val transitions = stageTransitionRepository.getTransitionsForPlantOnce(plant.id)
+            if (transitions.isNotEmpty()) {
+                for (i in transitions.indices) {
+                    val currentTransition = transitions[i]
+                    if (currentTransition.stage in relevantStages) {
+                        val startDate = currentTransition.transitionDate
+                        val endDate = if (i + 1 < transitions.size) {
+                            transitions[i + 1].transitionDate
+                        } else {
+                            when (plant.growthStage) {
+                                GrowthStage.DRYING -> plant.dryingStartDate ?: today
+                                GrowthStage.CURING -> plant.curingStartDate ?: today
+                                else -> today
+                            }
+                        }
+                        val duration = ChronoUnit.DAYS.between(startDate, endDate)
+                        if (duration >= 0) {
+                             stageDurations.computeIfAbsent(currentTransition.stage) { mutableListOf() }.add(duration)
+                        }
+                    }
                 }
             }
-            
-            // Plants created by month (can use all plants, including archived, for historical trend)
-            val plantsCreatedByMonth = calculatePlantsCreatedByMonth(plants)
-            
-            _uiState.value = QuickStatsUiState(
-                isLoading = false,
-                totalActivePlants = totalActivePlants,
-                dryingCount = dryingCount,
-                curingCount = curingCount,
-                plantsByStage = plantsByStage,
-                averageDaysInStage = averageDaysInStage,
-                plantsCreatedByMonth = plantsCreatedByMonth
-            )
         }
-    }
-    
-    /**
-     * Calculate number of plants created by month (last 6 months)
-     */
-    private fun calculatePlantsCreatedByMonth(plants: List<Plant>): Map<String, Int> {
-        val today = LocalDate.now()
-        val result = mutableMapOf<String, Int>()
-        
-        // Create entries for the last 6 months
-        for (i in 5 downTo 0) {
-            val month = today.minusMonths(i.toLong())
-            val monthKey = "${month.month.name.lowercase().capitalize()} ${month.year}"
-            result[monthKey] = 0
-        }
-        
-        // Count plants per month
-        plants.forEach { plant ->
-            val monthKey = "${plant.startDate.month.name.lowercase().capitalize()} ${plant.startDate.year}"
-            if (result.containsKey(monthKey)) {
-                result[monthKey] = result[monthKey]!! + 1
+
+        val averageDaysInStage = relevantStages.associateWith { stage ->
+            val durations = stageDurations[stage]
+            if (durations.isNullOrEmpty()) 0f else {
+                durations.average().toFloat()
             }
         }
         
-        return result
+        _uiState.value = QuickStatsUiState(
+            isLoading = false,
+            totalActivePlants = totalActivePlants,
+            dryingCount = dryingCount,
+            curingCount = curingCount,
+            plantsByStage = plantsByStage,
+            averageDaysInStage = averageDaysInStage,
+            selectedStrain = selectedStrainFilter,
+            strainNameOptions = strainOptions
+        )
     }
     
-    private fun String.capitalize(): String {
-        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    private fun String.capitalizeWords(): String = split(" ").joinToString(" ") { word ->
+        word.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
     
     companion object {
