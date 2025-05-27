@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -188,8 +189,15 @@ fun SeedListItem(
                 }
                 
                 Spacer(modifier = Modifier.weight(1f))
-                
-                // Acquisition date
+            }
+            
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // New Row for Acquisition Date
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
                 Text(
                     text = "Added: ${seed.acquisitionDate.format(dateFormatter)}",
                     fontSize = 12.sp,
