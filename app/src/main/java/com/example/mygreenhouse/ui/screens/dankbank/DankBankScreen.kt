@@ -82,6 +82,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.PagerState
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.style.TextOverflow
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1166,39 +1173,202 @@ fun SeedStatsSection(uiState: DankBankUiState, darkTheme: Boolean) {
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
-            ),
-            shape = RoundedCornerShape(12.dp)
+        SeedBankChartsPager(uiState, darkTheme)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SeedBankChartsPager(uiState: DankBankUiState, darkTheme: Boolean) {
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val coroutineScope = rememberCoroutineScope()
+
+    // Chart titles
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "Seed Type Distribution",
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .clickable { coroutineScope.launch { pagerState.animateScrollToPage(0) } }
+        )
+        
+        Text(
+            text = "Seeds Per Strain",
+            color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+            fontWeight = if (pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Normal,
+            fontSize = 16.sp,
+            modifier = Modifier
+                .padding(horizontal = 12.dp)
+                .clickable { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
+        )
+    }
+    
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
         ) {
-            Column(
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .height(220.dp)
+            ) { page ->
+                when (page) {
+                    0 -> SimplePieChart(
+                        data = mapOf(
+                            "Autoflower Regular" to uiState.autoflowerRegularSeedCount,
+                            "Autoflower Feminized" to uiState.autoflowerFeminizedSeedCount,
+                            "Photoperiod Regular" to uiState.photoperiodRegularSeedCount,
+                            "Photoperiod Feminized" to uiState.photoperiodFeminizedSeedCount
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp),
+                        darkTheme = darkTheme
+                    )
+                    1 -> SeedsPerStrainPieChart(
+                        data = uiState.seedsPerStrain,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(220.dp),
+                        darkTheme = darkTheme
+                    )
+                }
+            }
+            
+            // Pager indicators
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Seed Type Distribution",
-                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                repeat(2) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier = Modifier
+                            .size(if (isSelected) 10.dp else 8.dp)
+                            .background(
+                                color = if (isSelected) 
+                                    if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                                else 
+                                    if (darkTheme) TextGrey.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                shape = CircleShape
+                            )
+                            .padding(4.dp)
+                    )
+                    if (index < 1) Spacer(modifier = Modifier.width(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SeedsPerStrainPieChart(
+    data: Map<String, Int>,
+    modifier: Modifier = Modifier,
+    darkTheme: Boolean = true
+) {
+    if (data.isEmpty() || data.values.sum() == 0) {
+        Box(
+            modifier = modifier,
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No seed strain data available yet",
+                color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
+        }
+        return
+    }
+    
+    // Take only top 5 strains by seed count to avoid chart getting too crowded
+    val sortedData = data.entries
+        .sortedByDescending { it.value }
+        .take(5)
+        .associate { it.key to it.value }
+    
+    val total = sortedData.values.sum().toFloat()
+    
+    // Use a fixed set of colors for consistency
+    val colors = listOf(
+        Color(0xFF81C784),  // Green
+        Color(0xFFE57373),  // Red
+        Color(0xFF64B5F6),  // Blue
+        Color(0xFFFFD54F),  // Amber
+        Color(0xFFBA68C8)   // Purple
+    )
+    
+    // Define text color before Canvas scope
+    val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+    
+    Box(modifier = modifier) {
+        Canvas(
+            modifier = Modifier
+                .size(160.dp)
+                .align(Alignment.CenterStart)
+        ) {
+            var startAngle = 0f
+            
+            sortedData.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
+                val sweepAngle = 360f * entry.value / total
+                drawArc(
+                    color = colors[index % colors.size],
+                    startAngle = startAngle,
+                    sweepAngle = sweepAngle,
+                    useCenter = true
                 )
+                startAngle += sweepAngle
+            }
+        }
+        
+        // Legend
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            sortedData.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
+                val percentage = (entry.value * 100f / total).toInt()
+                val displayName = if (entry.key.length > 12) "${entry.key.take(10)}..." else entry.key
                 
-                SimplePieChart(
-                    data = mapOf(
-                        "Autoflower Regular" to uiState.autoflowerRegularSeedCount,
-                        "Autoflower Feminized" to uiState.autoflowerFeminizedSeedCount,
-                        "Photoperiod Regular" to uiState.photoperiodRegularSeedCount,
-                        "Photoperiod Feminized" to uiState.photoperiodFeminizedSeedCount
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(vertical = 8.dp),
-                    darkTheme = darkTheme
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .background(colors[index % colors.size], shape = CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "$displayName ($percentage%)",
+                        color = textColor,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

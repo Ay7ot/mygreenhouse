@@ -47,6 +47,9 @@ data class DankBankUiState(
     val photoperiodRegularSeedCount: Int = 0,
     val photoperiodFeminizedSeedCount: Int = 0,
     
+    // New field for seeds per strain
+    val seedsPerStrain: Map<String, Int> = emptyMap(),
+    
     // Search and filter
     val searchQuery: String = "",
     val showDryingOnly: Boolean = false,
@@ -262,6 +265,11 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         val photoperiodRegularSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.PHOTOPERIOD_REGULAR }?.sumOf { it.seedCount } ?: 0
         val photoperiodFeminizedSeedCount = currentAllSeeds?.filter { it.seedType == SeedType.PHOTOPERIOD_FEMINIZED }?.sumOf { it.seedCount } ?: 0
 
+        val seedsPerStrainData = currentAllSeeds
+            ?.groupBy { it.strainName }
+            ?.mapValues { entry -> entry.value.sumOf { it.seedCount } }
+            ?: emptyMap()
+
         DankBankUiState(
             isLoading = isLoading,
             selectedTab = selectedTab,
@@ -276,6 +284,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
             autoflowerFeminizedSeedCount = autoflowerFeminizedSeedCount,
             photoperiodRegularSeedCount = photoperiodRegularSeedCount,
             photoperiodFeminizedSeedCount = photoperiodFeminizedSeedCount,
+            seedsPerStrain = seedsPerStrainData,
             searchQuery = searchQuery,
             showDryingOnly = harvestFilter == HarvestFilterType.DRYING,
             showCuringOnly = harvestFilter == HarvestFilterType.CURING,
