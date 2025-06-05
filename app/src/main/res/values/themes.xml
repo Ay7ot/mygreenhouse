@@ -2,4 +2,19 @@
 <resources>
 
     <style name="Theme.MyGreenHouse" parent="android:Theme.Material.Light.NoActionBar" />
+    
+    <!-- Splash Screen Theme -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background -->
+        <item name="windowSplashScreenBackground">@drawable/splash_background</item>
+        <!-- Set the splash screen icon to use the custom launcher icon -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <!-- Optional: Set the splash screen brand image -->
+        <!-- <item name="windowSplashScreenBrandingImage">@drawable/branding_image</item> -->
+        <!-- Optional: Set the icon animation duration -->
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <!-- Set the theme of the Activity after splash screen -->
+        <item name="postSplashScreenTheme">@style/Theme.MyGreenHouse</item>
+    </style>
+    
 </resources>

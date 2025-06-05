@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalTime
+import java.time.DayOfWeek
+import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
 
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
@@ -65,10 +67,80 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             
             // Initialize plant name cache
             plants.collect { plantList ->
-                val newCache = plantList.associate { it.id to it.strainName }
+                val newCache = plantList.associate { plant -> 
+                    plant.id to "${plant.strainName} - ${plant.batchNumber}"
+                }
                 _plantNameCache.value = newCache
             }
         }
+    }
+
+    /**
+     * Helper function to calculate the next occurrence date based on selected repeat days
+     */
+    private fun calculateNextOccurrence(time: Calendar, repeatDays: List<String>): java.time.LocalDateTime {
+        val localTime = LocalTime.of(time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE))
+        
+        // If no repeat days selected, use today's date (non-recurring task)
+        if (repeatDays.isEmpty()) {
+            val today = java.time.LocalDate.now()
+            val currentTime = java.time.LocalTime.now()
+            
+            // If the selected time is later than current time, schedule for today
+            // Otherwise, schedule for tomorrow
+            return if (localTime.isAfter(currentTime)) {
+                today.atTime(localTime)
+            } else {
+                today.plusDays(1).atTime(localTime)
+            }
+        }
+        
+        val today = java.time.LocalDate.now()
+        val currentDayOfWeek = today.dayOfWeek
+        
+        // Map repeat day strings to DayOfWeek enum
+        val dayOfWeekMap = mapOf(
+            "MON" to DayOfWeek.MONDAY,
+            "TUE" to DayOfWeek.TUESDAY, 
+            "WED" to DayOfWeek.WEDNESDAY,
+            "THU" to DayOfWeek.THURSDAY,
+            "FRI" to DayOfWeek.FRIDAY,
+            "SAT" to DayOfWeek.SATURDAY,
+            "SUN" to DayOfWeek.SUNDAY
+        )
+        
+        val selectedDaysOfWeek = repeatDays.mapNotNull { dayOfWeekMap[it] }
+        
+        if (selectedDaysOfWeek.isEmpty()) {
+            // Fallback to today if no valid days found
+            val currentTime = java.time.LocalTime.now()
+            return if (localTime.isAfter(currentTime)) {
+                today.atTime(localTime)
+            } else {
+                today.plusDays(1).atTime(localTime)
+            }
+        }
+        
+        // Find the next occurrence
+        // First check if today is one of the selected days and the time hasn't passed yet
+        val currentTime = java.time.LocalTime.now()
+        if (selectedDaysOfWeek.contains(currentDayOfWeek) && localTime.isAfter(currentTime)) {
+            return today.atTime(localTime)
+        }
+        
+        // Find the next day that matches one of the selected days
+        var nextDate = today.plusDays(1)
+        while (!selectedDaysOfWeek.contains(nextDate.dayOfWeek)) {
+            nextDate = nextDate.plusDays(1)
+            // Safety check to prevent infinite loop (should never happen with valid days)
+            if (nextDate.isAfter(today.plusDays(7))) {
+                // Fallback to next week's first selected day
+                nextDate = today.with(TemporalAdjusters.next(selectedDaysOfWeek.minBy { it.value }))
+                break
+            }
+        }
+        
+        return nextDate.atTime(localTime)
     }
 
     fun saveTask(
@@ -79,17 +151,15 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         plantId: String? = null // Optional plant ID
     ) {
         viewModelScope.launch {
-            // Convert Calendar to LocalDateTime
-            val localTime = LocalTime.of(time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE))
-            val localDateTime = java.time.LocalDateTime.now().with(localTime)
+            // Calculate the next occurrence based on selected repeat days
+            val scheduledDateTime = calculateNextOccurrence(time, repeatDays)
 
-            // The Task model expects a description. For now, notes can be the description.
-            // RepeatDays logic will need further implementation (e.g. creating multiple tasks or a recurring task entity)
-            // For this initial step, we save a single task instance.
+            // Create task with repeat days information
             val newTask = Task(
                 type = taskType,
                 description = notes, // Using notes as description for now
-                scheduledDateTime = localDateTime,
+                scheduledDateTime = scheduledDateTime,
+                repeatDays = repeatDays, // Store the repeat days
                 plantId = plantId
                 // isCompleted and completedDateTime have defaults
             )
@@ -119,6 +189,39 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // New methods for date-specific completion
+    fun markDateAsCompleted(task: Task, date: java.time.LocalDate) {
+        viewModelScope.launch {
+            taskRepository.markDateAsCompleted(task.id, date)
+            // Cancel notification only if this is for today and task is non-recurring
+            if (task.repeatDays.isEmpty() && date.isEqual(java.time.LocalDate.now())) {
+                TaskNotificationScheduler.cancelTaskNotification(app, task.id)
+            }
+        }
+    }
+    
+    fun markDateAsIncomplete(task: Task, date: java.time.LocalDate) {
+        viewModelScope.launch {
+            taskRepository.markDateAsIncomplete(task.id, date)
+            // Reschedule notification if marking today as incomplete
+            if (date.isEqual(java.time.LocalDate.now()) && task.scheduledDateTime.isAfter(java.time.LocalDateTime.now())) {
+                TaskNotificationScheduler.scheduleTaskNotification(app, task)
+            }
+        }
+    }
+    
+    // Toggle completion for a specific date (for dashboard use)
+    fun toggleDateCompletion(task: Task, date: java.time.LocalDate) {
+        viewModelScope.launch {
+            val isCompleted = date.toString() in task.completedDates
+            if (isCompleted) {
+                markDateAsIncomplete(task, date)
+            } else {
+                markDateAsCompleted(task, date)
+            }
+        }
+    }
+
     fun updateTask(
         existingTaskId: String,
         taskType: TaskType,
@@ -128,9 +231,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         plantId: String? = null
     ) {
         viewModelScope.launch {
-            // Convert Calendar to LocalDateTime
-            val localTime = LocalTime.of(time.get(Calendar.HOUR_OF_DAY), time.get(Calendar.MINUTE))
-            val localDateTime = java.time.LocalDateTime.now().with(localTime)
+            // Calculate the next occurrence based on selected repeat days
+            val scheduledDateTime = calculateNextOccurrence(time, repeatDays)
 
             // Fetch the original task to maintain its completed status if not changing it here
             val originalTask = taskRepository.getTaskById(existingTaskId).first()
@@ -139,7 +241,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 id = existingTaskId, 
                 type = taskType,
                 description = notes,
-                scheduledDateTime = localDateTime,
+                scheduledDateTime = scheduledDateTime,
+                repeatDays = repeatDays,
                 plantId = plantId,
                 isCompleted = originalTask?.isCompleted ?: false, // Preserve original completion status
                 completedDateTime = originalTask?.completedDateTime // Preserve original completion time

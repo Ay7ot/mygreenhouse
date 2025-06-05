@@ -38,6 +38,10 @@ class AuthRepository(private val context: Context) {
     private val _isBiometricEnabledFlow = MutableStateFlow(sharedPreferences.getBoolean(KEY_IS_BIOMETRIC_ENABLED, false))
     val isBiometricEnabledFlow: Flow<Boolean> = _isBiometricEnabledFlow
 
+    // Session state tracking - reset when app is killed
+    private val _isAuthenticatedInSession = MutableStateFlow(false)
+    val isAuthenticatedInSession: Flow<Boolean> = _isAuthenticatedInSession
+
     private fun hashPin(pin: String): String {
         // In a real app, use a strong, salted hash. For this example, SHA-256 without salt.
         // Consider using a library like BouncyCastle or similar for robust hashing and salting.
@@ -60,7 +64,11 @@ class AuthRepository(private val context: Context) {
 
     fun verifyPin(pin: String): Boolean {
         val storedHash = sharedPreferences.getString(KEY_PIN_HASH, null) ?: return false
-        return hashPin(pin) == storedHash
+        val isValid = hashPin(pin) == storedHash
+        if (isValid) {
+            _isAuthenticatedInSession.value = true
+        }
+        return isValid
     }
 
     fun isPinCurrentlySet(): Boolean {
@@ -91,6 +99,21 @@ class AuthRepository(private val context: Context) {
             .apply()
         _isPinLockEnabledFlow.value = false
         _isBiometricEnabledFlow.value = false
+        _isAuthenticatedInSession.value = false
+    }
+
+    /**
+     * Mark user as authenticated in the current session (for biometric auth)
+     */
+    fun markAuthenticatedInSession() {
+        _isAuthenticatedInSession.value = true
+    }
+
+    /**
+     * Check if authentication is required (PIN is enabled but user hasn't authenticated this session)
+     */
+    fun isAuthenticationRequired(): Boolean {
+        return getIsPinLockEnabled() && !_isAuthenticatedInSession.value
     }
     
     // Biometric related functions

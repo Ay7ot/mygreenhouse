@@ -220,7 +220,7 @@ fun EditHarvestScreen(
                 OutlinedTextField(
                     value = wetWeight,
                     onValueChange = { 
-                        if (it.isEmpty() || it.matches(Regex("^\\\\d*\\\\.?\\\\d*$"))) {
+                        if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d*$"))) {
                             wetWeight = it
                         }
                     },

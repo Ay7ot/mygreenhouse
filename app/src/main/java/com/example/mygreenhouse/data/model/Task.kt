@@ -45,9 +45,15 @@ data class Task(
     val description: String,
     val scheduledDateTime: LocalDateTime,
     
+    // Recurring schedule information
+    val repeatDays: List<String> = emptyList(), // e.g., ["MON", "WED", "FRI"]
+    
     // Status
     val isCompleted: Boolean = false,
     val completedDateTime: LocalDateTime? = null,
+    
+    // Track completed dates for recurring tasks
+    val completedDates: List<String> = emptyList(), // e.g., ["2024-01-15", "2024-01-17"] in ISO format
     
     // Related plant (optional - some tasks might be general)
     val plantId: String? = null

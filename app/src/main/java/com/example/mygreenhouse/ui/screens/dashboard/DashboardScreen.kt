@@ -16,12 +16,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Task
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material.icons.filled.CheckCircleOutline
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,9 +65,11 @@ import coil.compose.AsyncImage
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.ui.components.GreenhouseBottomNavigation
 import com.example.mygreenhouse.ui.components.PlantCarouselSkeleton
+import com.example.mygreenhouse.ui.components.TaskAlert
 import com.example.mygreenhouse.ui.components.TaskAlertsSkeleton
 import com.example.mygreenhouse.ui.navigation.NavDestination
 import com.example.mygreenhouse.ui.screens.task.displayName
+import com.example.mygreenhouse.ui.screens.task.TaskViewModel
 import com.example.mygreenhouse.ui.theme.DarkBackground
 import com.example.mygreenhouse.ui.theme.DarkSurface
 import com.example.mygreenhouse.ui.theme.PrimaryGreen
@@ -129,6 +141,8 @@ fun DashboardScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 16.dp)
         ) {
             // Section Header for Plants
             SectionHeader(
@@ -172,7 +186,9 @@ fun DashboardScreen(
                 isLoadingTasks || upcomingTasks == null -> TaskAlertsSkeleton()
                 upcomingTasks!!.isNotEmpty() -> {
                     Column(
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         upcomingTasks!!.forEach { task ->
@@ -403,127 +419,3 @@ fun PlantCard(
     }
 }
 
-/**
- * Task alert component
- */
-@Composable
-fun TaskAlert(
-    task: Task,
-    daysUntil: Long,
-    onClick: () -> Unit,
-    darkTheme: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val viewModel: DashboardViewModel = viewModel()
-    val plantNameCache by viewModel.plantNameCache.collectAsState()
-    
-    // Define card colors based on urgency and theme
-    val cardColor = if (darkTheme) {
-        // Dark theme cards
-        if (daysUntil == 0L) PrimaryGreen.copy(alpha = 0.2f) else DarkSurface
-    } else {
-        // Light theme cards - more distinctive
-        if (daysUntil == 0L) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-    }
-    
-    // Title colors
-    val titleColor = if (darkTheme) {
-        // Dark theme text
-        if (daysUntil == 0L) PrimaryGreen else TextWhite
-    } else {
-        // Light theme text
-        if (daysUntil == 0L) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
-    }
-    
-    // Description colors
-    val descriptionColor = if (darkTheme) {
-        TextWhite.copy(alpha = 0.8f)
-    } else {
-        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-    }
-    
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (darkTheme) 0.dp else 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // Task title
-            Text(
-                text = task.type.displayName(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = titleColor
-            )
-            
-            // Task description if available
-            if (task.description.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = task.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = descriptionColor,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Task due date indicator with enhanced UI
-            val daysText = when (daysUntil) {
-                0L -> "Today"
-                1L -> "Tomorrow"
-                else -> "In $daysUntil days"
-            }
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Status dot indicator
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (daysUntil == 0L) {
-                                if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
-                            } else {
-                                if (darkTheme) TextWhite.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                            }
-                        )
-                )
-                
-                Text(
-                    text = daysText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (daysUntil == 0L) {
-                        if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
-                    } else {
-                        if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-                    },
-                    fontWeight = if (daysUntil == 0L) FontWeight.SemiBold else FontWeight.Normal
-                )
-                
-                if (task.plantId != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    val plantName = plantNameCache[task.plantId] ?: "Unknown plant"
-                    Text(
-                        text = "For: $plantName",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-            }
-        }
-    }
-} 

@@ -109,7 +109,7 @@ fun ScheduleTaskScreen(
         if (selectedPlantId != null && plants.isNotEmpty()) {
             val plant = plants.find { it.id == selectedPlantId }
             if (plant != null) {
-                selectedPlantName = plant.strainName
+                selectedPlantName = "${plant.strainName} - ${plant.batchNumber}"
             }
         }
     }
@@ -125,9 +125,8 @@ fun ScheduleTaskScreen(
             DayOfWeek("SUN", "Su")
         )
     }
-    // For now, we'll set an empty implementation for repeat days
-    // In a real implementation, you'd parse this from the task's data
-    var selectedDayIds by remember { mutableStateOf(emptyList<String>()) }
+    // Initialize selectedDayIds with existing task's repeat days if editing, otherwise empty
+    var selectedDayIds by remember { mutableStateOf(existingTask?.repeatDays ?: emptyList()) }
     
     // Initialize notes with existing task description if available
     var notes by remember { mutableStateOf(existingTask?.description ?: "") }
@@ -261,10 +260,10 @@ fun ScheduleTaskScreen(
                     } else {
                         plants.forEach { plant ->
                             DropdownMenuItem(
-                                text = { Text(plant.strainName, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant) },
+                                text = { Text("${plant.strainName} - ${plant.batchNumber}", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant) },
                                 onClick = {
                                     selectedPlantId = plant.id
-                                    selectedPlantName = plant.strainName
+                                    selectedPlantName = "${plant.strainName} - ${plant.batchNumber}"
                                     expandPlantDropdown = false
                                 }
                             )

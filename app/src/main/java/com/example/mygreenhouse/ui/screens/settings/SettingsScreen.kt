@@ -63,6 +63,13 @@ fun SettingsScreen(
     val isPinSet by authViewModel.isPinSet.collectAsState()
     val isBiometricEnabled by authViewModel.isBiometricEnabled.collectAsState()
     val isBiometricAvailable = authViewModel.isBiometricAvailable
+    
+    // Debug: Log biometric status (you can check this in Android Studio logs)
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        android.util.Log.d("SettingsScreen", "PIN Set: $isPinSet")
+        android.util.Log.d("SettingsScreen", "Biometric Available: $isBiometricAvailable") 
+        android.util.Log.d("SettingsScreen", "Biometric Enabled: $isBiometricEnabled")
+    }
 
     Scaffold(
         topBar = {
@@ -189,61 +196,98 @@ fun SettingsScreen(
                 )
             }
             
-            // Biometric Auth Toggle (only shown if PIN is set and biometric is available)
-            if (isBiometricAvailable && isPinSet) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column(
-                        modifier = Modifier.weight(1f)
+            // Biometric Authentication Section
+            // Always show some biometric option to make it clear what's happening
+            when {
+                // Case 1: PIN is set and biometrics are available - show toggle
+                isPinSet && isBiometricAvailable -> {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Use Biometric Authentication",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.bodyLarge
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
                         )
-                        Text(
-                            text = "Unlock using fingerprint or face recognition",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Use Biometric Authentication",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "Unlock using fingerprint or face recognition",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Switch(
+                            checked = isBiometricEnabled,
+                            onCheckedChange = { enabled ->
+                                authViewModel.enableBiometric(enabled)
+                            }
                         )
                     }
-                    Switch(
-                        checked = isBiometricEnabled,
-                        onCheckedChange = { enabled ->
-                            authViewModel.enableBiometric(enabled)
-                        }
-                    )
                 }
-            } else if (isPinSet && !isBiometricAvailable) {
-                // Show message that biometric is not available
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Fingerprint,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                        text = "Biometric authentication not available on this device",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
+                
+                // Case 2: PIN is set but biometrics are not available
+                isPinSet && !isBiometricAvailable -> {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = "Biometric authentication not available on this device",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+                
+                // Case 3: PIN is not set - show requirement message
+                !isPinSet -> {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Biometric Authentication",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "Set up a PIN first to enable biometric authentication",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
                 }
             }
             

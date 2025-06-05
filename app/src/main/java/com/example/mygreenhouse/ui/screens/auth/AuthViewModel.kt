@@ -41,9 +41,23 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = authRepository.isBiometricEnabled()
         )
+
+    val isAuthenticatedInSession: StateFlow<Boolean> = authRepository.isAuthenticatedInSession
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
         
     val isBiometricAvailable: Boolean
         get() = authRepository.isBiometricAvailable()
+
+    /**
+     * Check if authentication is required (PIN enabled but not authenticated this session)
+     */
+    fun isAuthenticationRequired(): Boolean {
+        return authRepository.isAuthenticationRequired()
+    }
 
     fun setPin(pin: String): Result<Unit> {
         return try {
@@ -79,6 +93,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun enableBiometric(enable: Boolean): Boolean {
         return authRepository.enableBiometric(enable)
     }
+
+    /**
+     * Mark user as authenticated in the current session
+     */
+    fun markAuthenticatedInSession() {
+        authRepository.markAuthenticatedInSession()
+    }
     
     /**
      * Show biometric authentication prompt
@@ -97,7 +118,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             subtitle = "Use your biometric to unlock the app",
             description = "Authentication is required to access your greenhouse data",
             negativeButtonText = "Cancel",
-            onAuthSuccess = onSuccess,
+            onAuthSuccess = {
+                markAuthenticatedInSession()
+                onSuccess()
+            },
             onAuthError = onError
         )
     }

@@ -96,9 +96,10 @@ fun GreenhouseNavGraph(
     // Get AuthViewModel to check if PIN lock is enabled
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
     val isPinLockEnabled by authViewModel.isPinLockEnabled.collectAsState()
+    val isAuthenticatedInSession by authViewModel.isAuthenticatedInSession.collectAsState()
     
-    // Determine the start destination based on PIN lock status
-    val startDestination = if (isPinLockEnabled) {
+    // Determine the start destination based on authentication status
+    val startDestination = if (authViewModel.isAuthenticationRequired()) {
         NavDestination.Lock.route
     } else {
         NavDestination.Dashboard.route

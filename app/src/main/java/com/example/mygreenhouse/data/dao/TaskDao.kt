@@ -39,6 +39,16 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledDateTime > :now ORDER BY scheduledDateTime ASC LIMIT :limit")
     fun getUpcomingTasks(now: LocalDateTime, limit: Int = 10): Flow<List<Task>>
     
+    @Query("""
+        SELECT * FROM tasks 
+        WHERE isCompleted = 0 
+        ORDER BY 
+            CASE WHEN scheduledDateTime <= :now THEN 0 ELSE 1 END,
+            scheduledDateTime ASC 
+        LIMIT :limit
+    """)
+    fun getDashboardTasks(now: LocalDateTime, limit: Int = 10): Flow<List<Task>>
+    
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 AND scheduledDateTime <= :now ORDER BY scheduledDateTime DESC")
     suspend fun getDueTasks(now: LocalDateTime): List<Task>
     

@@ -255,4 +255,32 @@ Based on `greenhouse.md`:
     *   [X] Remove Growth Trends line graph.
     *   [ ] Add Bar Graph for "Average Days In Growth Stage":
         *   Dropdown menu for Strain Name selection (default: "Across All Strains").
-        *   Graph displays average days for each growth stage (excluding Drying and Curing) based on selection. 
+        *   Graph displays average days for each growth stage (excluding Drying and Curing) based on selection.
+
+## 5. Bug Fixes
+
+### Add Plant Screen
+- [X] **Bug 1a:** Pressing Return in input boxes should complete the input, not produce a new line.
+- [X] **Bug 1b:** When Clone is selected, Plant Type can't be selected.
+- [N] **Bug 1c(i)(1):** Cloud Media Picker remains open in the background after selection.
+
+### Task Screen
+- [X] **Bug 2a:** Task information is not displayed when selecting a saved Task (e.g., Days of the week M, T, W).
+- [X] **Bug 2b:** Tasks show the current day as scheduled even if it wasn't selected (e.g., Friday for a Sa, Su, M task).
+- [X] **Bug 2c:** Inconsistent behavior when navigating back or pressing Home after saving a Task (sometimes tasks disappear from the Home Screen).
+- [X] **Bug 2d(i)(1):** No information is displayed for Plants already associated with a Task (e.g., Strain001's watering schedule).
+- [X] **Bug 2e(i):** Tasks display the creation day with the scheduled time instead of the correct scheduled day.
+
+### Stats Screen
+- [X] **Bug 3a(i):** Active Plants displays the number of Batches instead of the total quantity of plants.
+- [X] **Bug 3b(i):** Plants by Growth Stage calculates based on Batches instead of plant quantities.
+- [X] **Bug 3c(i):** Average Days in Growth Stage graph does not display data when selected from the dropdown.
+
+### Dank Bank Screen
+- [X] **Bug 4a(i)(1):** Harvested Plant weight cannot be edited in the Edit screen.
+
+### Notifications
+- [X] **Bug 5a:** Notifications require PIN entry even when already in the application.
+- [X] **Bug 5b:** Pressing notifications sometimes removes all tasks from the Home Screen.
+
+*(We will update the checkboxes as we complete tasks)* 

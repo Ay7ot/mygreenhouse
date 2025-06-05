@@ -63,6 +63,14 @@ data class Plant(
     val dryingStartDate: LocalDate? = null,
     val curingStartDate: LocalDate? = null,
     
+    // Stage-specific start dates for more accurate tracking
+    val germinationStartDate: LocalDate? = null,
+    val seedlingStartDate: LocalDate? = null,
+    val nonRootedStartDate: LocalDate? = null,
+    val rootedStartDate: LocalDate? = null,
+    val vegetationStartDate: LocalDate? = null,
+    val flowerStartDate: LocalDate? = null,
+    
     // Specific growth parameters based on plant type
     val seedToHarvestDays: Int? = null, // For autoflowers
     val flowerDurationDays: Int? = null, // For photoperiods

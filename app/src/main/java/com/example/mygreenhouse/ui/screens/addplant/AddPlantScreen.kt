@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -55,10 +56,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusDirection
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mygreenhouse.data.model.PlantSource
 import com.example.mygreenhouse.data.model.PlantType
@@ -170,6 +174,9 @@ fun AddPlantScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
+    // Focus manager for keyboard navigation
+    val focusManager = LocalFocusManager.current
+    
     // Context for date picker
     val context = LocalContext.current
     
@@ -235,7 +242,12 @@ fun AddPlantScreen(
                 label = { Text("Enter Strain Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = myAppTextFieldColors()
+                colors = myAppTextFieldColors(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -262,7 +274,12 @@ fun AddPlantScreen(
                 label = { Text("Enter Batch Number", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = myAppTextFieldColors()
+                colors = myAppTextFieldColors(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             // Quantity
@@ -273,7 +290,14 @@ fun AddPlantScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = myAppTextFieldColors(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
             )
 
             // Image Picker
@@ -317,7 +341,7 @@ fun AddPlantScreen(
                     viewModel.updatePlantTypeSelection(selectedString)
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = uiState.source == PlantSource.SEED // Only enable if source is SEED
+                enabled = uiState.source != null // Enable if source is selected (both SEED and CLONE)
             )
             
             // Growth Stage Dropdown
@@ -385,7 +409,15 @@ fun AddPlantScreen(
                     label = { Text(uiState.durationLabel, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = myAppTextFieldColors()
+                    colors = myAppTextFieldColors(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
             }
             
@@ -440,7 +472,14 @@ fun AddPlantScreen(
                     label = { Text("Add Nutrient", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(8.dp),
-                    colors = myAppTextFieldColors()
+                    colors = myAppTextFieldColors(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = { 
+                            viewModel.addNutrient()
+                        }
+                    )
                 )
                 IconButton(onClick = { viewModel.addNutrient() }, modifier = Modifier.padding(start = 8.dp)) {
                     Icon(

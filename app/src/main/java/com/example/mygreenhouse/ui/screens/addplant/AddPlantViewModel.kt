@@ -208,41 +208,22 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         val durationLabelText = determineDurationLabel(newPlantType, _uiState.value.source)
         
         _uiState.update { 
-            if (it.source == PlantSource.CLONE) {
-                 it.copy(
-                    plantTypeSelection = "Select",
-                    type = null,
-                    showDurationField = false,
-                    durationLabel = "Duration (days)",
-                    durationText = "",
-                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, "", null, it.source),
-                    isValid = validateForm(
-                        strainName = it.strainName,
-                        batchNumber = it.batchNumber,
-                        source = it.source,
-                        type = null,
-                        stage = it.growthStage,
-                        quantity = it.quantity
-                    )
-                )
-            } else {
-                it.copy(
-                    plantTypeSelection = selectedDisplayString,
+            it.copy(
+                plantTypeSelection = selectedDisplayString,
+                type = newPlantType,
+                durationLabel = durationLabelText,
+                showDurationField = if (it.source == PlantSource.CLONE) false else showField,
+                durationText = if (it.source == PlantSource.CLONE || !showField) "" else it.durationText,
+                daysUntilHarvest = if (it.source == PlantSource.CLONE) null else calculateDaysUntilHarvest(it.startDate, if (!showField) "" else it.durationText, newPlantType, it.source),
+                isValid = validateForm(
+                    strainName = it.strainName,
+                    batchNumber = it.batchNumber,
+                    source = it.source,
                     type = newPlantType,
-                    durationLabel = durationLabelText,
-                    showDurationField = showField,
-                    durationText = if (!showField) "" else it.durationText,
-                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, if (!showField) "" else it.durationText, newPlantType, it.source),
-                    isValid = validateForm(
-                        strainName = it.strainName,
-                        batchNumber = it.batchNumber,
-                        source = it.source,
-                        type = newPlantType,
-                        stage = it.growthStage,
-                        quantity = it.quantity
-                    )
+                    stage = it.growthStage,
+                    quantity = it.quantity
                 )
-            }
+            )
         }
     }
 
@@ -381,12 +362,16 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
         val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else null
         val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else null
         
+        // Initialize stage start dates based on current growth stage
+        val initialStage = currentState.growthStage ?: GrowthStage.GERMINATION
+        val stageStartDate = currentState.startDate
+        
         val plant = Plant(
             strainName = currentState.strainName,
             batchNumber = currentState.batchNumber,
             source = currentState.source ?: PlantSource.SEED,
             type = currentState.type,
-            growthStage = currentState.growthStage ?: GrowthStage.GERMINATION,
+            growthStage = initialStage,
             startDate = currentState.startDate,
             dryingStartDate = finalDryingStartDate,
             curingStartDate = finalCuringStartDate,
@@ -398,7 +383,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
             imagePath = currentState.imageUri,
             quantity = currentState.quantity.toIntOrNull() ?: 1,
             gender = currentState.plantGender,
-            isCustomStrain = currentState.isCustomStrain
+            isCustomStrain = currentState.isCustomStrain,
+            // Set the appropriate stage start date based on the initial growth stage
+            germinationStartDate = if (initialStage == GrowthStage.GERMINATION) stageStartDate else null,
+            seedlingStartDate = if (initialStage == GrowthStage.SEEDLING) stageStartDate else null,
+            nonRootedStartDate = if (initialStage == GrowthStage.NON_ROOTED) stageStartDate else null,
+            rootedStartDate = if (initialStage == GrowthStage.ROOTED) stageStartDate else null,
+            vegetationStartDate = if (initialStage == GrowthStage.VEGETATION) stageStartDate else null,
+            flowerStartDate = if (initialStage == GrowthStage.FLOWER) stageStartDate else null
         )
         
         viewModelScope.launch {

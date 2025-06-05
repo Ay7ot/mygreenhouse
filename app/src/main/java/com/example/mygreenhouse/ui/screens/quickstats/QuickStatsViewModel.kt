@@ -70,23 +70,37 @@ class QuickStatsViewModel(application: Application) : AndroidViewModel(applicati
         }
         val activeDisplayPlants = plants
 
-        val dryingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.DRYING }
-        val curingCount = activeDisplayPlants.count { it.growthStage == GrowthStage.CURING }
-        val totalActivePlants = activeDisplayPlants.count { 
-            it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING 
-        }
+        // Calculate quantities instead of counts
+        val dryingQuantity = activeDisplayPlants
+            .filter { it.growthStage == GrowthStage.DRYING }
+            .sumOf { it.quantity }
+        val curingQuantity = activeDisplayPlants
+            .filter { it.growthStage == GrowthStage.CURING }
+            .sumOf { it.quantity }
+        val totalActivePlantQuantity = activeDisplayPlants
+            .filter { it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING }
+            .sumOf { it.quantity }
         
+        // Calculate plants by stage using quantities
         val plantsByStage = GrowthStage.values().associateWith { stage ->
-            activeDisplayPlants.count { it.growthStage == stage }
+            activeDisplayPlants
+                .filter { it.growthStage == stage }
+                .sumOf { it.quantity }
         }
         
+        // Build strain options with strain name + batch number combinations
         val strainOptions = mutableListOf("Across All Strains")
-        strainOptions.addAll(activeDisplayPlants.map { it.strainName }.distinct().sorted())
+        val strainBatchCombinations = activeDisplayPlants
+            .map { "${it.strainName} - ${it.batchNumber}" }
+            .distinct()
+            .sorted()
+        strainOptions.addAll(strainBatchCombinations)
 
+        // Filter plants for average calculation based on strain + batch combination
         val plantsForAvgCalc = if (selectedStrainFilter == "Across All Strains") {
             activeDisplayPlants
         } else {
-            activeDisplayPlants.filter { it.strainName == selectedStrainFilter }
+            activeDisplayPlants.filter { "${it.strainName} - ${it.batchNumber}" == selectedStrainFilter }
         }
 
         val today = LocalDate.now()
@@ -97,24 +111,86 @@ class QuickStatsViewModel(application: Application) : AndroidViewModel(applicati
         val stageDurations = mutableMapOf<GrowthStage, MutableList<Long>>()
 
         for (plant in plantsForAvgCalc) {
+            // Use new stage-specific start dates if available, otherwise fall back to transitions
+            val stageStartDates = mapOf(
+                GrowthStage.GERMINATION to plant.germinationStartDate,
+                GrowthStage.SEEDLING to plant.seedlingStartDate,
+                GrowthStage.NON_ROOTED to plant.nonRootedStartDate,
+                GrowthStage.ROOTED to plant.rootedStartDate,
+                GrowthStage.VEGETATION to plant.vegetationStartDate,
+                GrowthStage.FLOWER to plant.flowerStartDate
+            )
+            
+            // Get transitions for fallback calculation
             val transitions = stageTransitionRepository.getTransitionsForPlantOnce(plant.id)
-            if (transitions.isNotEmpty()) {
-                for (i in transitions.indices) {
-                    val currentTransition = transitions[i]
+            val sortedTransitions = transitions.sortedBy { it.transitionDate }
+            
+            // Calculate stage durations using the new stage start dates when available
+            for (stage in relevantStages) {
+                val stageStartDate = stageStartDates[stage]
+                
+                if (stageStartDate != null) {
+                    // Find the next stage date
+                    val nextStageDate = when (stage) {
+                        GrowthStage.GERMINATION -> plant.seedlingStartDate
+                        GrowthStage.SEEDLING -> plant.vegetationStartDate
+                        GrowthStage.NON_ROOTED -> plant.rootedStartDate
+                        GrowthStage.ROOTED -> plant.vegetationStartDate
+                        GrowthStage.VEGETATION -> plant.flowerStartDate
+                        GrowthStage.FLOWER -> plant.dryingStartDate
+                        else -> null
+                    }
+                    
+                    val endDate = when {
+                        nextStageDate != null -> nextStageDate
+                        stage == plant.growthStage -> null // Don't count current incomplete stage
+                        plant.growthStage == GrowthStage.DRYING && stage == GrowthStage.FLOWER -> plant.dryingStartDate
+                        plant.growthStage == GrowthStage.CURING && stage == GrowthStage.FLOWER -> plant.dryingStartDate
+                        else -> {
+                            // Find end date from transitions as fallback
+                            val nextTransition = sortedTransitions.find { 
+                                it.transitionDate.isAfter(stageStartDate) && it.stage != stage 
+                            }
+                            nextTransition?.transitionDate
+                        }
+                    }
+                    
+                    if (endDate != null) {
+                        val duration = ChronoUnit.DAYS.between(stageStartDate, endDate)
+                        if (duration >= 0) {
+                            stageDurations.computeIfAbsent(stage) { mutableListOf() }.add(duration)
+                        }
+                    }
+                }
+            }
+            
+            // Fallback to transition-based calculation if no stage dates are set
+            if (stageStartDates.values.all { it == null } && sortedTransitions.isNotEmpty()) {
+                for (i in sortedTransitions.indices) {
+                    val currentTransition = sortedTransitions[i]
                     if (currentTransition.stage in relevantStages) {
                         val startDate = currentTransition.transitionDate
-                        val endDate = if (i + 1 < transitions.size) {
-                            transitions[i + 1].transitionDate
+                        val endDate = if (i + 1 < sortedTransitions.size) {
+                            sortedTransitions[i + 1].transitionDate
                         } else {
                             when (plant.growthStage) {
-                                GrowthStage.DRYING -> plant.dryingStartDate ?: today
-                                GrowthStage.CURING -> plant.curingStartDate ?: today
-                                else -> today
+                                GrowthStage.DRYING -> plant.dryingStartDate ?: currentTransition.transitionDate
+                                GrowthStage.CURING -> plant.curingStartDate ?: currentTransition.transitionDate
+                                else -> {
+                                    if (currentTransition.stage == plant.growthStage) {
+                                        null // Skip current stage as it's incomplete
+                                    } else {
+                                        today // For completed stages, calculate until now
+                                    }
+                                }
                             }
                         }
-                        val duration = ChronoUnit.DAYS.between(startDate, endDate)
-                        if (duration >= 0) {
-                             stageDurations.computeIfAbsent(currentTransition.stage) { mutableListOf() }.add(duration)
+                        
+                        if (endDate != null) {
+                            val duration = ChronoUnit.DAYS.between(startDate, endDate)
+                            if (duration >= 0) {
+                                stageDurations.computeIfAbsent(currentTransition.stage) { mutableListOf() }.add(duration)
+                            }
                         }
                     }
                 }
@@ -130,9 +206,9 @@ class QuickStatsViewModel(application: Application) : AndroidViewModel(applicati
         
         _uiState.value = QuickStatsUiState(
             isLoading = false,
-            totalActivePlants = totalActivePlants,
-            dryingCount = dryingCount,
-            curingCount = curingCount,
+            totalActivePlants = totalActivePlantQuantity,
+            dryingCount = dryingQuantity,
+            curingCount = curingQuantity,
             plantsByStage = plantsByStage,
             averageDaysInStage = averageDaysInStage,
             selectedStrain = selectedStrainFilter,

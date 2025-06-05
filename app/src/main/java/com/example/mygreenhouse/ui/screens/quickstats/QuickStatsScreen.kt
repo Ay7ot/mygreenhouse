@@ -197,16 +197,19 @@ fun QuickStatsScreen(
 
                                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) // Separator
 
-                                if (uiState.averageDaysInStage.any { it.value > 0f }) {
+                                // Filter out drying and curing stages before checking if data exists
+                                val filteredAverageDaysData = uiState.averageDaysInStage.filterKeys { 
+                                    it !in listOf(GrowthStage.DRYING, GrowthStage.CURING)
+                                }
+                                
+                                if (filteredAverageDaysData.any { it.value > 0f }) {
                                     AverageDaysInStageBarChart(
-                                        averageDaysData = uiState.averageDaysInStage.filterKeys { 
-                                            it !in listOf(GrowthStage.DRYING, GrowthStage.CURING)
-                                        },
+                                        averageDaysData = filteredAverageDaysData,
                                         darkTheme = darkTheme
                                     )
                                 } else {
                                     Text(
-                                        text = "No data available for the selected strain to display average days in growth stage.",
+                                        text = "Data Unavailable until at least one strain has been moved from one growth stage into another!",
                                         color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant).copy(alpha = 0.7f),
                                         textAlign = TextAlign.Center,
                                         modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp)
@@ -476,12 +479,28 @@ fun AverageDaysInStageBarChart(
     darkTheme: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val validStages = averageDaysData.filter { it.value > 0f }
-    if (validStages.isEmpty()) {
+    // Show all relevant stages (excluding DRYING and CURING) even if they have 0 data
+    val allRelevantStages = listOf(
+        GrowthStage.GERMINATION,
+        GrowthStage.SEEDLING, 
+        GrowthStage.NON_ROOTED,
+        GrowthStage.ROOTED,
+        GrowthStage.VEGETATION,
+        GrowthStage.FLOWER
+    )
+    
+    // Create a map with all stages, using 0f for stages without data
+    val completeStageData = allRelevantStages.associateWith { stage ->
+        averageDaysData[stage] ?: 0f
+    }
+    
+    // Check if there's any data at all
+    val hasAnyData = completeStageData.values.any { it > 0f }
+    if (!hasAnyData) {
         Box(
             modifier = modifier
                 .fillMaxWidth()
-                .height(250.dp) // Increased height for potentially taller text
+                .height(250.dp)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -495,12 +514,13 @@ fun AverageDaysInStageBarChart(
         return
     }
 
-    val maxValue = validStages.values.maxOrNull() ?: 1f
+    val maxValue = completeStageData.values.maxOrNull() ?: 1f
     val barColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+    val emptyBarColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     val labelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
     val gridColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.2f)
     val yAxisLabelColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.6f)
-    val yAxisLabelPadding = 30.dp // Space for Y-axis labels
+    val yAxisLabelPadding = 30.dp
 
     Column(modifier = modifier
         .fillMaxWidth()
@@ -512,10 +532,10 @@ fun AverageDaysInStageBarChart(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(end = 8.dp, top = 8.dp, bottom = 8.dp) // Added top/bottom padding
-                    .width(yAxisLabelPadding), // Fixed width for Y-axis labels
+                    .padding(end = 8.dp, top = 8.dp, bottom = 8.dp)
+                    .width(yAxisLabelPadding),
                 verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.End // Align text to the right
+                horizontalAlignment = Alignment.End
             ) {
                 val yGridLines = 5
                 for (i in yGridLines downTo 0) {
@@ -532,7 +552,7 @@ fun AverageDaysInStageBarChart(
             Canvas(modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 8.dp, bottom = 8.dp)) { 
-                val barCount = validStages.size
+                val barCount = completeStageData.size
                 if (barCount == 0) return@Canvas
 
                 val barWidthRatio = 0.6f
@@ -552,30 +572,40 @@ fun AverageDaysInStageBarChart(
                     )
                 }
 
-                // Draw bars
-                validStages.entries.toList().forEachIndexed { index, (stage, avgDays) ->
-                    val barHeight = (avgDays / maxValue) * size.height // Ensure avgDays is positive
+                // Draw bars for all stages
+                completeStageData.entries.toList().forEachIndexed { index, (stage, avgDays) ->
                     val xOffset = index * totalBarAndSpacingWidth + spacing / 2
-                    if (barHeight > 0) { 
+                    
+                    if (avgDays > 0f) {
+                        // Draw bar with data
+                        val barHeight = (avgDays / maxValue) * size.height
                         drawRect(
                             color = barColor,
                             topLeft = Offset(xOffset, size.height - barHeight),
-                            size = androidx.compose.ui.geometry.Size(barWidth, barHeight) // barHeight is already Float
+                            size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
+                        )
+                    } else {
+                        // Draw empty bar placeholder (small height to show it exists)
+                        val minBarHeight = 2f
+                        drawRect(
+                            color = emptyBarColor,
+                            topLeft = Offset(xOffset, size.height - minBarHeight),
+                            size = androidx.compose.ui.geometry.Size(barWidth, minBarHeight)
                         )
                     }
                 }
             }
         }
-        // X-axis labels
+        // X-axis labels for ALL stages
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 4.dp, start = yAxisLabelPadding + 8.dp), // Align with chart content
+                .padding(top = 4.dp, start = yAxisLabelPadding + 8.dp),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            validStages.keys.forEach {
+            completeStageData.keys.forEach { stage ->
                 Text(
-                    text = formatGrowthStageName(it).take(3).uppercase(),
+                    text = formatGrowthStageName(stage).take(3).uppercase(),
                     fontSize = 10.sp,
                     color = labelColor,
                     textAlign = TextAlign.Center,

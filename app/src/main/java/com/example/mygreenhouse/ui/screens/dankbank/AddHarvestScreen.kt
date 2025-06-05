@@ -190,10 +190,10 @@ fun AddHarvestScreen(
                     // Plant options
                     plants.forEach { plant ->
                         DropdownMenuItem(
-                            text = { Text(plant.strainName, color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
+                            text = { Text("${plant.strainName} - ${plant.batchNumber}", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
                             onClick = {
                                 selectedPlantId = plant.id
-                                selectedPlantName = plant.strainName
+                                selectedPlantName = "${plant.strainName} - ${plant.batchNumber}"
                                 strainName = plant.strainName
                                 batchNumber = plant.batchNumber
                                 isPlantDropdownExpanded = false

@@ -37,9 +37,9 @@ object NotificationHelper {
         task: Task,
         plantName: String? // Plant name can be passed if available
     ) {
-        // Intent to open the app - ideally, navigate to the specific task or task list
+        // Intent to open the app - don't clear task if app is already running to preserve authentication state
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             // You could add extras here to navigate to a specific screen, e.g.:
             // putExtra("destination_route", NavDestination.TaskList.route)
             // putExtra("task_id", task.id) 

@@ -50,7 +50,7 @@ class TaskReminderWorker(
             var plantName: String? = null
             if (task.plantId != null) {
                 val plant = withContext(Dispatchers.IO) { plantDao.getPlantByIdOnce(task.plantId) }
-                plantName = plant?.strainName
+                plantName = plant?.let { "${it.strainName} - ${it.batchNumber}" }
             }
 
             NotificationHelper.showTaskNotification(appContext, task, plantName)

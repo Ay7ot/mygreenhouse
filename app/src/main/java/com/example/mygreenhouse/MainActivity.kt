@@ -27,6 +27,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import android.app.Activity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -42,8 +43,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install the splash screen before any other content
+        val splashScreen = installSplashScreen()
+        
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Optional: Keep the splash screen visible while loading
+        splashScreen.setKeepOnScreenCondition {
+            // You can add conditions here to keep splash screen visible longer
+            // For example, while data is loading
+            false
+        }
         
         requestNotificationPermission()
 

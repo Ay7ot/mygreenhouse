@@ -207,11 +207,25 @@ class DataExportService(private val context: Context) {
             put("id", JsonPrimitive(plant.id))
             put("strainName", JsonPrimitive(plant.strainName))
             put("batchNumber", JsonPrimitive(plant.batchNumber))
+            put("quantity", JsonPrimitive(plant.quantity))
             put("source", JsonPrimitive(plant.source.name))
             plant.type?.let { put("type", JsonPrimitive(it.name)) }
+            put("gender", JsonPrimitive(plant.gender.name))
             put("growthStage", JsonPrimitive(plant.growthStage.name))
+            put("isCustomStrain", JsonPrimitive(plant.isCustomStrain))
             put("startDate", JsonPrimitive(plant.startDate.format(DateTimeFormatter.ISO_LOCAL_DATE)))
             put("lastUpdated", JsonPrimitive(plant.lastUpdated.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+            plant.dryingStartDate?.let { put("dryingStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.curingStartDate?.let { put("curingStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            
+            // Stage-specific start dates
+            plant.germinationStartDate?.let { put("germinationStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.seedlingStartDate?.let { put("seedlingStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.nonRootedStartDate?.let { put("nonRootedStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.rootedStartDate?.let { put("rootedStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.vegetationStartDate?.let { put("vegetationStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            plant.flowerStartDate?.let { put("flowerStartDate", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE))) }
+            
             plant.seedToHarvestDays?.let { put("seedToHarvestDays", JsonPrimitive(it)) }
             plant.flowerDurationDays?.let { put("flowerDurationDays", JsonPrimitive(it)) }
             plant.growMedium?.let { put("growMedium", JsonPrimitive(it)) }
@@ -227,6 +241,9 @@ class DataExportService(private val context: Context) {
             put("type", JsonPrimitive(task.type.name))
             put("description", JsonPrimitive(task.description))
             put("scheduledDateTime", JsonPrimitive(task.scheduledDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+            put("repeatDays", buildJsonArray {
+                task.repeatDays.forEach { add(JsonPrimitive(it)) }
+            })
             put("isCompleted", JsonPrimitive(task.isCompleted))
             task.completedDateTime?.let { put("completedDateTime", JsonPrimitive(it.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))) }
             task.plantId?.let { put("plantId", JsonPrimitive(it)) }
@@ -264,6 +281,7 @@ class DataExportService(private val context: Context) {
             put("acquisitionDate", JsonPrimitive(seed.acquisitionDate.format(DateTimeFormatter.ISO_LOCAL_DATE)))
             put("source", JsonPrimitive(seed.source))
             put("notes", JsonPrimitive(seed.notes))
+            put("isCustomStrain", JsonPrimitive(seed.isCustomStrain))
         }
     }
     
@@ -273,17 +291,37 @@ class DataExportService(private val context: Context) {
             id = jsonObj["id"]!!.jsonPrimitive.content,
             strainName = jsonObj["strainName"]!!.jsonPrimitive.content,
             batchNumber = jsonObj["batchNumber"]!!.jsonPrimitive.content,
+            quantity = jsonObj["quantity"]?.jsonPrimitive?.content?.toIntOrNull() ?: 1,
             source = PlantSource.valueOf(jsonObj["source"]!!.jsonPrimitive.content),
             type = jsonObj["type"]?.jsonPrimitive?.content?.let { PlantType.valueOf(it) },
+            gender = jsonObj["gender"]?.jsonPrimitive?.content?.let { 
+                try { 
+                    com.example.mygreenhouse.data.model.PlantGender.valueOf(it) 
+                } catch (e: Exception) { 
+                    com.example.mygreenhouse.data.model.PlantGender.UNKNOWN 
+                }
+            } ?: com.example.mygreenhouse.data.model.PlantGender.UNKNOWN,
             growthStage = GrowthStage.valueOf(jsonObj["growthStage"]!!.jsonPrimitive.content),
+            isCustomStrain = jsonObj["isCustomStrain"]?.jsonPrimitive?.content?.toBoolean() ?: false,
             startDate = LocalDate.parse(jsonObj["startDate"]!!.jsonPrimitive.content, DateTimeFormatter.ISO_LOCAL_DATE),
             lastUpdated = LocalDate.parse(jsonObj["lastUpdated"]!!.jsonPrimitive.content, DateTimeFormatter.ISO_LOCAL_DATE),
+            dryingStartDate = jsonObj["dryingStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            curingStartDate = jsonObj["curingStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            
+            // Stage-specific start dates
+            germinationStartDate = jsonObj["germinationStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            seedlingStartDate = jsonObj["seedlingStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            nonRootedStartDate = jsonObj["nonRootedStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            rootedStartDate = jsonObj["rootedStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            vegetationStartDate = jsonObj["vegetationStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            flowerStartDate = jsonObj["flowerStartDate"]?.jsonPrimitive?.content?.let { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) },
+            
             seedToHarvestDays = jsonObj["seedToHarvestDays"]?.jsonPrimitive?.content?.toIntOrNull(),
             flowerDurationDays = jsonObj["flowerDurationDays"]?.jsonPrimitive?.content?.toIntOrNull(),
             growMedium = jsonObj["growMedium"]?.jsonPrimitive?.content,
             nutrients = jsonObj["nutrients"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
             imagePath = jsonObj["imagePath"]?.jsonPrimitive?.content,
-            isArchived = jsonObj["isArchived"]!!.jsonPrimitive.content.toBoolean()
+            isArchived = jsonObj["isArchived"]?.jsonPrimitive?.content?.toBoolean() ?: false
         )
     }
     
@@ -293,6 +331,7 @@ class DataExportService(private val context: Context) {
             type = ActualTaskType.valueOf(jsonObj["type"]!!.jsonPrimitive.content),
             description = jsonObj["description"]!!.jsonPrimitive.content,
             scheduledDateTime = LocalDateTime.parse(jsonObj["scheduledDateTime"]!!.jsonPrimitive.content, DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            repeatDays = jsonObj["repeatDays"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
             isCompleted = jsonObj["isCompleted"]!!.jsonPrimitive.content.toBoolean(),
             completedDateTime = jsonObj["completedDateTime"]?.jsonPrimitive?.content?.let { LocalDateTime.parse(it, DateTimeFormatter.ISO_LOCAL_DATE_TIME) },
             plantId = jsonObj["plantId"]?.jsonPrimitive?.content
@@ -325,11 +364,12 @@ class DataExportService(private val context: Context) {
             strainName = jsonObj["strainName"]!!.jsonPrimitive.content,
             batchNumber = jsonObj["batchNumber"]!!.jsonPrimitive.content,
             seedCount = jsonObj["seedCount"]!!.jsonPrimitive.content.toInt(),
-            breeder = jsonObj["breeder"]!!.jsonPrimitive.content,
+            breeder = jsonObj["breeder"]?.jsonPrimitive?.content ?: "",
             seedType = ActualSeedType.valueOf(jsonObj["seedType"]!!.jsonPrimitive.content),
             acquisitionDate = LocalDate.parse(jsonObj["acquisitionDate"]!!.jsonPrimitive.content, DateTimeFormatter.ISO_LOCAL_DATE),
-            source = jsonObj["source"]!!.jsonPrimitive.content,
-            notes = jsonObj["notes"]!!.jsonPrimitive.content
+            source = jsonObj["source"]?.jsonPrimitive?.content ?: "",
+            notes = jsonObj["notes"]?.jsonPrimitive?.content ?: "",
+            isCustomStrain = jsonObj["isCustomStrain"]?.jsonPrimitive?.content?.toBoolean() ?: false
         )
     }
 } 

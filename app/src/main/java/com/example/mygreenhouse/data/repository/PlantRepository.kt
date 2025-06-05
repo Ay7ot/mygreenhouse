@@ -12,9 +12,16 @@ class PlantRepository(private val plantDao: PlantDao) {
     
     val allActivePlants: Flow<List<Plant>> = plantDao.getAllActivePlants()
     val allPlants: Flow<List<Plant>> = plantDao.getAllPlants()
+    
+    // Legacy count methods (count records/batches)
     val activePlantCount: Flow<Int> = plantDao.getActivePlantCount()
     val dryingCount: Flow<Int> = plantDao.getDryingCount()
     val curingCount: Flow<Int> = plantDao.getCuringCount()
+    
+    // New quantity-based methods (sum quantities)
+    val activePlantQuantity: Flow<Int> = plantDao.getActivePlantQuantity()
+    val dryingQuantity: Flow<Int> = plantDao.getDryingQuantity()
+    val curingQuantity: Flow<Int> = plantDao.getCuringQuantity()
     
     suspend fun insertPlant(plant: Plant) {
         plantDao.insertPlant(plant)
@@ -43,5 +50,9 @@ class PlantRepository(private val plantDao: PlantDao) {
     
     fun getPlantCountByStage(stage: GrowthStage): Flow<Int> {
         return plantDao.getPlantCountByStage(stage)
+    }
+    
+    fun getPlantQuantityByStage(stage: GrowthStage): Flow<Int> {
+        return plantDao.getPlantQuantityByStage(stage)
     }
 } 

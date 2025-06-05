@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 
 // Material Icons
@@ -54,7 +55,9 @@ import java.time.LocalDate
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -71,6 +74,9 @@ fun EditPlantScreen(
     darkTheme: Boolean
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Focus manager for keyboard navigation
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     // Context for date picker
     val context = LocalContext.current
@@ -162,7 +168,12 @@ fun EditPlantScreen(
                     label = { Text("Strain Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = textFieldColors()
+                    colors = textFieldColors(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
 
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -188,7 +199,12 @@ fun EditPlantScreen(
                     label = { Text("Batch Number", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = textFieldColors()
+                    colors = textFieldColors(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
 
                 OutlinedTextField(
@@ -198,7 +214,14 @@ fun EditPlantScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = textFieldColors(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                    )
                 )
 
                 ImagePicker(
@@ -227,17 +250,15 @@ fun EditPlantScreen(
                     enabled = true
                 )
 
-                if (uiState.source == PlantSource.SEED) {
-                    DropdownMenuField(
-                        label = "Plant Type",
-                        selectedValue = uiState.plantTypeSelection,
-                        options = viewModel.plantTypeSelectionOptions,
-                        onOptionSelected = { selectedString ->
-                            viewModel.updatePlantTypeSelection(selectedString)
-                        },
-                        enabled = true
-                    )
-                }
+                DropdownMenuField(
+                    label = "Plant Type",
+                    selectedValue = uiState.plantTypeSelection,
+                    options = viewModel.plantTypeSelectionOptions,
+                    onOptionSelected = { selectedString ->
+                        viewModel.updatePlantTypeSelection(selectedString)
+                    },
+                    enabled = uiState.source != null // Enable for both SEED and CLONE
+                )
 
                 DropdownMenuField(
                     label = "Growth Stage",
@@ -309,7 +330,14 @@ fun EditPlantScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                         colors = textFieldColors(),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number)
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                        )
                     )
                 }
 
@@ -363,7 +391,14 @@ fun EditPlantScreen(
                         label = { Text("Add Nutrient", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
-                        colors = textFieldColors()
+                        colors = textFieldColors(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(
+                            onDone = { 
+                                viewModel.addNutrient()
+                            }
+                        )
                     )
                     IconButton(onClick = { viewModel.addNutrient() }) {
                         Icon(Icons.Filled.Add, "Add Nutrient", tint = MaterialTheme.colorScheme.primary)
@@ -394,6 +429,25 @@ fun EditPlantScreen(
                                 )
                             },
                             shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+                }
+
+                // Stage History Section - show editable dates for completed stages
+                if (uiState.completedStages.isNotEmpty()) {
+                    Text(
+                        text = "Stage History",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+                    
+                    uiState.completedStages.forEach { stage ->
+                        StageStartDateField(
+                            stage = stage,
+                            currentDate = getStageStartDate(uiState, stage),
+                            onDateSelected = { date -> updateStageStartDate(viewModel, stage, date) },
+                            darkTheme = darkTheme
                         )
                     }
                 }
@@ -456,4 +510,88 @@ private fun textFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.color
 
 private fun String.capitalizeWords(): String = split(" ").joinToString(" ") { word ->
     word.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+}
+
+@Composable
+private fun StageStartDateField(
+    stage: GrowthStage,
+    currentDate: LocalDate?,
+    onDateSelected: (LocalDate) -> Unit,
+    darkTheme: Boolean
+) {
+    val context = LocalContext.current
+    val datePickerDialog = remember(currentDate) {
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                onDateSelected(LocalDate.of(year, month + 1, dayOfMonth))
+            },
+            currentDate?.year ?: LocalDate.now().year,
+            currentDate?.monthValue?.minus(1) ?: LocalDate.now().monthValue - 1,
+            currentDate?.dayOfMonth ?: LocalDate.now().dayOfMonth
+        )
+    }
+
+    val stageName = stage.name.replace("_", " ").capitalizeWords()
+    val dateText = currentDate?.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE) ?: "Not Set"
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        OutlinedTextField(
+            value = dateText,
+            onValueChange = { /* Read-only */ },
+            label = { Text("$stageName Start Date", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            enabled = false,
+            shape = RoundedCornerShape(8.dp),
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Select Date",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { datePickerDialog.show() }
+        )
+    }
+}
+
+private fun getStageStartDate(uiState: EditPlantUiState, stage: GrowthStage): LocalDate? {
+    return when (stage) {
+        GrowthStage.GERMINATION -> uiState.germinationStartDate
+        GrowthStage.SEEDLING -> uiState.seedlingStartDate
+        GrowthStage.NON_ROOTED -> uiState.nonRootedStartDate
+        GrowthStage.ROOTED -> uiState.rootedStartDate
+        GrowthStage.VEGETATION -> uiState.vegetationStartDate
+        GrowthStage.FLOWER -> uiState.flowerStartDate
+        GrowthStage.DRYING -> uiState.dryingStartDate
+        GrowthStage.CURING -> uiState.curingStartDate
+    }
+}
+
+private fun updateStageStartDate(viewModel: EditPlantViewModel, stage: GrowthStage, date: LocalDate) {
+    when (stage) {
+        GrowthStage.GERMINATION -> viewModel.updateGerminationStartDate(date)
+        GrowthStage.SEEDLING -> viewModel.updateSeedlingStartDate(date)
+        GrowthStage.NON_ROOTED -> viewModel.updateNonRootedStartDate(date)
+        GrowthStage.ROOTED -> viewModel.updateRootedStartDate(date)
+        GrowthStage.VEGETATION -> viewModel.updateVegetationStartDate(date)
+        GrowthStage.FLOWER -> viewModel.updateFlowerStartDate(date)
+        GrowthStage.DRYING -> viewModel.updateDryingStartDate(date)
+        GrowthStage.CURING -> viewModel.updateCuringStartDate(date)
+    }
 } 

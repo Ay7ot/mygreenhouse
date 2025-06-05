@@ -47,4 +47,16 @@ interface PlantDao {
     
     @Query("SELECT COUNT(*) FROM plants WHERE growthStage IN ('CURING') AND isArchived = 0")
     fun getCuringCount(): Flow<Int>
+    
+    @Query("SELECT COALESCE(SUM(quantity), 0) FROM plants WHERE isArchived = 0")
+    fun getActivePlantQuantity(): Flow<Int>
+    
+    @Query("SELECT COALESCE(SUM(quantity), 0) FROM plants WHERE growthStage = :stage AND isArchived = 0")
+    fun getPlantQuantityByStage(stage: GrowthStage): Flow<Int>
+    
+    @Query("SELECT COALESCE(SUM(quantity), 0) FROM plants WHERE growthStage IN ('DRYING') AND isArchived = 0")
+    fun getDryingQuantity(): Flow<Int>
+    
+    @Query("SELECT COALESCE(SUM(quantity), 0) FROM plants WHERE growthStage IN ('CURING') AND isArchived = 0")
+    fun getCuringQuantity(): Flow<Int>
 } 

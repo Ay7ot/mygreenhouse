@@ -54,6 +54,17 @@ data class EditPlantUiState(
     val daysInDrying: Long? = null,
     val daysInCuring: Long? = null,
     val daysUntilHarvest: Long? = null,
+    
+    // Stage-specific start dates
+    val germinationStartDate: LocalDate? = null,
+    val seedlingStartDate: LocalDate? = null,
+    val nonRootedStartDate: LocalDate? = null,
+    val rootedStartDate: LocalDate? = null,
+    val vegetationStartDate: LocalDate? = null,
+    val flowerStartDate: LocalDate? = null,
+    
+    // Completed stages (stages the plant has been through)
+    val completedStages: List<GrowthStage> = emptyList(),
     val currentNutrientInput: String = "",
     val nutrientsList: List<String> = emptyList(),
     val growMediumDisplay: String = "Select",
@@ -137,6 +148,10 @@ class EditPlantViewModel(
                 val daysInDrying = plant.dryingStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) }
                 val daysInCuring = plant.curingStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) }
                 val daysUntilHarvest = calculateDaysUntilHarvest(plant.startDate, durationTextValue, plant.type, plant.source)
+                
+                // Get transitions to determine completed stages
+                val transitions = stageTransitionRepository.getTransitionsForPlantOnce(plant.id)
+                val completedStages = transitions.map { it.stage }.distinct().filter { it != plant.growthStage }
 
                 _uiState.update {
                     it.copy(
@@ -163,6 +178,13 @@ class EditPlantViewModel(
                         daysInDrying = daysInDrying,
                         daysInCuring = daysInCuring,
                         daysUntilHarvest = daysUntilHarvest,
+                        germinationStartDate = plant.germinationStartDate,
+                        seedlingStartDate = plant.seedlingStartDate,
+                        nonRootedStartDate = plant.nonRootedStartDate,
+                        rootedStartDate = plant.rootedStartDate,
+                        vegetationStartDate = plant.vegetationStartDate,
+                        flowerStartDate = plant.flowerStartDate,
+                        completedStages = completedStages,
                         nutrientsList = plant.nutrients,
                         growMediumDisplay = plant.growMedium ?: "Select",
                         selectedGrowMedium = plant.growMedium,
@@ -267,27 +289,15 @@ class EditPlantViewModel(
         val durationLabelText = determineDurationFieldVisibilityAndLabel(_uiState.value.source, newPlantType).first
         
         _uiState.update {
-            if (it.source == PlantSource.CLONE) {
-                 it.copy(
-                    plantTypeSelection = "Select",
-                    type = null,
-                    showDurationField = false,
-                    durationLabel = "Duration (days)",
-                    durationText = "",
-                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, "", null, it.source),
-                    isValid = validateForm(it.strainName, it.batchNumber, it.source, null, it.growthStage, it.quantity)
-                )
-            } else {
-                it.copy(
-                    plantTypeSelection = selectedDisplayString,
-                    type = newPlantType,
-                    durationLabel = durationLabelText,
-                    showDurationField = showField,
-                    durationText = if (!showField) "" else it.durationText,
-                    daysUntilHarvest = calculateDaysUntilHarvest(it.startDate, if(!showField) "" else it.durationText, newPlantType, it.source),
-                    isValid = validateForm(it.strainName, it.batchNumber, it.source, newPlantType, it.growthStage, it.quantity)
-                )
-            }
+            it.copy(
+                plantTypeSelection = selectedDisplayString,
+                type = newPlantType,
+                durationLabel = durationLabelText,
+                showDurationField = if (it.source == PlantSource.CLONE) false else showField,
+                durationText = if (it.source == PlantSource.CLONE || !showField) "" else it.durationText,
+                daysUntilHarvest = if (it.source == PlantSource.CLONE) null else calculateDaysUntilHarvest(it.startDate, if(!showField) "" else it.durationText, newPlantType, it.source),
+                isValid = validateForm(it.strainName, it.batchNumber, it.source, newPlantType, it.growthStage, it.quantity)
+            )
         }
     }
 
@@ -297,7 +307,15 @@ class EditPlantViewModel(
             val newDryingStartDate = if (stage == GrowthStage.DRYING && currentState.growthStage != GrowthStage.DRYING) LocalDate.now() else if (stage != GrowthStage.DRYING) null else currentState.dryingStartDate
             val newCuringStartDate = if (stage == GrowthStage.CURING && currentState.growthStage != GrowthStage.CURING) LocalDate.now() else if (stage != GrowthStage.CURING) null else currentState.curingStartDate
             
-            val seedToHarvestDays = currentState.durationText.toIntOrNull()
+            // Auto-set stage start dates when moving to a new stage
+            val today = LocalDate.now()
+            val newGerminationStartDate = if (stage == GrowthStage.GERMINATION && currentState.growthStage != GrowthStage.GERMINATION && currentState.germinationStartDate == null) today else currentState.germinationStartDate
+            val newSeedlingStartDate = if (stage == GrowthStage.SEEDLING && currentState.growthStage != GrowthStage.SEEDLING && currentState.seedlingStartDate == null) today else currentState.seedlingStartDate
+            val newNonRootedStartDate = if (stage == GrowthStage.NON_ROOTED && currentState.growthStage != GrowthStage.NON_ROOTED && currentState.nonRootedStartDate == null) today else currentState.nonRootedStartDate
+            val newRootedStartDate = if (stage == GrowthStage.ROOTED && currentState.growthStage != GrowthStage.ROOTED && currentState.rootedStartDate == null) today else currentState.rootedStartDate
+            val newVegetationStartDate = if (stage == GrowthStage.VEGETATION && currentState.growthStage != GrowthStage.VEGETATION && currentState.vegetationStartDate == null) today else currentState.vegetationStartDate
+            val newFlowerStartDate = if (stage == GrowthStage.FLOWER && currentState.growthStage != GrowthStage.FLOWER && currentState.flowerStartDate == null) today else currentState.flowerStartDate
+            
             val daysUntilHarvest = calculateDaysUntilHarvest(currentState.startDate, currentState.durationText, currentState.type, currentState.source)
 
             currentState.copy(
@@ -308,6 +326,12 @@ class EditPlantViewModel(
                 daysInDrying = newDryingStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) },
                 daysInCuring = newCuringStartDate?.let { ChronoUnit.DAYS.between(it, LocalDate.now()) },
                 daysUntilHarvest = daysUntilHarvest,
+                germinationStartDate = newGerminationStartDate,
+                seedlingStartDate = newSeedlingStartDate,
+                nonRootedStartDate = newNonRootedStartDate,
+                rootedStartDate = newRootedStartDate,
+                vegetationStartDate = newVegetationStartDate,
+                flowerStartDate = newFlowerStartDate,
                 isValid = validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, stage, currentState.quantity)
             )
         }
@@ -402,6 +426,30 @@ class EditPlantViewModel(
         }
     }
 
+    fun updateGerminationStartDate(date: LocalDate) {
+        _uiState.update { it.copy(germinationStartDate = date) }
+    }
+
+    fun updateSeedlingStartDate(date: LocalDate) {
+        _uiState.update { it.copy(seedlingStartDate = date) }
+    }
+
+    fun updateNonRootedStartDate(date: LocalDate) {
+        _uiState.update { it.copy(nonRootedStartDate = date) }
+    }
+
+    fun updateRootedStartDate(date: LocalDate) {
+        _uiState.update { it.copy(rootedStartDate = date) }
+    }
+
+    fun updateVegetationStartDate(date: LocalDate) {
+        _uiState.update { it.copy(vegetationStartDate = date) }
+    }
+
+    fun updateFlowerStartDate(date: LocalDate) {
+        _uiState.update { it.copy(flowerStartDate = date) }
+    }
+
     fun updateIsCustomStrain(isCustom: Boolean) {
         _uiState.update { it.copy(isCustomStrain = isCustom) }
     }
@@ -421,7 +469,7 @@ class EditPlantViewModel(
             strainName = currentState.strainName,
             batchNumber = currentState.batchNumber,
             source = currentState.source!!,
-            type = if(currentState.source == PlantSource.SEED) currentState.type else null,
+            type = currentState.type, // Allow clones to have plant types
             gender = currentState.plantGender,
             growthStage = currentState.growthStage!!,
             startDate = currentState.startDate,
@@ -434,12 +482,18 @@ class EditPlantViewModel(
             dryingStartDate = finalDryingStartDate,
             curingStartDate = finalCuringStartDate,
             seedToHarvestDays = seedToHarvest,
-            isCustomStrain = currentState.isCustomStrain
+            isCustomStrain = currentState.isCustomStrain,
+            germinationStartDate = currentState.germinationStartDate,
+            seedlingStartDate = currentState.seedlingStartDate,
+            nonRootedStartDate = currentState.nonRootedStartDate,
+            rootedStartDate = currentState.rootedStartDate,
+            vegetationStartDate = currentState.vegetationStartDate,
+            flowerStartDate = currentState.flowerStartDate
         )
 
         viewModelScope.launch {
             plantRepository.updatePlant(updatedPlant)
-            if (currentState.growthStage != null && currentState.originalPlant.growthStage != currentState.growthStage) {
+            if (currentState.originalPlant.growthStage != currentState.growthStage) {
                 val transitionDate = when(currentState.growthStage) {
                     GrowthStage.DRYING -> finalDryingStartDate ?: LocalDate.now()
                     GrowthStage.CURING -> finalCuringStartDate ?: LocalDate.now()

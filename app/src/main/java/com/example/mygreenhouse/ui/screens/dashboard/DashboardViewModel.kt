@@ -33,7 +33,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     
     // Exposed data
     val plants: Flow<List<Plant>> = plantRepository.allActivePlants
-    val upcomingTasks: Flow<List<Task>> = taskRepository.getUpcomingTasks(5)
+    val upcomingTasks: Flow<List<Task>> = taskRepository.getDashboardTasks(5)
     
     // Loading states
     private val _isLoadingPlants = MutableStateFlow(true)
@@ -62,7 +62,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private fun loadPlantCache() {
         viewModelScope.launch {
             plants.collect { plantList ->
-                val newCache = plantList.associate { it.id to it.strainName }
+                val newCache = plantList.associate { plant -> 
+                    plant.id to "${plant.strainName} - ${plant.batchNumber}"
+                }
                 _plantNameCache.value = newCache
             }
         }
@@ -78,10 +80,93 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     
     /**
      * Calculate days until the scheduled date/time
+     * Returns negative values for overdue tasks
      */
     fun calculateDaysUntil(dateTime: LocalDateTime): Long {
-        val today = LocalDate.now().atStartOfDay()
-        return ChronoUnit.DAYS.between(today, dateTime)
+        val now = LocalDateTime.now()
+        return ChronoUnit.DAYS.between(now.toLocalDate(), dateTime.toLocalDate())
+    }
+    
+    /**
+     * Check if a task is overdue
+     */
+    fun isTaskOverdue(dateTime: LocalDateTime): Boolean {
+        return dateTime.isBefore(LocalDateTime.now())
+    }
+    
+    /**
+     * Check if a specific date is completed for a task
+     */
+    fun isDateCompleted(task: Task, date: LocalDate): Boolean {
+        return date.toString() in task.completedDates
+    }
+    
+    /**
+     * Get the task status for a specific date
+     */
+    fun getTaskStatusForDate(task: Task, date: LocalDate): TaskStatus {
+        val today = LocalDate.now()
+        val isCompleted = isDateCompleted(task, date)
+        
+        return when {
+            isCompleted -> TaskStatus.COMPLETED
+            date.isBefore(today) -> TaskStatus.OVERDUE
+            date.isEqual(today) -> TaskStatus.DUE_TODAY
+            else -> TaskStatus.UPCOMING
+        }
+    }
+    
+    /**
+     * Calculate the next occurrence date for a recurring task
+     */
+    fun getNextOccurrenceDate(task: Task): LocalDate? {
+        if (task.repeatDays.isEmpty()) {
+            // Non-recurring task
+            return task.scheduledDateTime.toLocalDate()
+        }
+        
+        // For recurring tasks, find the next occurrence that isn't completed
+        val today = LocalDate.now()
+        val dayOfWeekMap = mapOf(
+            "MON" to java.time.DayOfWeek.MONDAY,
+            "TUE" to java.time.DayOfWeek.TUESDAY,
+            "WED" to java.time.DayOfWeek.WEDNESDAY,
+            "THU" to java.time.DayOfWeek.THURSDAY,
+            "FRI" to java.time.DayOfWeek.FRIDAY,
+            "SAT" to java.time.DayOfWeek.SATURDAY,
+            "SUN" to java.time.DayOfWeek.SUNDAY
+        )
+        
+        val selectedDaysOfWeek = task.repeatDays.mapNotNull { dayOfWeekMap[it] }
+        if (selectedDaysOfWeek.isEmpty()) return null
+        
+        // Check today first
+        if (selectedDaysOfWeek.contains(today.dayOfWeek) && !isDateCompleted(task, today)) {
+            return today
+        }
+        
+        // Find the next occurrence within the next 7 days
+        for (i in 1..7) {
+            val checkDate = today.plusDays(i.toLong())
+            if (selectedDaysOfWeek.contains(checkDate.dayOfWeek) && !isDateCompleted(task, checkDate)) {
+                return checkDate
+            }
+        }
+        
+        return null
+    }
+    
+    /**
+     * Get the most relevant date to display for a task (either overdue or next occurrence)
+     */
+    fun getDisplayDate(task: Task): LocalDate {
+        val nextOccurrence = getNextOccurrenceDate(task)
+        if (nextOccurrence != null) {
+            return nextOccurrence
+        }
+        
+        // Fallback to original scheduled date
+        return task.scheduledDateTime.toLocalDate()
     }
     
     companion object {
@@ -92,4 +177,14 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
     }
+}
+
+/**
+ * Enum representing different task statuses
+ */
+enum class TaskStatus {
+    UPCOMING,
+    DUE_TODAY,
+    OVERDUE,
+    COMPLETED
 } 

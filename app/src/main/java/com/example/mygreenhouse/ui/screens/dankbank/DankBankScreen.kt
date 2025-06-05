@@ -1007,17 +1007,20 @@ fun SimplePieChart(
     val colors = listOf(
         Color(0xFF81C784),  // Green for Regular
         Color(0xFFE57373),  // Red for Feminized
-        Color(0xFF64B5F6)   // Blue for Autoflower
+        Color(0xFF64B5F6),  // Blue for Autoflower
+        Color(0xFFFFD54F)   // Amber for additional types
     )
     
     // Define text color before Canvas scope
     val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Pie Chart
         Canvas(
-            modifier = Modifier
-                .size(160.dp)
-                .align(Alignment.CenterStart)
+            modifier = Modifier.size(180.dp)
         ) {
             var startAngle = 0f
             
@@ -1033,29 +1036,30 @@ fun SimplePieChart(
             }
         }
         
-        // Legend
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Legend - centered below the chart
         Column(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(start = 16.dp),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             data.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
                 val percentage = (entry.value * 100f / total).toInt()
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 4.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
+                            .size(14.dp)
                             .background(colors[index % colors.size], shape = CircleShape)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "${entry.key} ($percentage%)",
                         color = textColor,
-                        fontSize = 12.sp
+                        fontSize = 15.sp
                     )
                 }
             }
@@ -1320,11 +1324,13 @@ fun SeedsPerStrainPieChart(
     // Define text color before Canvas scope
     val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
-    Box(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Pie Chart
         Canvas(
-            modifier = Modifier
-                .size(160.dp)
-                .align(Alignment.CenterStart)
+            modifier = Modifier.size(180.dp)
         ) {
             var startAngle = 0f
             
@@ -1340,32 +1346,33 @@ fun SeedsPerStrainPieChart(
             }
         }
         
-        // Legend
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Legend - centered below the chart with full strain names
         Column(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(start = 16.dp),
-            verticalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             sortedData.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
                 val percentage = (entry.value * 100f / total).toInt()
-                val displayName = if (entry.key.length > 12) "${entry.key.take(10)}..." else entry.key
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 2.dp)
+                    horizontalArrangement = Arrangement.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
+                            .size(14.dp)
                             .background(colors[index % colors.size], shape = CircleShape)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "$displayName ($percentage%)",
+                        text = "${entry.key} ($percentage%)",
                         color = textColor,
-                        fontSize = 12.sp,
-                        maxLines = 1,
+                        fontSize = 15.sp,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
