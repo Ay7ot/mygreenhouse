@@ -1,14 +1,5 @@
 # My Greenhouse - Android Application
 
-<div align="center">
-  <img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher.png" alt="My Greenhouse Logo" width="120"/>
-  
-  [![Android](https://img.shields.io/badge/Platform-Android-green.svg)](https://android.com)
-  [![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg)](https://kotlinlang.org)
-  [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-blue.svg)](https://developer.android.com/jetpack/compose)
-  [![Material 3](https://img.shields.io/badge/Design-Material%203-orange.svg)](https://m3.material.io)
-</div>
-
 ## 📱 Overview
 
 **My Greenhouse** is a comprehensive Android application designed for cannabis cultivation enthusiasts and professionals. This app provides a complete solution for managing your greenhouse operations, from plant tracking and task scheduling to harvest management and seed banking.
