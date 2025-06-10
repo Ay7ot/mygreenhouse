@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.mygreenhouse.data.model.SeedType
 import com.example.mygreenhouse.ui.components.GreenhouseBottomNavigation
+import com.example.mygreenhouse.ui.composables.StrainSelector
 import com.example.mygreenhouse.ui.navigation.NavDestination
 import com.example.mygreenhouse.ui.theme.DarkBackground
 import com.example.mygreenhouse.ui.theme.DarkSurface
@@ -142,32 +143,16 @@ fun AddSeedScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Strain name field
-            OutlinedTextField(
-                value = strainName,
-                onValueChange = { strainName = it },
-                label = { Text("Strain Name", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
-                colors = textFieldColors(darkTheme),
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+            // Strain name selector
+            StrainSelector(
+                selectedStrainName = strainName,
+                onStrainSelected = { selectedStrain, isCustom ->
+                    strainName = selectedStrain
+                    isCustomStrain = isCustom
+                },
+                darkTheme = darkTheme,
+                modifier = Modifier.fillMaxWidth()
             )
-            
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = isCustomStrain,
-                    onCheckedChange = { isCustomStrain = it },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                        uncheckedColor = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.6f),
-                        checkmarkColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-                Text(
-                    text = "Custom Strain",
-                    modifier = Modifier.padding(start = 4.dp),
-                    color = (if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface).copy(alpha = 0.8f)
-                )
-            }
             
             Spacer(modifier = Modifier.height(16.dp))
             

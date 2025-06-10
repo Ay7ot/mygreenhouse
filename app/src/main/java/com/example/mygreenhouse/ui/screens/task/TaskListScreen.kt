@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,7 +47,8 @@ fun TaskListScreen(
     onEditTask: (Task) -> Unit,
     darkTheme: Boolean
 ) {
-    val tasks by viewModel.allTasks.collectAsState(initial = null)
+    val tasks by viewModel.filteredTasks.collectAsState(initial = null)
+    val taskFilter by viewModel.taskFilter.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val dateFormatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT)
 
@@ -82,11 +85,19 @@ fun TaskListScreen(
                 .background(if (darkTheme) DarkBackground else MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
+            // Filter toggle section
+            TaskFilterToggle(
+                currentFilter = taskFilter,
+                onFilterChanged = { filter -> viewModel.setTaskFilter(filter) },
+                darkTheme = darkTheme
+            )
+            
             when {
                 isLoading || tasks == null -> TaskListSkeleton()
                 tasks!!.isEmpty() -> EmptyTaskListView(
                     onAddTaskClick = onNavigateBack,
-                    darkTheme = darkTheme
+                    darkTheme = darkTheme,
+                    isFiltered = taskFilter == TaskFilter.TODAY
                 )
                 else -> {
                     LazyColumn(
@@ -113,7 +124,7 @@ fun TaskListScreen(
 }
 
 @Composable
-fun EmptyTaskListView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
+fun EmptyTaskListView(onAddTaskClick: () -> Unit, darkTheme: Boolean, isFiltered: Boolean = false) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -129,7 +140,7 @@ fun EmptyTaskListView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
-            text = "Your Task List is Empty",
+            text = if (isFiltered) "No Tasks for Today" else "Your Task List is Empty",
             style = MaterialTheme.typography.headlineMedium,
             color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onBackground,
             fontWeight = FontWeight.Bold,
@@ -137,7 +148,10 @@ fun EmptyTaskListView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Ready to get organized? Add your first task and keep your greenhouse thriving.",
+            text = if (isFiltered) 
+                "No tasks are scheduled for today. Try switching to 'All Tasks' to see your complete task list."
+            else 
+                "Ready to get organized? Add your first task and keep your greenhouse thriving.",
             style = MaterialTheme.typography.bodyLarge,
             color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -398,6 +412,95 @@ fun StatusChip(
                 else 
                     if (darkTheme) Color(0xFFF9A825) else MaterialTheme.colorScheme.tertiary,
                 fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun TaskFilterToggle(
+    currentFilter: TaskFilter,
+    onFilterChanged: (TaskFilter) -> Unit,
+    darkTheme: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.7f) else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = currentFilter == TaskFilter.ALL,
+                onClick = { onFilterChanged(TaskFilter.ALL) },
+                label = { 
+                    Text(
+                        "All Tasks",
+                        color = if (currentFilter == TaskFilter.ALL) {
+                            if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    ) 
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.List,
+                        contentDescription = "All Tasks",
+                        modifier = Modifier.size(18.dp),
+                        tint = if (currentFilter == TaskFilter.ALL) {
+                            if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            
+            FilterChip(
+                selected = currentFilter == TaskFilter.TODAY,
+                onClick = { onFilterChanged(TaskFilter.TODAY) },
+                label = { 
+                    Text(
+                        "Today",
+                        color = if (currentFilter == TaskFilter.TODAY) {
+                            if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    ) 
+                },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Today,
+                        contentDescription = "Today's Tasks",
+                        modifier = Modifier.size(18.dp),
+                        tint = if (currentFilter == TaskFilter.TODAY) {
+                            if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    containerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surface
+                ),
+                modifier = Modifier.weight(1f)
             )
         }
     }

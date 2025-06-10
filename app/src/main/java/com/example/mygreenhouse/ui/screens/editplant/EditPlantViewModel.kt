@@ -18,6 +18,7 @@ import com.example.mygreenhouse.data.model.PlantGender
 import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
+import com.example.mygreenhouse.data.repository.StrainRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,7 +74,10 @@ data class EditPlantUiState(
     val originalPlant: Plant? = null, // To compare for changes or use for update
     val isLoading: Boolean = true,
     val isValid: Boolean = false,
-    val isCustomStrain: Boolean = false
+    val isCustomStrain: Boolean = false,
+    val showHarvestConfirmationDialog: Boolean = false,
+    val hasUnsavedChanges: Boolean = false,
+    val showExitConfirmationDialog: Boolean = false
 )
 
 /**
@@ -85,6 +89,7 @@ class EditPlantViewModel(
 ) : AndroidViewModel(application) {
     private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
     private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
+    private val strainRepository = StrainRepository(AppDatabase.getDatabase(application).strainDao())
     private val plantId: String = savedStateHandle.get<String>("plantId") ?: ""
 
     private val _uiState = MutableStateFlow(EditPlantUiState(plantId = plantId))
@@ -210,8 +215,8 @@ class EditPlantViewModel(
     
     private fun determineAvailableGrowthStages(source: PlantSource?): List<GrowthStage> {
         return when (source) {
-            PlantSource.SEED -> listOf(GrowthStage.GERMINATION, GrowthStage.SEEDLING, GrowthStage.VEGETATION, GrowthStage.FLOWER, GrowthStage.DRYING, GrowthStage.CURING)
-            PlantSource.CLONE -> listOf(GrowthStage.NON_ROOTED, GrowthStage.ROOTED, GrowthStage.VEGETATION, GrowthStage.FLOWER, GrowthStage.DRYING, GrowthStage.CURING)
+            PlantSource.SEED -> listOf(GrowthStage.GERMINATION, GrowthStage.SEEDLING, GrowthStage.VEGETATION, GrowthStage.FLOWER, GrowthStage.HARVEST_PLANT)
+            PlantSource.CLONE -> listOf(GrowthStage.NON_ROOTED, GrowthStage.ROOTED, GrowthStage.VEGETATION, GrowthStage.FLOWER, GrowthStage.HARVEST_PLANT)
             else -> emptyList()
         }
     }
@@ -303,6 +308,13 @@ class EditPlantViewModel(
 
     fun updateGrowthStage(stage: GrowthStage) {
         val displayText = stage.name.replace("_", " ").lowercase().capitalizeWords()
+        
+        // If user selects HARVEST_PLANT, show confirmation dialog
+        if (stage == GrowthStage.HARVEST_PLANT) {
+            _uiState.update { it.copy(showHarvestConfirmationDialog = true) }
+            return
+        }
+        
         _uiState.update { currentState ->
             val newDryingStartDate = if (stage == GrowthStage.DRYING && currentState.growthStage != GrowthStage.DRYING) LocalDate.now() else if (stage != GrowthStage.DRYING) null else currentState.dryingStartDate
             val newCuringStartDate = if (stage == GrowthStage.CURING && currentState.growthStage != GrowthStage.CURING) LocalDate.now() else if (stage != GrowthStage.CURING) null else currentState.curingStartDate
@@ -453,6 +465,23 @@ class EditPlantViewModel(
     fun updateIsCustomStrain(isCustom: Boolean) {
         _uiState.update { it.copy(isCustomStrain = isCustom) }
     }
+    
+    fun onHarvestConfirmationDismiss() {
+        _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+    }
+    
+    fun onHarvestConfirmationConfirm(): Triple<String, String, String>? {
+        val currentState = uiState.value
+        if (currentState.strainName.isNotEmpty() && currentState.batchNumber.isNotEmpty() && currentState.plantId.isNotEmpty()) {
+            _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+            return Triple(currentState.strainName, currentState.batchNumber, currentState.plantId)
+        }
+        return null
+    }
+    
+    fun onHarvestConfirmationCancel() {
+        _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+    }
 
     fun updatePlant() {
         val currentState = uiState.value
@@ -507,7 +536,124 @@ class EditPlantViewModel(
                     )
                 )
             }
+            
+            // Archive the strain name for future use (only if strain name changed)
+            if (currentState.originalPlant.strainName != currentState.strainName) {
+                strainRepository.archiveStrainName(currentState.strainName, currentState.isCustomStrain)
+            }
         }
+    }
+
+    // Exit confirmation methods
+    fun checkForUnsavedChanges(): Boolean {
+        val currentState = uiState.value
+        val original = currentState.originalPlant ?: return false
+        
+        return currentState.strainName != original.strainName ||
+               currentState.batchNumber != original.batchNumber ||
+               currentState.quantity != original.quantity.toString() ||
+               currentState.source != original.source ||
+               currentState.plantGender != original.gender ||
+               currentState.type != original.type ||
+               currentState.growthStage != original.growthStage ||
+               currentState.durationText != (original.seedToHarvestDays?.toString() ?: original.flowerDurationDays?.toString() ?: "") ||
+               currentState.startDate != original.startDate ||
+               currentState.nutrientsList != original.nutrients ||
+               currentState.selectedGrowMedium != original.growMedium ||
+               currentState.imageUri != original.imagePath ||
+               currentState.isCustomStrain != original.isCustomStrain
+    }
+    
+    fun showExitConfirmationDialog() {
+        _uiState.update { it.copy(showExitConfirmationDialog = true) }
+    }
+    
+    fun onExitConfirmationDismiss() {
+        _uiState.update { it.copy(showExitConfirmationDialog = false) }
+    }
+    
+    fun onExitConfirmationSave(onComplete: (Boolean) -> Unit) {
+        if (validateForm(
+            uiState.value.strainName,
+            uiState.value.batchNumber,
+            uiState.value.source,
+            uiState.value.type,
+            uiState.value.growthStage,
+            uiState.value.quantity
+        )) {
+            viewModelScope.launch {
+                try {
+                    updatePlantSuspending()
+                    _uiState.update { it.copy(showExitConfirmationDialog = false) }
+                    onComplete(true)
+                } catch (e: Exception) {
+                    // Handle error if needed
+                    onComplete(false)
+                }
+            }
+        } else {
+            onComplete(false)
+        }
+    }
+    
+    private suspend fun updatePlantSuspending() {
+        val currentState = uiState.value
+        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage, currentState.quantity) || currentState.originalPlant == null) return
+
+        val flowerDuration = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.PHOTOPERIOD) currentState.durationText.toIntOrNull() else currentState.originalPlant.flowerDurationDays
+
+        val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else currentState.originalPlant.dryingStartDate
+        val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else currentState.originalPlant.curingStartDate
+
+        val seedToHarvest = if (currentState.source == PlantSource.SEED && currentState.type == PlantType.AUTOFLOWER) currentState.durationText.toIntOrNull() else currentState.originalPlant.seedToHarvestDays
+
+        val updatedPlant = currentState.originalPlant.copy(
+            strainName = currentState.strainName,
+            batchNumber = currentState.batchNumber,
+            source = currentState.source!!,
+            type = currentState.type, // Allow clones to have plant types
+            gender = currentState.plantGender,
+            growthStage = currentState.growthStage!!,
+            startDate = currentState.startDate,
+            lastUpdated = LocalDate.now(),
+            flowerDurationDays = flowerDuration,
+            growMedium = currentState.selectedGrowMedium,
+            nutrients = currentState.nutrientsList,
+            imagePath = currentState.imageUri,
+            quantity = currentState.quantity.toIntOrNull() ?: 1,
+            dryingStartDate = finalDryingStartDate,
+            curingStartDate = finalCuringStartDate,
+            seedToHarvestDays = seedToHarvest,
+            isCustomStrain = currentState.isCustomStrain,
+            germinationStartDate = currentState.germinationStartDate,
+            seedlingStartDate = currentState.seedlingStartDate,
+            nonRootedStartDate = currentState.nonRootedStartDate,
+            rootedStartDate = currentState.rootedStartDate,
+            vegetationStartDate = currentState.vegetationStartDate,
+            flowerStartDate = currentState.flowerStartDate
+        )
+
+        plantRepository.updatePlant(updatedPlant)
+        if (currentState.originalPlant.growthStage != currentState.growthStage) {
+            val transitionDate = when(currentState.growthStage) {
+                GrowthStage.DRYING -> finalDryingStartDate ?: LocalDate.now()
+                GrowthStage.CURING -> finalCuringStartDate ?: LocalDate.now()
+                else -> LocalDate.now()
+            }
+            stageTransitionRepository.insertTransition(
+                PlantStageTransition(
+                    plantId = updatedPlant.id,
+                    stage = currentState.growthStage,
+                    transitionDate = transitionDate
+                )
+            )
+        }
+        
+
+    }
+    
+    fun onExitConfirmationDontSave() {
+        _uiState.update { it.copy(showExitConfirmationDialog = false) }
     }
 
     private fun validateForm(

@@ -13,6 +13,7 @@ import com.example.mygreenhouse.data.model.SeedType
 import com.example.mygreenhouse.data.repository.HarvestRepository
 import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.SeedRepository
+import com.example.mygreenhouse.data.repository.StrainRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -76,6 +77,7 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     private val harvestRepository = HarvestRepository(AppDatabase.getDatabase(application).harvestDao())
     private val seedRepository = SeedRepository(AppDatabase.getDatabase(application).seedDao())
     val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
+    private val strainRepository = StrainRepository(AppDatabase.getDatabase(application).strainDao())
     
     // Loading states
     private val _isLoading = MutableStateFlow(true)
@@ -358,6 +360,40 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     }
     
     /**
+     * Add a new harvest and remove the plant from greenhouse
+     */
+    fun addHarvestAndRemovePlant(
+        plantId: String?,
+        strainName: String,
+        batchNumber: String,
+        harvestDate: LocalDate,
+        wetWeight: Double?,
+        notes: String
+    ) {
+        viewModelScope.launch {
+            // Add the harvest
+            val harvest = Harvest(
+                plantId = plantId,
+                strainName = strainName,
+                batchNumber = batchNumber,
+                harvestDate = harvestDate,
+                wetWeight = wetWeight,
+                notes = notes,
+                isDrying = true
+            )
+            harvestRepository.insertHarvest(harvest)
+            
+            // Remove the plant from greenhouse if plantId is provided
+            if (plantId != null) {
+                val plant = plantRepository.getPlantByIdOnce(plantId)
+                if (plant != null) {
+                    plantRepository.deletePlant(plant)
+                }
+            }
+        }
+    }
+    
+    /**
      * Update basic harvest information
      */
     fun updateHarvestBasicInfo(
@@ -417,24 +453,17 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     }
     
     /**
-     * Complete a harvest with final cured weight
+     * Rate a strain quality during curing
      */
-    fun completeHarvest(
+    fun rateStrain(
         harvestId: String,
-        finalCuredWeight: Double,
-        curingCompleteDate: LocalDate = LocalDate.now(),
-        qualityRating: Int? = null
+        qualityRating: Int
     ) {
         viewModelScope.launch {
             val harvest = harvestRepository.getHarvestById(harvestId).first()
             if (harvest == null) return@launch
             val updatedHarvest = harvest.copy(
-                finalCuredWeight = finalCuredWeight,
-                curingCompleteDate = curingCompleteDate,
-                qualityRating = qualityRating,
-                isDrying = false,
-                isCuring = false,
-                isCompleted = true
+                qualityRating = qualityRating
             )
             harvestRepository.updateHarvest(updatedHarvest)
         }
@@ -476,6 +505,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
                 isCustomStrain = isCustomStrain
             )
             seedRepository.insertSeed(seed)
+            // Archive the strain name for future use
+            strainRepository.archiveStrainName(strainName, isCustomStrain)
         }
     }
     
@@ -485,6 +516,8 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
     fun updateSeed(seed: Seed) {
         viewModelScope.launch {
             seedRepository.updateSeed(seed)
+            // Archive the strain name for future use
+            strainRepository.archiveStrainName(seed.strainName, seed.isCustomStrain)
         }
     }
     

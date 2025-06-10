@@ -12,19 +12,21 @@ import com.example.mygreenhouse.data.dao.TaskDao
 import com.example.mygreenhouse.data.dao.HarvestDao
 import com.example.mygreenhouse.data.dao.SeedDao
 import com.example.mygreenhouse.data.dao.PlantStageTransitionDao
+import com.example.mygreenhouse.data.dao.StrainDao
 import com.example.mygreenhouse.data.model.Converters
 import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.data.model.Harvest
 import com.example.mygreenhouse.data.model.Seed
 import com.example.mygreenhouse.data.model.PlantStageTransition
+import com.example.mygreenhouse.data.model.Strain
 
 /**
  * Main database class for the app
  */
 @Database(
-    entities = [Plant::class, Task::class, Harvest::class, Seed::class, PlantStageTransition::class],
-    version = 7,
+    entities = [Plant::class, Task::class, Harvest::class, Seed::class, PlantStageTransition::class, Strain::class],
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -35,6 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun harvestDao(): HarvestDao
     abstract fun seedDao(): SeedDao
     abstract fun plantStageTransitionDao(): PlantStageTransitionDao
+    abstract fun strainDao(): StrainDao
     
     companion object {
         @Volatile
@@ -99,6 +102,23 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
         
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create strains table for strain name management
+                database.execSQL("""
+                    CREATE TABLE strains (
+                        id TEXT PRIMARY KEY NOT NULL,
+                        name TEXT NOT NULL,
+                        isCustomStrain INTEGER NOT NULL DEFAULT 0,
+                        firstUsedDate TEXT NOT NULL,
+                        lastUsedDate TEXT NOT NULL,
+                        usageCount INTEGER NOT NULL DEFAULT 1,
+                        notes TEXT NOT NULL DEFAULT ''
+                    )
+                """)
+            }
+        }
+        
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -106,7 +126,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "greenhouse_db"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                 .build()
                 INSTANCE = instance
                 instance

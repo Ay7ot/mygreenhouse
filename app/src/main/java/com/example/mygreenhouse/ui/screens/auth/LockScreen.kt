@@ -33,7 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import android.content.ContextWrapper
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -41,14 +42,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun LockScreen(
     onUnlockSuccess: () -> Unit,
     darkTheme: Boolean,
+    activity: FragmentActivity,
     viewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
 ) {
-    val activity = LocalContext.current as? FragmentActivity
     var pin by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var attempts by remember { mutableIntStateOf(0) }
@@ -57,8 +60,8 @@ fun LockScreen(
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
     val isBiometricAvailable = viewModel.isBiometricAvailable
     
-    // Automatically show biometric prompt when screen is launched if enabled
-    LaunchedEffect(Unit) {
+    // Automatically show biometric prompt when biometric is enabled and available
+    LaunchedEffect(isBiometricEnabled, isBiometricAvailable, activity) {
         if (isBiometricEnabled && isBiometricAvailable && activity != null) {
             viewModel.authenticateWithBiometric(
                 activity = activity,

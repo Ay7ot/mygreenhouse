@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,9 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mygreenhouse.data.model.Task
 import com.example.mygreenhouse.ui.screens.dashboard.DashboardViewModel
@@ -68,6 +74,7 @@ fun TaskAlert(
     // Calculate days until for the display date
     val today = java.time.LocalDate.now()
     val actualDaysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, displayDate)
+    val isFutureTask = actualDaysUntil > 0
     
     // Define card colors based on urgency and theme
     val cardColor = if (darkTheme) {
@@ -116,7 +123,7 @@ fun TaskAlert(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (darkTheme) 0.dp else 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier
@@ -137,28 +144,47 @@ fun TaskAlert(
                     modifier = Modifier.weight(1f)
                 )
                 
-                // Enhanced completion toggle button
-                IconButton(
-                    onClick = { taskViewModel.toggleDateCompletion(task, displayDate) },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        imageVector = when {
-                            isCompleted -> Icons.Default.CheckCircle
-                            isOverdue -> Icons.Default.Warning  
-                            else -> Icons.Default.RadioButtonUnchecked
-                        },
-                        contentDescription = when {
-                            isCompleted -> "Completed"
-                            isOverdue -> "Overdue"
-                            else -> "Pending"
-                        },
-                        tint = when {
+                // Completion status button - no more circles!
+                Button(
+                    onClick = { 
+                        if (!isFutureTask) {
+                            taskViewModel.toggleDateCompletion(task, displayDate) 
+                        }
+                    },
+                    enabled = !isFutureTask, // Disable for future tasks
+                    modifier = Modifier.height(36.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = when {
                             isCompleted -> if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
                             isOverdue -> if (darkTheme) Color(0xFFFF7043) else MaterialTheme.colorScheme.error
-                            else -> if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                            isDueToday -> if (darkTheme) Color(0xFFFFA726) else MaterialTheme.colorScheme.tertiary
+                            isFutureTask -> if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            else -> if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant
                         },
-                        modifier = Modifier.size(24.dp)
+                        contentColor = when {
+                            isCompleted -> Color.White
+                            isOverdue -> Color.White
+                            isDueToday -> Color.White
+                            isFutureTask -> if (darkTheme) TextWhite.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            else -> if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContentColor = if (darkTheme) TextWhite.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    ),
+                    shape = RoundedCornerShape(18.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = when {
+                            isCompleted -> "✓ DONE"
+                            isOverdue -> "OVERDUE"
+                            isDueToday -> "MARK DONE"
+                            isFutureTask -> if (task.repeatDays.isNotEmpty()) "RECURRING" else "SCHEDULED"
+                            else -> "MARK DONE"
+                        },
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
                     )
                 }
             }
@@ -236,8 +262,45 @@ fun TaskAlert(
                     )
                 }
                 
-                // Recurring pattern info
+                // Recurring pattern info with next occurrence
                 if (task.repeatDays.isNotEmpty()) {
+                    // Calculate next occurrence for recurring tasks
+                    val nextOccurrenceText = if (isCompleted && !isFutureTask) {
+                        // For completed tasks, show when it will occur next
+                        val today = java.time.LocalDate.now()
+                        val currentDayOfWeek = today.dayOfWeek
+                        val dayOfWeekMap = mapOf(
+                            "MON" to java.time.DayOfWeek.MONDAY,
+                            "TUE" to java.time.DayOfWeek.TUESDAY, 
+                            "WED" to java.time.DayOfWeek.WEDNESDAY,
+                            "THU" to java.time.DayOfWeek.THURSDAY,
+                            "FRI" to java.time.DayOfWeek.FRIDAY,
+                            "SAT" to java.time.DayOfWeek.SATURDAY,
+                            "SUN" to java.time.DayOfWeek.SUNDAY
+                        )
+                        val selectedDaysOfWeek = task.repeatDays.mapNotNull { dayOfWeekMap[it] }.sorted()
+                        
+                        if (selectedDaysOfWeek.isNotEmpty()) {
+                            // Find next occurrence
+                            var nextDate = today.plusDays(1)
+                            while (!selectedDaysOfWeek.contains(nextDate.dayOfWeek)) {
+                                nextDate = nextDate.plusDays(1)
+                                if (nextDate.isAfter(today.plusDays(7))) break
+                            }
+                            val daysUntilNext = java.time.temporal.ChronoUnit.DAYS.between(today, nextDate)
+                            when (daysUntilNext) {
+                                1L -> "Next: Tomorrow"
+                                in 2..6 -> "Next: In $daysUntilNext days"
+                                7L -> "Next: Next week"
+                                else -> "Next occurrence: ${task.repeatDays.joinToString(", ")}"
+                            }
+                        } else {
+                            "Repeats: ${task.repeatDays.joinToString(", ")}"
+                        }
+                    } else {
+                        "Repeats: ${task.repeatDays.joinToString(", ")}"
+                    }
+                    
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -246,15 +309,15 @@ fun TaskAlert(
                             modifier = Modifier
                                 .size(8.dp)
                                 .background(
-                                    color = if (darkTheme) TextWhite.copy(alpha = 0.4f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                                    color = if (darkTheme) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary,
                                     shape = CircleShape
                                 )
                         )
                         Text(
-                            text = "🔄 Repeats: ${task.repeatDays.joinToString(", ")}",
+                            text = "🔄 $nextOccurrenceText",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Normal
+                            color = if (darkTheme) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary,
+                            fontWeight = if (isCompleted && !isFutureTask) FontWeight.SemiBold else FontWeight.Normal
                         )
                     }
                 }

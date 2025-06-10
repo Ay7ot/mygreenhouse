@@ -55,6 +55,8 @@ import com.example.mygreenhouse.ui.theme.TextWhite
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.navigation.NavController
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,16 +65,28 @@ fun AddHarvestScreen(
     onHarvestAdded: () -> Unit,
     viewModel: DankBankViewModel = viewModel(factory = DankBankViewModel.Factory),
     navController: NavController,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    prefilledStrainName: String = "",
+    prefilledBatchNumber: String = "",
+    prefilledPlantId: String = ""
 ) {
     // State for form fields
-    var selectedPlantId by remember { mutableStateOf<String?>(null) }
-    var selectedPlantName by remember { mutableStateOf("Select Plant (Optional)") }
-    var strainName by remember { mutableStateOf("") }
-    var batchNumber by remember { mutableStateOf("") }
+    var selectedPlantId by remember { mutableStateOf<String?>(prefilledPlantId.ifEmpty { null }) }
+    var selectedPlantName by remember { mutableStateOf(
+        if (prefilledStrainName.isNotEmpty() && prefilledBatchNumber.isNotEmpty()) {
+            "$prefilledStrainName - $prefilledBatchNumber"
+        } else {
+            "Select Plant"
+        }
+    ) }
+    var strainName by remember { mutableStateOf(prefilledStrainName) }
+    var batchNumber by remember { mutableStateOf(prefilledBatchNumber) }
     var harvestDate by remember { mutableStateOf(LocalDate.now()) }
     var wetWeight by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
+    
+    // State for confirmation dialog
+    var showRemoveFromGreenhouseDialog by remember { mutableStateOf(false) }
     
     // Plants for dropdown selection
     val plants by viewModel.plantRepository.allActivePlants.collectAsState(initial = emptyList())
@@ -87,7 +101,7 @@ fun AddHarvestScreen(
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
     
     // Form validation
-    val isFormValid = strainName.isNotBlank() && batchNumber.isNotBlank()
+    val isFormValid = selectedPlantId != null && strainName.isNotBlank() && batchNumber.isNotBlank()
     
     // Date picker dialog
     val datePickerDialog = remember {
@@ -138,17 +152,28 @@ fun AddHarvestScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Informational text if no plants available
+            if (plants.isEmpty()) {
+                Text(
+                    text = "⚠️ No plants available in your greenhouse. Add plants first to create harvests.",
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+            
             // Plant selection dropdown
             ExposedDropdownMenuBox(
                 expanded = isPlantDropdownExpanded,
-                onExpandedChange = { isPlantDropdownExpanded = it },
+                onExpandedChange = { isPlantDropdownExpanded = it && plants.isNotEmpty() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 OutlinedTextField(
                     value = selectedPlantName,
                     onValueChange = { },
                     readOnly = true,
-                    label = { Text("Plant", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                    enabled = plants.isNotEmpty(),
+                    label = { Text("Select Plant", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(
                             expanded = isPlantDropdownExpanded
@@ -176,51 +201,45 @@ fun AddHarvestScreen(
                     onDismissRequest = { isPlantDropdownExpanded = false },
                     modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                 ) {
-                    // None option
-                    DropdownMenuItem(
-                        text = { Text("None (Manual Entry)", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
-                        onClick = {
-                            selectedPlantId = null
-                            selectedPlantName = "Manual Entry"
-                            isPlantDropdownExpanded = false
-                        },
-                        modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
-                    )
-                    
-                    // Plant options
-                    plants.forEach { plant ->
+                    if (plants.isEmpty()) {
                         DropdownMenuItem(
-                            text = { Text("${plant.strainName} - ${plant.batchNumber}", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
-                            onClick = {
-                                selectedPlantId = plant.id
-                                selectedPlantName = "${plant.strainName} - ${plant.batchNumber}"
-                                strainName = plant.strainName
-                                batchNumber = plant.batchNumber
-                                isPlantDropdownExpanded = false
-                            },
+                            text = { Text("No plants available", color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                            onClick = { },
                             modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
                         )
+                    } else {
+                        // Plant options
+                        plants.forEach { plant ->
+                            DropdownMenuItem(
+                                text = { Text("${plant.strainName} - ${plant.batchNumber}", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
+                                onClick = {
+                                    selectedPlantId = plant.id
+                                    selectedPlantName = "${plant.strainName} - ${plant.batchNumber}"
+                                    strainName = plant.strainName
+                                    batchNumber = plant.batchNumber
+                                    isPlantDropdownExpanded = false
+                                },
+                                modifier = Modifier.background(if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface)
+                            )
+                        }
                     }
                 }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Strain name field
+            // Strain name field (read-only)
             OutlinedTextField(
                 value = strainName,
-                onValueChange = { strainName = it },
+                onValueChange = { }, // Read-only
                 label = { Text("Strain Name", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                readOnly = true,
+                enabled = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                    unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
-                    focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                    cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                    focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                    disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                    disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -228,21 +247,18 @@ fun AddHarvestScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Batch number field
+            // Batch number field (read-only)
             OutlinedTextField(
                 value = batchNumber,
-                onValueChange = { batchNumber = it },
+                onValueChange = { }, // Read-only
                 label = { Text("Batch Number", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
+                readOnly = true,
+                enabled = false,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                    unfocusedBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
-                    focusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
-                    unfocusedContainerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surfaceVariant,
-                    focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.9f) else MaterialTheme.colorScheme.primary,
-                    unfocusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                    cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                    focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                    unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                    disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                    disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp)
@@ -342,15 +358,21 @@ fun AddHarvestScreen(
             // Save button
             Button(
                 onClick = {
-                    viewModel.addHarvest(
-                        plantId = selectedPlantId,
-                        strainName = strainName,
-                        batchNumber = batchNumber,
-                        harvestDate = harvestDate,
-                        wetWeight = wetWeight.toDoubleOrNull(),
-                        notes = notes
-                    )
-                    onHarvestAdded()
+                    // If a plant is selected from the greenhouse, show confirmation dialog
+                    if (selectedPlantId != null) {
+                        showRemoveFromGreenhouseDialog = true
+                    } else {
+                        // No plant selected, save directly (shouldn't happen due to form validation)
+                        viewModel.addHarvest(
+                            plantId = selectedPlantId,
+                            strainName = strainName,
+                            batchNumber = batchNumber,
+                            harvestDate = harvestDate,
+                            wetWeight = wetWeight.toDoubleOrNull(),
+                            notes = notes
+                        )
+                        onHarvestAdded()
+                    }
                 },
                 enabled = isFormValid,
                 colors = ButtonDefaults.buttonColors(
@@ -364,5 +386,59 @@ fun AddHarvestScreen(
                 Text("Save Harvest")
             }
         }
+    }
+    
+    // Remove from Greenhouse confirmation dialog
+    if (showRemoveFromGreenhouseDialog) {
+        AlertDialog(
+            onDismissRequest = { showRemoveFromGreenhouseDialog = false },
+            title = { 
+                Text(
+                    "Remove Batch from Greenhouse", 
+                    color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
+                ) 
+            },
+            text = { 
+                Text(
+                    "This will remove the selected batch from your Greenhouse, do you wish to proceed?",
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                ) 
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // Add the harvest and remove the plant from greenhouse
+                        viewModel.addHarvestAndRemovePlant(
+                            plantId = selectedPlantId,
+                            strainName = strainName,
+                            batchNumber = batchNumber,
+                            harvestDate = harvestDate,
+                            wetWeight = wetWeight.toDoubleOrNull(),
+                            notes = notes
+                        )
+                        
+                        showRemoveFromGreenhouseDialog = false
+                        onHarvestAdded()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Yes, Proceed")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showRemoveFromGreenhouseDialog = false }
+                ) {
+                    Text(
+                        "Cancel", 
+                        color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
+        )
     }
 } 

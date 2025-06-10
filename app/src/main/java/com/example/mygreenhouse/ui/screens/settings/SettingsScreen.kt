@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -65,10 +66,8 @@ fun SettingsScreen(
     val isBiometricAvailable = authViewModel.isBiometricAvailable
     
     // Debug: Log biometric status (you can check this in Android Studio logs)
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        android.util.Log.d("SettingsScreen", "PIN Set: $isPinSet")
-        android.util.Log.d("SettingsScreen", "Biometric Available: $isBiometricAvailable") 
-        android.util.Log.d("SettingsScreen", "Biometric Enabled: $isBiometricEnabled")
+    LaunchedEffect(isPinSet, isBiometricEnabled, isBiometricAvailable) {
+        android.util.Log.d("SettingsScreen", "State changed - PIN Set: $isPinSet, Biometric Available: $isBiometricAvailable, Biometric Enabled: $isBiometricEnabled")
     }
 
     Scaffold(

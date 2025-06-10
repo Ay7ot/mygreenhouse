@@ -266,7 +266,7 @@ fun EmptyPlantsView(onAddPlantClick: () -> Unit, darkTheme: Boolean) {
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+            defaultElevation = 0.dp
         )
     ) {
         Column(
@@ -316,7 +316,7 @@ fun EmptyTasksView(onAddTaskClick: () -> Unit, darkTheme: Boolean) {
         ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
+            defaultElevation = 0.dp
         )
     ) {
         Column(

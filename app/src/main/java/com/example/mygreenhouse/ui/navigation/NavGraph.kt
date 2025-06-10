@@ -38,6 +38,7 @@ import com.example.mygreenhouse.ui.screens.photomanagement.PhotoManagementScreen
 import com.example.mygreenhouse.ui.screens.datamanagement.DataManagementScreen
 import com.example.mygreenhouse.ui.settings.ThemePreference
 import kotlinx.coroutines.flow.StateFlow
+import androidx.fragment.app.FragmentActivity
 
 /**
  * Navigation destinations for the app
@@ -61,6 +62,9 @@ sealed class NavDestination(val route: String) {
     object QuickStats : NavDestination("quick_stats")
     object DankBank : NavDestination("dank_bank")
     object AddHarvest : NavDestination("add_harvest")
+    object AddHarvestWithData : NavDestination("addHarvest/{strainName}/{batchNumber}/{plantId}") {
+        fun createRoute(strainName: String, batchNumber: String, plantId: String) = "addHarvest/$strainName/$batchNumber/$plantId"
+    }
     object AddSeed : NavDestination("add_seed")
     object EditHarvest : NavDestination("editHarvest/{harvestId}") {
         fun createRoute(harvestId: String) = "editHarvest/$harvestId"
@@ -91,7 +95,8 @@ fun GreenhouseNavGraph(
     navController: NavHostController,
     themePreferenceState: StateFlow<ThemePreference>,
     onThemePreferenceChange: (ThemePreference) -> Unit,
-    darkTheme: Boolean
+    darkTheme: Boolean,
+    activity: FragmentActivity
 ) {
     // Get AuthViewModel to check if PIN lock is enabled
     val authViewModel: AuthViewModel = viewModel(factory = AuthViewModel.Factory)
@@ -117,7 +122,8 @@ fun GreenhouseNavGraph(
                         popUpTo(NavDestination.Lock.route) { inclusive = true }
                     }
                 },
-                darkTheme = darkTheme
+                darkTheme = darkTheme,
+                activity = activity
             )
         }
         
@@ -171,6 +177,10 @@ fun GreenhouseNavGraph(
             EditPlantScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPlantUpdated = { navController.popBackStack() },
+                onNavigateToHarvest = { strainName, batchNumber, plantId ->
+                    // Navigate to AddHarvestScreen with pre-filled data via route parameters
+                    navController.navigate("addHarvest/$strainName/$batchNumber/$plantId")
+                },
                 navController = navController,
                 darkTheme = darkTheme
             )
@@ -301,9 +311,43 @@ fun GreenhouseNavGraph(
         composable(NavDestination.AddHarvest.route) {
             AddHarvestScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onHarvestAdded = { navController.popBackStack() },
+                onHarvestAdded = { 
+                    // Navigate to Dank Bank and clear the back stack to prevent going back to EditPlantScreen
+                    navController.navigate(NavDestination.DankBank.route) {
+                        popUpTo(NavDestination.Dashboard.route) { inclusive = false }
+                    }
+                },
                 navController = navController,
                 darkTheme = darkTheme
+            )
+        }
+        
+        // AddHarvest with pre-filled data from plant harvest
+        composable(
+            route = NavDestination.AddHarvestWithData.route,
+            arguments = listOf(
+                navArgument("strainName") { type = NavType.StringType },
+                navArgument("batchNumber") { type = NavType.StringType },
+                navArgument("plantId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val strainName = backStackEntry.arguments?.getString("strainName") ?: ""
+            val batchNumber = backStackEntry.arguments?.getString("batchNumber") ?: ""
+            val plantId = backStackEntry.arguments?.getString("plantId") ?: ""
+            
+            AddHarvestScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onHarvestAdded = { 
+                    // Navigate to Dank Bank and clear the back stack to prevent going back to EditPlantScreen
+                    navController.navigate(NavDestination.DankBank.route) {
+                        popUpTo(NavDestination.Dashboard.route) { inclusive = false }
+                    }
+                },
+                navController = navController,
+                darkTheme = darkTheme,
+                prefilledStrainName = strainName,
+                prefilledBatchNumber = batchNumber,
+                prefilledPlantId = plantId
             )
         }
         

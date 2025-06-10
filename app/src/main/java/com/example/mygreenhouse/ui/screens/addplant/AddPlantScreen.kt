@@ -77,6 +77,7 @@ import com.example.mygreenhouse.ui.theme.TextWhite
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import com.example.mygreenhouse.ui.composables.ImagePicker
+import com.example.mygreenhouse.ui.composables.StrainSelector
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -168,6 +169,7 @@ fun DropdownMenuField(
 fun AddPlantScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDashboard: () -> Unit,
+    onNavigateToHarvest: (String, String) -> Unit = { _, _ -> },
     viewModel: AddPlantViewModel = viewModel(factory = AddPlantViewModel.Factory),
     navController: NavController,
     darkTheme: Boolean
@@ -235,43 +237,29 @@ fun AddPlantScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Strain Name
-            OutlinedTextField(
-                value = uiState.strainName,
-                onValueChange = { viewModel.updateStrainName(it) },
-                label = { Text("Enter Strain Name", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = myAppTextFieldColors(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(
-                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                )
+            // Plant Image at the top
+            ImagePicker(
+                imageUri = uiState.imageUri,
+                onImageSelected = { viewModel.updateImageUri(it) },
+                modifier = Modifier.fillMaxWidth()
             )
-
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = uiState.isCustomStrain,
-                    onCheckedChange = { viewModel.updateIsCustomStrain(it) },
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = MaterialTheme.colorScheme.primary,
-                        uncheckedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        checkmarkColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-                Text(
-                    text = "Custom Strain",
-                    modifier = Modifier.padding(start = 4.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
-            }
+            
+            // Strain Name Selector
+            StrainSelector(
+                selectedStrainName = uiState.strainName,
+                onStrainSelected = { strainName, isCustomStrain ->
+                    viewModel.updateStrainName(strainName)
+                    viewModel.updateIsCustomStrain(isCustomStrain)
+                },
+                darkTheme = darkTheme,
+                modifier = Modifier.fillMaxWidth()
+            )
             
             // Batch Number
             OutlinedTextField(
                 value = uiState.batchNumber,
                 onValueChange = { viewModel.updateBatchNumber(it) },
-                label = { Text("Enter Batch Number", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                label = { Text("Enter Batch Number*", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = myAppTextFieldColors(),
@@ -286,7 +274,7 @@ fun AddPlantScreen(
             OutlinedTextField(
                 value = uiState.quantity,
                 onValueChange = { viewModel.updateQuantity(it) },
-                label = { Text("Quantity", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                label = { Text("Quantity*", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = myAppTextFieldColors(),
@@ -299,17 +287,10 @@ fun AddPlantScreen(
                     onNext = { focusManager.moveFocus(FocusDirection.Down) }
                 )
             )
-
-            // Image Picker
-            ImagePicker(
-                imageUri = uiState.imageUri,
-                onImageSelected = { viewModel.updateImageUri(it) },
-                modifier = Modifier.fillMaxWidth()
-            )
             
             // Seed or Clone Dropdown
             DropdownMenuField(
-                label = "Seed or Clone",
+                label = "Seed or Clone*",
                 selectedValue = uiState.sourceDisplay,
                 options = PlantSource.values().map { it.name.lowercase().replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() } }, // E.g., "Seed", "Clone"
                 onOptionSelected = { selectedString ->
@@ -428,7 +409,7 @@ fun AddPlantScreen(
                 OutlinedTextField(
                     value = uiState.startDateText,
                     onValueChange = { /* Read-only, value updated via dialog */ },
-                    label = { Text("Start Date", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
+                    label = { Text("Start Date*", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)) },
                     modifier = Modifier.fillMaxWidth(), // TextField takes full width of the Box
                     readOnly = true,
                     enabled = false, // Keep TextField visually disabled and non-interactive
@@ -558,6 +539,36 @@ fun AddPlantScreen(
             }
         }
     }
+
+    // Harvest Confirmation Dialog
+    if (uiState.showHarvestConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onHarvestConfirmationDismiss() },
+            title = { Text("Move Batch to Your Dank Bank") },
+            text = { Text("Do you want to move this batch to your Dank Bank for harvest tracking?") },
+            confirmButton = {
+                TextButton(
+                    onClick = { 
+                        val harvestData = viewModel.onHarvestConfirmationConfirm()
+                        if (harvestData != null) {
+                            onNavigateToHarvest(harvestData.first, harvestData.second)
+                        }
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.onHarvestConfirmationCancel() }
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
+
 
     // Confirmation Dialog
     if (uiState.showSaveConfirmationDialog) {

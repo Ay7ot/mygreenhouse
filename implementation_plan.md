@@ -243,6 +243,36 @@ Based on `greenhouse.md`:
 *   **Dank Bank, Add Plant, Edit Plant:**
     *   [X] Replace "Unique Strain" with "Custom Strain" (checkbox near Strain Name).
 
+## New Client Corrections (Latest)
+
+*   **Add Plant/Edit Plant Screen - Growth Stage Changes:**
+    *   [X] Remove "Drying" and "Curing" from growth stage options.
+    *   [X] Replace with "Harvest Plant" option.
+    *   [X] When "Harvest Plant" is selected, prompt: "Move Batch to Your Dank Bank" Y/N.
+    *   [X] If Y: Navigate to Harvest Plant screen with Strain Name and Batch Number pre-filled.
+    *   [X] If N: Keep current growth stage unchanged (no changes made).
+    *   [X] Edit Plant Screen: When changing growth stage to "Harvest Plant", prompt to remove batch from Greenhouse and move to Dank Bank Y/N.
+    *   [X] On Yes: Remove batch from Greenhouse and navigate to Dank Bank Drying Screen with pre-filled data.
+    *   [X] Fixed: Removed DRYING and CURING from Edit Plant Screen growth stage dropdown options.
+
+*   **Add Plant/Edit Plant Screen - UI/UX Improvements:**
+    *   [X] Display plant image at the top of the screen.
+    *   [X] Add asterisk (*) next to fields that are required for saving/updating the plant.
+    *   [X] When exiting Add/Edit Plant Screen without clicking Save/Update, prompt: "Do you wish to save any changes?"
+
+*   **Strain Name Management:**
+    *   [X] Archive strain names once used for future selection.
+    *   [X] In Add Plant Screen, show archived strain names as selectable options.
+    *   [X] Add "Add new Strain" option to the strain selection list.
+    *   [X] Add three-dot edit menu next to each strain name for editing (to fix misspellings).
+    *   [X] Implement strain name editing functionality.
+    *   [X] Use StrainSelector component in seed screens (AddSeedScreen and EditSeedScreen) for consistency.
+
+*   **Dank Bank Integration:**
+    *   [X] Updated harvest screens to require plant selection (strain name and batch number auto-populated from selected plant and made read-only).
+    *   [X] When adding batch via "+" button in Dank Bank Screen, prompt: "This Will Remove the selected Batch from your Greenhouse, do you wish to proceed?"
+    *   [X] On Yes: Remove the batch from the Greenhouse and proceed with Dank Bank entry.
+
 ## Progress Tracking
 
 *   **To Do:** [ ]
@@ -253,11 +283,18 @@ Based on `greenhouse.md`:
 
 *   **Quick Stats:**
     *   [X] Remove Growth Trends line graph.
-    *   [ ] Add Bar Graph for "Average Days In Growth Stage":
+    *   [X] Add Bar Graph for "Average Days In Growth Stage":
         *   Dropdown menu for Strain Name selection (default: "Across All Strains").
         *   Graph displays average days for each growth stage (excluding Drying and Curing) based on selection.
+    *   [X] Updated chart labels to: GERM, SEEDLING, Non-Rooted (with "Non" on top, "Rooted" underneath), Rooted, Veg, Flower.
+    *   [X] Changed drying and curing stats to obtain data from Dank Bank Screen instead of plant growth stages.
 
 ## 5. Bug Fixes
+
+### Strain Management
+- [X] **Bug SM1:** Strain usage count incremented multiple times during single save operation causing incorrect "used X times" display.
+- [X] **Bug SM2:** Fixed double increment when adding new strain via StrainSelector dialog - strain no longer archived during dialog creation, only when plant/seed is saved.
+
 
 ### Add Plant Screen
 - [X] **Bug 1a:** Pressing Return in input boxes should complete the input, not produce a new line.

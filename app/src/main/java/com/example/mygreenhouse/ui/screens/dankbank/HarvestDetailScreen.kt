@@ -29,9 +29,11 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -77,7 +79,7 @@ fun HarvestDetailScreen(
     
     // Add dialog states for weight updates
     var showDryWeightDialog by remember { mutableStateOf(false) }
-    var showCuredWeightDialog by remember { mutableStateOf(false) }
+    var showRateStrainDialog by remember { mutableStateOf(false) }
     
     // Fetch harvest data
     LaunchedEffect(harvestId) {
@@ -273,7 +275,7 @@ fun HarvestDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Button(
-                        onClick = { showCuredWeightDialog = true },
+                        onClick = { showRateStrainDialog = true },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
                             contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
@@ -281,7 +283,7 @@ fun HarvestDetailScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Update Cured Weight")
+                        Text("Rate This Strain")
                     }
                 }
                 
@@ -339,7 +341,7 @@ fun HarvestDetailScreen(
         DryWeightInputDialog(
             harvest = harvest!!,
             onDismiss = { showDryWeightDialog = false },
-            onConfirm = { dryWeight ->
+            onConfirm = { dryWeight: Double ->
                 viewModel.updateHarvestWithDryWeight(harvest!!.id, dryWeight)
                 showDryWeightDialog = false
             },
@@ -347,14 +349,14 @@ fun HarvestDetailScreen(
         )
     }
     
-    // Add Cured Weight Dialog
-    if (showCuredWeightDialog && harvest != null) {
-        CuredWeightInputDialog(
+    // Add Rate Strain Dialog
+    if (showRateStrainDialog && harvest != null) {
+        RateStrainDialog(
             harvest = harvest!!,
-            onDismiss = { showCuredWeightDialog = false },
-            onConfirm = { finalCuredWeight, qualityRating ->
-                viewModel.completeHarvest(harvest!!.id, finalCuredWeight, qualityRating = qualityRating)
-                showCuredWeightDialog = false
+            onDismiss = { showRateStrainDialog = false },
+            onConfirm = { qualityRating: Int ->
+                viewModel.rateStrain(harvest!!.id, qualityRating)
+                showRateStrainDialog = false
             },
             darkTheme = darkTheme
         )
@@ -474,4 +476,107 @@ fun DetailRow(label: String, value: String, darkTheme: Boolean) {
             fontWeight = FontWeight.Medium
         )
     }
-} 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RateStrainDialog(
+    harvest: Harvest,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    darkTheme: Boolean
+) {
+    var qualityRatingInput by remember { mutableStateOf(harvest.qualityRating?.toString() ?: "") }
+
+    val isRatingError = qualityRatingInput.toIntOrNull() == null && qualityRatingInput.isNotEmpty() ||
+            (qualityRatingInput.toIntOrNull() != null && (qualityRatingInput.toInt() < 1 || qualityRatingInput.toInt() > 5))
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                "Rate This Strain", 
+                color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.headlineSmall
+            ) 
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "Rate the quality of ${harvest.strainName} (Batch #${harvest.batchNumber}) from 1 to 5 stars.", 
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = qualityRatingInput,
+                    onValueChange = { qualityRatingInput = it },
+                    label = { 
+                        Text(
+                            "Quality Rating (1-5)",
+                            color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                        ) 
+                    },
+                    singleLine = true,
+                    isError = isRatingError,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = TextFieldDefaults.colors(
+                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.outline,
+                        focusedLabelColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
+                        errorIndicatorColor = MaterialTheme.colorScheme.error,
+                        errorLabelColor = MaterialTheme.colorScheme.error
+                    )
+                )
+                if (isRatingError) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Rating must be a number between 1 and 5", 
+                        color = MaterialTheme.colorScheme.error, 
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    qualityRatingInput.toIntOrNull()?.let { rating ->
+                        if (rating in 1..5) {
+                            onConfirm(rating)
+                        }
+                    }
+                },
+                enabled = !isRatingError && qualityRatingInput.toIntOrNull() != null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Rate Strain")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Cancel", 
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface,
+        titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
+        textContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+ 

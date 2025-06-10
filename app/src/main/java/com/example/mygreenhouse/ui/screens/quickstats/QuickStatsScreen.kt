@@ -604,13 +604,79 @@ fun AverageDaysInStageBarChart(
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             completeStageData.keys.forEach { stage ->
-                Text(
-                    text = formatGrowthStageName(stage).take(3).uppercase(),
-                    fontSize = 10.sp,
-                    color = labelColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f) 
-                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (stage) {
+                        GrowthStage.GERMINATION -> {
+                            Text(
+                                text = "GERM",
+                                fontSize = 10.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        GrowthStage.SEEDLING -> {
+                            Text(
+                                text = "SEEDLING",
+                                fontSize = 9.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        GrowthStage.NON_ROOTED -> {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Non",
+                                    fontSize = 9.sp,
+                                    color = labelColor,
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "Rooted",
+                                    fontSize = 9.sp,
+                                    color = labelColor,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                        GrowthStage.ROOTED -> {
+                            Text(
+                                text = "Rooted",
+                                fontSize = 10.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        GrowthStage.VEGETATION -> {
+                            Text(
+                                text = "Veg",
+                                fontSize = 10.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        GrowthStage.FLOWER -> {
+                            Text(
+                                text = "Flower",
+                                fontSize = 9.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        else -> {
+                            Text(
+                                text = formatGrowthStageName(stage).take(3).uppercase(),
+                                fontSize = 10.sp,
+                                color = labelColor,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
             }
         }
     }

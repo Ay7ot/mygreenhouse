@@ -16,6 +16,7 @@ import com.example.mygreenhouse.data.model.PlantGender
 import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
+import com.example.mygreenhouse.data.repository.StrainRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,7 +60,9 @@ data class AddPlantUiState(
     val isValid: Boolean = false,
     val showSaveConfirmationDialog: Boolean = false,
     val plantJustSaved: Boolean = false,
-    val isCustomStrain: Boolean = false
+    val isCustomStrain: Boolean = false,
+    val showHarvestConfirmationDialog: Boolean = false,
+    val hasUnsavedChanges: Boolean = false
 )
 
 /**
@@ -68,6 +71,7 @@ data class AddPlantUiState(
 class AddPlantViewModel(application: Application) : AndroidViewModel(application) {
     private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
     private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
+    private val strainRepository = StrainRepository(AppDatabase.getDatabase(application).strainDao())
     
     private val _uiState = MutableStateFlow(AddPlantUiState())
     val uiState: StateFlow<AddPlantUiState> = _uiState.asStateFlow()
@@ -100,7 +104,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     
     fun updateStrainName(name: String) {
         _uiState.update { 
-            it.copy(
+            val newState = it.copy(
                 strainName = name,
                 isValid = validateForm(
                     strainName = name,
@@ -111,6 +115,7 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     quantity = it.quantity
                 )
             )
+            newState.copy(hasUnsavedChanges = hasUnsavedChanges(newState))
         }
     }
     
@@ -159,16 +164,14 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                 GrowthStage.SEEDLING, 
                 GrowthStage.VEGETATION, 
                 GrowthStage.FLOWER, 
-                GrowthStage.DRYING, 
-                GrowthStage.CURING
+                GrowthStage.HARVEST_PLANT
             )
             PlantSource.CLONE -> listOf(
                 GrowthStage.NON_ROOTED,
                 GrowthStage.ROOTED,
                 GrowthStage.VEGETATION,
                 GrowthStage.FLOWER,
-                GrowthStage.DRYING,
-                GrowthStage.CURING
+                GrowthStage.HARVEST_PLANT
             )
         }
         
@@ -242,6 +245,12 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
     
     fun updateGrowthStage(stage: GrowthStage) {
         val displayText = stage.name.replace("_", " ").lowercase().capitalizeWords()
+        
+        // If user selects HARVEST_PLANT, show confirmation dialog
+        if (stage == GrowthStage.HARVEST_PLANT) {
+            _uiState.update { it.copy(showHarvestConfirmationDialog = true) }
+            return
+        }
         
         _uiState.update { currentState ->
             val newDryingStartDate = if (stage == GrowthStage.DRYING && currentState.growthStage != GrowthStage.DRYING) LocalDate.now() else if (stage != GrowthStage.DRYING) null else currentState.dryingStartDate
@@ -408,6 +417,10 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
                     transitionDate = transitionDate
                 )
             )
+            
+            // Archive the strain name for future use
+            strainRepository.archiveStrainName(currentState.strainName, currentState.isCustomStrain)
+            
             _uiState.update {
                 it.copy(plantJustSaved = true, showSaveConfirmationDialog = true)
             }
@@ -428,6 +441,101 @@ class AddPlantViewModel(application: Application) : AndroidViewModel(application
 
     fun updateIsCustomStrain(isCustom: Boolean) {
         _uiState.update { it.copy(isCustomStrain = isCustom) }
+    }
+    
+    fun onHarvestConfirmationDismiss() {
+        _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+    }
+    
+    fun onHarvestConfirmationConfirm(): Pair<String, String>? {
+        val currentState = uiState.value
+        if (currentState.strainName.isNotEmpty() && currentState.batchNumber.isNotEmpty()) {
+            _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+            return Pair(currentState.strainName, currentState.batchNumber)
+        }
+        return null
+    }
+    
+    fun onHarvestConfirmationCancel() {
+        _uiState.update { it.copy(showHarvestConfirmationDialog = false) }
+    }
+    
+    private suspend fun savePlantSuspending() {
+        val currentState = uiState.value
+        
+        if (!validateForm(currentState.strainName, currentState.batchNumber, currentState.source, currentState.type, currentState.growthStage, currentState.quantity)) return
+        
+        val seedToHarvestDays = if (currentState.type == PlantType.AUTOFLOWER && currentState.source == PlantSource.SEED) {
+            currentState.durationText.toIntOrNull()
+        } else null
+        
+        val flowerDurationDays = if (currentState.type == PlantType.PHOTOPERIOD && currentState.source == PlantSource.SEED) {
+            currentState.durationText.toIntOrNull()
+        } else null
+
+        val finalDryingStartDate = if (currentState.growthStage == GrowthStage.DRYING) currentState.dryingStartDate ?: LocalDate.now() else null
+        val finalCuringStartDate = if (currentState.growthStage == GrowthStage.CURING) currentState.curingStartDate ?: LocalDate.now() else null
+        
+        // Initialize stage start dates based on current growth stage
+        val initialStage = currentState.growthStage ?: GrowthStage.GERMINATION
+        val stageStartDate = currentState.startDate
+        
+        val plant = Plant(
+            strainName = currentState.strainName,
+            batchNumber = currentState.batchNumber,
+            source = currentState.source ?: PlantSource.SEED,
+            type = currentState.type,
+            growthStage = initialStage,
+            startDate = currentState.startDate,
+            dryingStartDate = finalDryingStartDate,
+            curingStartDate = finalCuringStartDate,
+            lastUpdated = LocalDate.now(),
+            seedToHarvestDays = seedToHarvestDays,
+            flowerDurationDays = flowerDurationDays,
+            growMedium = currentState.selectedGrowMedium,
+            nutrients = currentState.nutrientsList,
+            imagePath = currentState.imageUri,
+            quantity = currentState.quantity.toIntOrNull() ?: 1,
+            gender = currentState.plantGender,
+            isCustomStrain = currentState.isCustomStrain,
+            // Set the appropriate stage start date based on the initial growth stage
+            germinationStartDate = if (initialStage == GrowthStage.GERMINATION) stageStartDate else null,
+            seedlingStartDate = if (initialStage == GrowthStage.SEEDLING) stageStartDate else null,
+            nonRootedStartDate = if (initialStage == GrowthStage.NON_ROOTED) stageStartDate else null,
+            rootedStartDate = if (initialStage == GrowthStage.ROOTED) stageStartDate else null,
+            vegetationStartDate = if (initialStage == GrowthStage.VEGETATION) stageStartDate else null,
+            flowerStartDate = if (initialStage == GrowthStage.FLOWER) stageStartDate else null
+        )
+        
+        plantRepository.insertPlant(plant)
+        val transitionDate = when(initialStage) {
+            GrowthStage.DRYING -> finalDryingStartDate ?: currentState.startDate
+            GrowthStage.CURING -> finalCuringStartDate ?: currentState.startDate
+            else -> currentState.startDate
+        }
+        stageTransitionRepository.insertTransition(
+            PlantStageTransition(
+                plantId = plant.id,
+                stage = initialStage,
+                transitionDate = transitionDate
+            )
+        )
+    }
+    
+    private fun hasUnsavedChanges(state: AddPlantUiState): Boolean {
+        return state.strainName.isNotEmpty() ||
+               state.batchNumber.isNotEmpty() ||
+               state.quantity != "1" ||
+               state.source != null ||
+               state.plantGender != PlantGender.UNKNOWN ||
+               state.type != null ||
+               state.growthStage != null ||
+               state.durationText.isNotEmpty() ||
+               state.nutrientsList.isNotEmpty() ||
+               state.selectedGrowMedium != null ||
+               state.imageUri != null ||
+               state.isCustomStrain ||
+               state.startDate != LocalDate.now()
     }
     
     private fun validateForm(

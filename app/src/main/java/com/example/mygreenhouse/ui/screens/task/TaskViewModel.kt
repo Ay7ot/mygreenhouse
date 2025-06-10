@@ -23,8 +23,18 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 import java.util.Calendar
+import kotlinx.coroutines.flow.combine
+
+/**
+ * Enum for task filtering options
+ */
+enum class TaskFilter {
+    ALL,
+    TODAY
+}
 
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -38,6 +48,10 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     
     private val _isLoadingPlants = MutableStateFlow(true)
     val isLoadingPlants: StateFlow<Boolean> = _isLoadingPlants.asStateFlow()
+    
+    // Filter state
+    private val _taskFilter = MutableStateFlow(TaskFilter.ALL)
+    val taskFilter: StateFlow<TaskFilter> = _taskFilter.asStateFlow()
 
     // Data states
     val allTasks: StateFlow<List<Task>> = taskRepository.allTasks
@@ -46,6 +60,21 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+        
+    // Filtered tasks based on current filter
+    val filteredTasks: StateFlow<List<Task>> = combine(
+        allTasks,
+        _taskFilter
+    ) { tasks, filter ->
+        when (filter) {
+            TaskFilter.ALL -> tasks
+            TaskFilter.TODAY -> filterTasksForToday(tasks)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
         
     val plants: StateFlow<List<Plant>> = plantRepository.allActivePlants
         .stateIn(
@@ -73,6 +102,47 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
                 _plantNameCache.value = newCache
             }
         }
+    }
+
+    /**
+     * Set task filter
+     */
+    fun setTaskFilter(filter: TaskFilter) {
+        _taskFilter.value = filter
+    }
+    
+    /**
+     * Filter tasks for today based on recurring tasks and scheduled dates
+     */
+    private fun filterTasksForToday(tasks: List<Task>): List<Task> {
+        val today = LocalDate.now()
+        return tasks.filter { task ->
+            isTaskDueToday(task, today)
+        }
+    }
+    
+    /**
+     * Check if a task is due today considering recurring schedules
+     */
+    private fun isTaskDueToday(task: Task, today: LocalDate): Boolean {
+        // For non-recurring tasks, check if scheduled date is today
+        if (task.repeatDays.isEmpty()) {
+            return task.scheduledDateTime.toLocalDate().isEqual(today)
+        }
+        
+        // For recurring tasks, check if today is one of the repeat days
+        val dayOfWeekMap = mapOf(
+            "MON" to DayOfWeek.MONDAY,
+            "TUE" to DayOfWeek.TUESDAY,
+            "WED" to DayOfWeek.WEDNESDAY,
+            "THU" to DayOfWeek.THURSDAY,
+            "FRI" to DayOfWeek.FRIDAY,
+            "SAT" to DayOfWeek.SATURDAY,
+            "SUN" to DayOfWeek.SUNDAY
+        )
+        
+        val selectedDaysOfWeek = task.repeatDays.mapNotNull { dayOfWeekMap[it] }
+        return selectedDaysOfWeek.contains(today.dayOfWeek)
     }
 
     /**

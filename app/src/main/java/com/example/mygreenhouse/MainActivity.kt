@@ -28,8 +28,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import android.app.Activity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.fragment.app.FragmentActivity
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -95,10 +96,9 @@ class MainActivity : ComponentActivity() {
                         GreenhouseNavGraph(
                             navController = navController,
                             themePreferenceState = settingsViewModel.themePreference,
-                            onThemePreferenceChange = { newPreference ->
-                                settingsViewModel.setThemePreference(newPreference)
-                            },
-                            darkTheme = useDarkTheme
+                            onThemePreferenceChange = { settingsViewModel.setThemePreference(it) },
+                            darkTheme = useDarkTheme,
+                            activity = this
                         )
                     }
                 }

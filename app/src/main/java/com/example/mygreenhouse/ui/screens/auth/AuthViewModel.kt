@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val authRepository = AuthRepository(application.applicationContext)
+    private val authRepository = AuthRepository.getInstance(application.applicationContext)
 
     val isPinLockEnabled: StateFlow<Boolean> = authRepository.isPinLockEnabledFlow
         .stateIn(
@@ -28,7 +28,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         )
 
     val isPinSet: StateFlow<Boolean> = authRepository.isPinLockEnabledFlow
-        .map { isEnabled -> isEnabled && authRepository.isPinCurrentlySet() } // More accurate check for UI
+        .map { isEnabled -> isEnabled && authRepository.isPinCurrentlySet() }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -36,18 +36,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         )
         
     val isBiometricEnabled: StateFlow<Boolean> = authRepository.isBiometricEnabledFlow
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = authRepository.isBiometricEnabled()
-        )
 
     val isAuthenticatedInSession: StateFlow<Boolean> = authRepository.isAuthenticatedInSession
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = false
-        )
         
     val isBiometricAvailable: Boolean
         get() = authRepository.isBiometricAvailable()

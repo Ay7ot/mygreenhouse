@@ -24,10 +24,10 @@ enum class PlantType {
  */
 enum class GrowthStage {
     // Seed growth stages
-    GERMINATION, SEEDLING, VEGETATION, FLOWER, DRYING, CURING,
+    GERMINATION, SEEDLING, VEGETATION, FLOWER, HARVEST_PLANT, DRYING, CURING,
     // Clone growth stages
     NON_ROOTED, ROOTED
-    // Note: Clones also go through VEGETATION, FLOWER, DRYING, CURING stages
+    // Note: Clones also go through VEGETATION, FLOWER, HARVEST_PLANT, DRYING, CURING stages
 }
 
 /**

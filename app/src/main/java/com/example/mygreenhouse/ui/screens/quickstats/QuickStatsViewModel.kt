@@ -8,10 +8,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.mygreenhouse.data.AppDatabase
 import com.example.mygreenhouse.data.model.GrowthStage
+import com.example.mygreenhouse.data.model.Harvest
 import com.example.mygreenhouse.data.model.Plant
 import com.example.mygreenhouse.data.model.PlantStageTransition
 import com.example.mygreenhouse.data.repository.PlantRepository
 import com.example.mygreenhouse.data.repository.PlantStageTransitionRepository
+import com.example.mygreenhouse.data.repository.HarvestRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,16 +45,24 @@ data class QuickStatsUiState(
 class QuickStatsViewModel(application: Application) : AndroidViewModel(application) {
     private val plantRepository = PlantRepository(AppDatabase.getDatabase(application).plantDao())
     private val stageTransitionRepository = PlantStageTransitionRepository(AppDatabase.getDatabase(application).plantStageTransitionDao())
+    private val harvestRepository = HarvestRepository(AppDatabase.getDatabase(application).harvestDao())
     
     private val _uiState = MutableStateFlow(QuickStatsUiState())
     val uiState: StateFlow<QuickStatsUiState> = _uiState.asStateFlow()
     
     init {
         viewModelScope.launch {
-            plantRepository.allActivePlants.combine(_uiState.map { it.selectedStrain }.distinctUntilChanged()) { plants, strain ->
-                Pair(plants, strain)
-            }.collect { (plants, strain) -> 
-                loadStatistics(plants, strain)
+            combine(
+                plantRepository.allActivePlants,
+                harvestRepository.dryingHarvests,
+                harvestRepository.curingHarvests,
+                _uiState.map { it.selectedStrain }.distinctUntilChanged()
+            ) { plants, dryingHarvests, curingHarvests, strain ->
+                Pair(Pair(plants, Pair(dryingHarvests, curingHarvests)), strain)
+            }.collect { (plantData, strain) -> 
+                val (plants, harvestData) = plantData
+                val (dryingHarvests, curingHarvests) = harvestData
+                loadStatistics(plants, dryingHarvests, curingHarvests, strain)
             }
         }
     }
@@ -63,29 +73,31 @@ class QuickStatsViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
-    private suspend fun loadStatistics(plants: List<Plant>?, selectedStrainFilter: String) {
+    private suspend fun loadStatistics(plants: List<Plant>?, dryingHarvests: List<Harvest>, curingHarvests: List<Harvest>, selectedStrainFilter: String) {
         if (plants == null) {
             _uiState.value = _uiState.value.copy(isLoading = true)
             return
         }
-        val activeDisplayPlants = plants
-
-        // Calculate quantities instead of counts
-        val dryingQuantity = activeDisplayPlants
-            .filter { it.growthStage == GrowthStage.DRYING }
-            .sumOf { it.quantity }
-        val curingQuantity = activeDisplayPlants
-            .filter { it.growthStage == GrowthStage.CURING }
-            .sumOf { it.quantity }
-        val totalActivePlantQuantity = activeDisplayPlants
-            .filter { it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING }
-            .sumOf { it.quantity }
         
-        // Calculate plants by stage using quantities
+        // Filter plants to exclude those with DRYING and CURING stages since they're now handled by harvest data
+        val activeDisplayPlants = plants.filter { 
+            it.growthStage != GrowthStage.DRYING && it.growthStage != GrowthStage.CURING 
+        }
+
+        // Get drying and curing counts from harvest data instead of plants
+        val dryingQuantity = dryingHarvests.size // Count of drying batches
+        val curingQuantity = curingHarvests.size // Count of curing batches
+        val totalActivePlantQuantity = activeDisplayPlants.sumOf { it.quantity }
+        
+        // Calculate plants by stage using quantities, with harvest data for drying/curing
         val plantsByStage = GrowthStage.values().associateWith { stage ->
-            activeDisplayPlants
-                .filter { it.growthStage == stage }
-                .sumOf { it.quantity }
+            when (stage) {
+                GrowthStage.DRYING -> dryingQuantity
+                GrowthStage.CURING -> curingQuantity
+                else -> activeDisplayPlants
+                    .filter { it.growthStage == stage }
+                    .sumOf { it.quantity }
+            }
         }
         
         // Build strain options with strain name + batch number combinations

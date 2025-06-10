@@ -107,7 +107,7 @@ fun DankBankScreen(
     val seedTypeFilter by viewModel.seedTypeFilter.collectAsState()
     
     var showDryWeightDialog by remember { mutableStateOf<Harvest?>(null) }
-    var showCuredWeightDialog by remember { mutableStateOf<Harvest?>(null) }
+    var showRateStrainDialog by remember { mutableStateOf<Harvest?>(null) }
     var isSearchMode by remember { mutableStateOf(false) }
     var showFilterDialog by remember { mutableStateOf(false) }
     
@@ -310,7 +310,7 @@ fun DankBankScreen(
                         viewModel = viewModel,
                         uiState = uiState,
                         onMarkDryClick = { harvest -> showDryWeightDialog = harvest },
-                        onMarkCuredClick = { harvest -> showCuredWeightDialog = harvest },
+                        onMarkCuredClick = { harvest -> showRateStrainDialog = harvest },
                         onEditHarvestClick = { harvest -> navController.navigate("editHarvest/${harvest.id}") },
                         onHarvestClick = { harvest -> navController.navigate("harvestDetail/${harvest.id}") },
                         darkTheme = darkTheme,
@@ -335,7 +335,7 @@ fun DankBankScreen(
         DryWeightInputDialog(
             harvest = harvest,
             onDismiss = { showDryWeightDialog = null },
-            onConfirm = { dryWeight ->
+            onConfirm = { dryWeight: Double ->
                 viewModel.updateHarvestWithDryWeight(harvest.id, dryWeight)
                 showDryWeightDialog = null
             },
@@ -343,13 +343,13 @@ fun DankBankScreen(
         )
     }
 
-    showCuredWeightDialog?.let { harvest ->
-        CuredWeightInputDialog(
+    showRateStrainDialog?.let { harvest ->
+        RateStrainDialog(
             harvest = harvest,
-            onDismiss = { showCuredWeightDialog = null },
-            onConfirm = { finalCuredWeight, qualityRating ->
-                viewModel.completeHarvest(harvest.id, finalCuredWeight, qualityRating = qualityRating)
-                showCuredWeightDialog = null
+            onDismiss = { showRateStrainDialog = null },
+            onConfirm = { qualityRating: Int ->
+                viewModel.rateStrain(harvest.id, qualityRating)
+                showRateStrainDialog = null
             },
             darkTheme = darkTheme
         )
@@ -769,102 +769,7 @@ fun DryWeightInputDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CuredWeightInputDialog(
-    harvest: Harvest,
-    onDismiss: () -> Unit,
-    onConfirm: (Double, Int?) -> Unit,
-    darkTheme: Boolean
-) {
-    var finalCuredWeightInput by remember { mutableStateOf(harvest.finalCuredWeight?.toString() ?: "") }
-    var qualityRatingInput by remember { mutableStateOf(harvest.qualityRating?.toString() ?: "") }
 
-    val isWeightError = finalCuredWeightInput.toDoubleOrNull() == null && finalCuredWeightInput.isNotEmpty()
-    val isRatingError = qualityRatingInput.toIntOrNull() == null && qualityRatingInput.isNotEmpty() ||
-            (qualityRatingInput.toIntOrNull() != null && (qualityRatingInput.toInt() < 1 || qualityRatingInput.toInt() > 5))
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Enter Cured Weight & Quality", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
-        text = {
-            Column {
-                Text(
-                    "Enter the final cured weight (grams) and optionally a quality rating (1-5) for ${harvest.strainName} (Batch #${harvest.batchNumber}).", 
-                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = finalCuredWeightInput,
-                    onValueChange = { finalCuredWeightInput = it },
-                    label = { Text("Final Cured Weight (g)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = isWeightError,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
-                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                        errorCursorColor = MaterialTheme.colorScheme.error,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
-                    )
-                )
-                if (isWeightError) {
-                    Text("Please enter a valid weight", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                TextField(
-                    value = qualityRatingInput,
-                    onValueChange = { qualityRatingInput = it },
-                    label = { Text("Quality Rating (1-5, Optional)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    isError = isRatingError,
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
-                        focusedLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        unfocusedLabelColor = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant,
-                        focusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                        unfocusedTextColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
-                        errorCursorColor = MaterialTheme.colorScheme.error,
-                        errorIndicatorColor = MaterialTheme.colorScheme.error
-                    )
-                )
-                if (isRatingError) {
-                    Text("Rating must be a number between 1 and 5", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    finalCuredWeightInput.toDoubleOrNull()?.let { weight ->
-                        onConfirm(weight, qualityRatingInput.toIntOrNull())
-                    }
-                },
-                enabled = finalCuredWeightInput.toDoubleOrNull() != null && !isRatingError
-            ) {
-                Text("Confirm", color = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        },
-        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
-    )
-}
 
 @Composable
 fun SimpleBarChart(
@@ -889,28 +794,31 @@ fun SimpleBarChart(
     // Define colors outside of Canvas scope
     val gridColor = if (darkTheme) TextWhite.copy(alpha = 0.1f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
     val completedColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+    val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
     Box(
         modifier = modifier.padding(
-            start = 32.dp, // Space for y-axis labels
+            start = 40.dp, // Increased space for y-axis labels
             end = 16.dp,
-            top = 24.dp,
-            bottom = 40.dp // Space for x-axis labels
+            top = 32.dp, // Increased space for value labels on top of bars
+            bottom = 48.dp // Increased space for x-axis labels
         )
     ) {
         val values = data.values.toList()
         val maxValue = values.maxOrNull() ?: 0
+        // Ensure minimum scale shows at least to 5 for better visibility when values are small
+        val adjustedMaxValue = maxOf(maxValue, 5)
         
         Canvas(
             modifier = Modifier.fillMaxSize()
         ) {
             val barWidth = size.width / data.size * 0.6f
             val spacing = size.width / data.size * 0.4f
-            val yScale = if (maxValue > 0) size.height / maxValue.toFloat() else 1f
+            val yScale = if (adjustedMaxValue > 0) size.height / adjustedMaxValue.toFloat() else 1f
             
             // Draw grid lines
-            for (i in 0..4) {
-                val y = size.height - (i * size.height / 4)
+            for (i in 0..5) {
+                val y = size.height - (i * size.height / 5)
                 drawLine(
                     color = gridColor,
                     start = Offset(0f, y),
@@ -924,15 +832,23 @@ fun SimpleBarChart(
                 val barHeight = (entry.value * yScale).toFloat()
                 val x = index * (barWidth + spacing) + spacing / 2
                 
+                // Use different colors for different categories
+                val barColor = when (entry.key) {
+                    "Drying" -> Color(0xFFFFD54F) // Amber for drying
+                    "Curing" -> Color(0xFFAED581) // Light green for curing
+                    "Completed" -> completedColor
+                    else -> completedColor
+                }
+                
+                // Always draw bar background for better visualization
+                drawRect(
+                    color = barColor.copy(alpha = 0.1f),
+                    topLeft = Offset(x, 0f),
+                    size = Size(barWidth, size.height)
+                )
+                
+                // Draw actual bar if value > 0
                 if (entry.value > 0) {
-                    // Use different colors for different categories
-                    val barColor = when (entry.key) {
-                        "Drying" -> Color(0xFFFFD54F) // Amber for drying
-                        "Curing" -> Color(0xFFAED581) // Light green for curing
-                        "Completed" -> completedColor
-                        else -> completedColor
-                    }
-                    
                     drawRect(
                         color = barColor,
                         topLeft = Offset(x, size.height - barHeight),
@@ -942,24 +858,41 @@ fun SimpleBarChart(
             }
         }
         
-        // Y-axis labels
+        // Y-axis labels (show actual values)
         Column(
             modifier = Modifier
                 .height(200.dp)
                 .align(Alignment.CenterStart)
-                .offset(x = (-24).dp),
+                .offset(x = (-32).dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             for (i in 5 downTo 0) {
-                val value = if (maxValue > 0) ((maxValue * i) / 5) else i
-                if (i < 5 || (i == 0 && maxValue > 0) ) {
-                    Text(
-                        text = value.toString(),
-                        color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        fontSize = 10.sp,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                }
+                val value = (adjustedMaxValue * i) / 5
+                Text(
+                    text = value.toString(),
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+            }
+        }
+        
+        // Value labels on top of bars
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            data.entries.forEach { (_, value) ->
+                Text(
+                    text = value.toString(),
+                    color = textColor,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.offset(y = (-20).dp)
+                )
             }
         }
         
@@ -968,14 +901,15 @@ fun SimpleBarChart(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .offset(y = 20.dp),
+                .offset(y = 24.dp),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             data.keys.forEach { label ->
                 Text(
                     text = label,
-                    color = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    fontSize = 10.sp,
+                    color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
             }

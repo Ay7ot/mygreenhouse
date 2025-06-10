@@ -8,11 +8,23 @@ import androidx.security.crypto.MasterKey
 import com.example.mygreenhouse.util.BiometricUtil
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.security.MessageDigest
 
 class AuthRepository(private val context: Context) {
 
     companion object {
+        @Volatile
+        private var INSTANCE: AuthRepository? = null
+
+        fun getInstance(context: Context): AuthRepository {
+            return INSTANCE ?: synchronized(this) {
+                val instance = AuthRepository(context.applicationContext)
+                INSTANCE = instance
+                instance
+            }
+        }
+        
         private const val AUTH_PREFERENCES_FILENAME = "auth_prefs"
         private const val KEY_PIN_HASH = "pin_hash"
         private const val KEY_IS_PIN_LOCK_ENABLED = "is_pin_lock_enabled"
@@ -33,14 +45,14 @@ class AuthRepository(private val context: Context) {
     )
 
     private val _isPinLockEnabledFlow = MutableStateFlow(sharedPreferences.getBoolean(KEY_IS_PIN_LOCK_ENABLED, false))
-    val isPinLockEnabledFlow: Flow<Boolean> = _isPinLockEnabledFlow
+    val isPinLockEnabledFlow: StateFlow<Boolean> = _isPinLockEnabledFlow
     
     private val _isBiometricEnabledFlow = MutableStateFlow(sharedPreferences.getBoolean(KEY_IS_BIOMETRIC_ENABLED, false))
-    val isBiometricEnabledFlow: Flow<Boolean> = _isBiometricEnabledFlow
+    val isBiometricEnabledFlow: StateFlow<Boolean> = _isBiometricEnabledFlow
 
     // Session state tracking - reset when app is killed
     private val _isAuthenticatedInSession = MutableStateFlow(false)
-    val isAuthenticatedInSession: Flow<Boolean> = _isAuthenticatedInSession
+    val isAuthenticatedInSession: StateFlow<Boolean> = _isAuthenticatedInSession
 
     private fun hashPin(pin: String): String {
         // In a real app, use a strong, salted hash. For this example, SHA-256 without salt.
@@ -133,6 +145,7 @@ class AuthRepository(private val context: Context) {
     fun enableBiometric(enabled: Boolean): Boolean {
         // Only allow enabling if PIN is set and biometric is available
         if (enabled && (!isPinCurrentlySet() || !isBiometricAvailable())) {
+            _isBiometricEnabledFlow.value = false // Ensure it's false if conditions fail
             return false
         }
         
@@ -148,5 +161,13 @@ class AuthRepository(private val context: Context) {
      */
     fun isBiometricEnabled(): Boolean {
         return sharedPreferences.getBoolean(KEY_IS_BIOMETRIC_ENABLED, false)
+    }
+
+    /**
+     * Force refresh the state flows with current values from SharedPreferences
+     */
+    private fun refreshStateFlows() {
+        _isPinLockEnabledFlow.value = sharedPreferences.getBoolean(KEY_IS_PIN_LOCK_ENABLED, false)
+        _isBiometricEnabledFlow.value = sharedPreferences.getBoolean(KEY_IS_BIOMETRIC_ENABLED, false)
     }
 } 

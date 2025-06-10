@@ -91,8 +91,8 @@ fun EditHarvestScreen(
         }
     }
     
-    // Form validation
-    val isFormValid = !isLoading && strainName.isNotBlank() && batchNumber.isNotBlank()
+    // Form validation (strain and batch are read-only, so just check if not loading)
+    val isFormValid = !isLoading
     
     // Date picker dialog
     val datePickerDialog = remember {
@@ -154,24 +154,38 @@ fun EditHarvestScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Strain name field
+                // Strain name field (read-only)
                 OutlinedTextField(
                     value = strainName,
-                    onValueChange = { strainName = it },
+                    onValueChange = { }, // Read-only
                     label = { Text("Strain Name", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
-                    colors = editTextFieldColors(darkTheme = darkTheme),
+                    readOnly = true,
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Batch number field
+                // Batch number field (read-only)
                 OutlinedTextField(
                     value = batchNumber,
-                    onValueChange = { batchNumber = it },
+                    onValueChange = { }, // Read-only
                     label = { Text("Batch Number", color = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)) },
-                    colors = editTextFieldColors(darkTheme = darkTheme),
+                    readOnly = true,
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledBorderColor = if (darkTheme) DarkSurface.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline,
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        disabledLabelColor = if (darkTheme) TextWhite.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTextColor = if (darkTheme) TextWhite.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 )
