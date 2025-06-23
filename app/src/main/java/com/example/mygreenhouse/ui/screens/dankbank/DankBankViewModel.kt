@@ -530,6 +530,27 @@ class DankBankViewModel(application: Application) : AndroidViewModel(application
         }
     }
     
+    /**
+     * Mark a harvest as completed after curing
+     */
+    fun completeCuringProcess(
+        harvestId: String,
+        finalCuredWeight: Double,
+        curingCompleteDate: LocalDate = LocalDate.now()
+    ) {
+        viewModelScope.launch {
+            val harvest = harvestRepository.getHarvestById(harvestId).first()
+            if (harvest == null) return@launch
+            val updatedHarvest = harvest.copy(
+                finalCuredWeight = finalCuredWeight,
+                curingCompleteDate = curingCompleteDate,
+                isCuring = false,
+                isCompleted = true
+            )
+            harvestRepository.updateHarvest(updatedHarvest)
+        }
+    }
+    
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

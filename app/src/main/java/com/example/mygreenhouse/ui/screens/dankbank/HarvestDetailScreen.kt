@@ -60,6 +60,8 @@ import com.example.mygreenhouse.ui.theme.TextGrey
 import com.example.mygreenhouse.ui.theme.TextWhite
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +82,7 @@ fun HarvestDetailScreen(
     // Add dialog states for weight updates
     var showDryWeightDialog by remember { mutableStateOf(false) }
     var showRateStrainDialog by remember { mutableStateOf(false) }
+    var showFinalCureDialog by remember { mutableStateOf(false) }
     
     // Fetch harvest data
     LaunchedEffect(harvestId) {
@@ -274,6 +277,20 @@ fun HarvestDetailScreen(
                 } else if (harvest!!.isCuring) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Finalize cure button
+                    Button(
+                        onClick = { showFinalCureDialog = true },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                            contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Finalize Cure & Complete")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
                     Button(
                         onClick = { showRateStrainDialog = true },
                         colors = ButtonDefaults.buttonColors(
@@ -357,6 +374,20 @@ fun HarvestDetailScreen(
             onConfirm = { qualityRating: Int ->
                 viewModel.rateStrain(harvest!!.id, qualityRating)
                 showRateStrainDialog = false
+            },
+            darkTheme = darkTheme
+        )
+    }
+    
+    // Finalize Cure Dialog
+    if (showFinalCureDialog && harvest != null) {
+        FinalCuredWeightDialog(
+            harvest = harvest!!,
+            onDismiss = { showFinalCureDialog = false },
+            onConfirm = { weight: Double ->
+                viewModel.completeCuringProcess(harvest!!.id, weight)
+                showFinalCureDialog = false
+                onNavigateBack()
             },
             darkTheme = darkTheme
         )
@@ -576,6 +607,67 @@ fun RateStrainDialog(
         containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface,
         titleContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface,
         textContentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FinalCuredWeightDialog(
+    harvest: Harvest,
+    onDismiss: () -> Unit,
+    onConfirm: (Double) -> Unit,
+    darkTheme: Boolean
+) {
+    var curedWeightInput by remember { mutableStateOf("") }
+    val isError = curedWeightInput.toDoubleOrNull() == null && curedWeightInput.isNotEmpty()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Enter Final Cured Weight", color = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface) },
+        text = {
+            Column {
+                Text(
+                    "Enter the final cured weight in grams for harvest of ${harvest.strainName} (Batch #${harvest.batchNumber}).",
+                    color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = curedWeightInput,
+                    onValueChange = { curedWeightInput = it },
+                    label = { Text("Cured Weight (g)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = isError,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        disabledContainerColor = if (darkTheme) DarkSurface.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
+                    )
+                )
+                if (isError) {
+                    Text("Please enter a valid number", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { curedWeightInput.toDoubleOrNull()?.let { onConfirm(it) } },
+                enabled = curedWeightInput.toDoubleOrNull() != null,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary,
+                    contentColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text("Complete Harvest")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = if (darkTheme) TextGrey else MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        containerColor = if (darkTheme) DarkSurface else MaterialTheme.colorScheme.surface
     )
 }
 
