@@ -948,16 +948,16 @@ fun SimplePieChart(
     // Define text color before Canvas scope
     val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
-    Column(
+    Row(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         // Pie Chart
         Canvas(
             modifier = Modifier.size(180.dp)
         ) {
             var startAngle = 0f
-            
             data.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
                 val sweepAngle = 360f * entry.value / total
                 drawArc(
@@ -969,33 +969,19 @@ fun SimplePieChart(
                 startAngle += sweepAngle
             }
         }
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        // Legend - centered below the chart
+        Spacer(modifier = Modifier.width(24.dp))
+        // Legend list
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            data.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
-                val percentage = (entry.value * 100f / total).toInt()
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(14.dp)
-                            .background(colors[index % colors.size], shape = CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+            data.entries.forEachIndexed { index, entry ->
+                val percentage = if (total > 0) (entry.value * 100f / total).toInt() else 0
+                val totalInt = total.toInt()
                     Text(
-                        text = "${entry.key} ($percentage%)",
+                    text = "${entry.key}: ${entry.value}/$totalInt ($percentage%)",
                         color = textColor,
-                        fontSize = 15.sp
+                    fontSize = 12.sp
                     )
-                }
             }
         }
     }
@@ -1165,7 +1151,7 @@ fun SeedBankChartsPager(uiState: DankBankUiState, darkTheme: Boolean) {
                 state = pagerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(340.dp)
             ) { page ->
                 when (page) {
                     0 -> SimplePieChart(
@@ -1177,14 +1163,14 @@ fun SeedBankChartsPager(uiState: DankBankUiState, darkTheme: Boolean) {
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp),
+                            .height(340.dp),
                         darkTheme = darkTheme
                     )
                     1 -> SeedsPerStrainPieChart(
                         data = uiState.seedsPerStrain,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(220.dp),
+                            .height(340.dp),
                         darkTheme = darkTheme
                     )
                 }
@@ -1258,9 +1244,10 @@ fun SeedsPerStrainPieChart(
     // Define text color before Canvas scope
     val textColor = if (darkTheme) TextWhite else MaterialTheme.colorScheme.onSurface
     
-    Column(
+    Row(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         // Pie Chart
         Canvas(
@@ -1279,37 +1266,19 @@ fun SeedsPerStrainPieChart(
                 startAngle += sweepAngle
             }
         }
-        
-        Spacer(modifier = Modifier.height(20.dp))
-        
-        // Legend - centered below the chart with full strain names
+        Spacer(modifier = Modifier.width(24.dp))
+        // Legend list
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             sortedData.entries.filter { it.value > 0 }.forEachIndexed { index, entry ->
-                val percentage = (entry.value * 100f / total).toInt()
-                
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(14.dp)
-                            .background(colors[index % colors.size], shape = CircleShape)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+                val percentage = if (total > 0) (entry.value * 100f / total).toInt() else 0
+                val totalInt2 = total.toInt()
                     Text(
-                        text = "${entry.key} ($percentage%)",
+                    text = "${entry.key}: ${entry.value}/$totalInt2 ($percentage%)",
                         color = textColor,
-                        fontSize = 15.sp,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
+                    fontSize = 12.sp
                     )
-                }
             }
         }
     }

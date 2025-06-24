@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Co2
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,6 +57,7 @@ import com.example.mygreenhouse.ui.theme.PrimaryGreen
 import com.example.mygreenhouse.ui.theme.TextWhite
 import androidx.navigation.NavController
 
+
 // For displaying user-friendly names for TaskType
 fun TaskType.displayName(): String {
     return when (this) {
@@ -66,7 +66,7 @@ fun TaskType.displayName(): String {
         TaskType.PEST_CONTROL -> "Pest Control"
         TaskType.SOIL_TEST -> "Soil Test"
         TaskType.WATER_TEST -> "Water Test"
-        TaskType.LIGHT_CYCLE_CHANGE -> "Light Cycle Change"
+        TaskType.LIGHT_CYCLE_CHANGE -> "Light Cycle"
         TaskType.CO2_SUPPLEMENTATION -> "CO₂ Supplementation"
         TaskType.OTHER -> "Other Task"
     }
@@ -79,7 +79,7 @@ fun TaskType.displayName(): String {
 fun TaskType.getIcon(): ImageVector {
     return when (this) {
         TaskType.WATERING -> Icons.Filled.Opacity
-        TaskType.FEEDING -> Icons.Filled.Fastfood
+        TaskType.FEEDING -> FeedingIcon.WateringCan
         TaskType.PEST_CONTROL -> Icons.Filled.BugReport
         TaskType.SOIL_TEST -> Icons.Filled.Science
         TaskType.WATER_TEST -> Icons.Filled.WaterDrop
@@ -243,7 +243,7 @@ fun TaskTypeCard(
                 Icon(
                     imageVector = taskType.getIcon(),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(28.dp),
                     tint = if (darkTheme) PrimaryGreen else MaterialTheme.colorScheme.primary
                 )
             }
